@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "665761525967",
+    "project_id": "newfitnessappbr",
+    "storage_bucket": "newfitnessappbr.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:665761525967:android:8562eba73c7be19b4f07ba",
+        "android_client_info": {
+          "package_name": "com.newfitness.newfitness"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB8qK9y1r3meU6TfuuPNACT9Si0xb2CsNk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
