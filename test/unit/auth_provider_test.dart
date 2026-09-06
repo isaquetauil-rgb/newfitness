@@ -62,6 +62,27 @@ void main() {
     },
   );
 
+  test('quando o perfil não existe no Firestore, cria um perfil padrão automaticamente', () async {
+    final user = MockUser();
+    when(() => user.uid).thenReturn('u1');
+    when(() => user.email).thenReturn('ana@x.com');
+    when(() => user.displayName).thenReturn('Ana Silva');
+    when(() => firestoreService.getUserProfile('u1'))
+        .thenAnswer((_) async => null);
+    when(() => firestoreService.createUserProfile(any()))
+        .thenAnswer((_) async {});
+
+    final provider = buildProvider();
+    authStateController.add(user);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(provider.profile, isNotNull);
+    expect(provider.profile!.uid, 'u1');
+    expect(provider.profile!.name, 'Ana Silva');
+    expect(provider.profileError, isNull);
+    verify(() => firestoreService.createUserProfile(any())).called(1);
+  });
+
   test('signIn com credenciais inválidas expõe mensagem amigável', () async {
     when(
       () => authService.signIn(

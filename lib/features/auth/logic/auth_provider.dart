@@ -66,11 +66,13 @@ class AuthProvider extends ChangeNotifier {
     _profileError = null;
     notifyListeners();
     try {
-      _profile = await _firestoreService.getUserProfile(uid);
-      if (_profile == null) {
-        _profileError =
-            'Não encontramos seu perfil. Tente sair e entrar novamente.';
-      }
+      var profile = await _firestoreService.getUserProfile(uid);
+      // Conta autenticada sem documento de perfil (ex: a escrita falhou no
+      // cadastro por algum motivo pontual) — em vez de travar o usuário
+      // numa tela de erro, cria um perfil padrão automaticamente com os
+      // dados já disponíveis no Firebase Auth.
+      profile ??= await _createDefaultProfile(uid);
+      _profile = profile;
     } catch (e, st) {
       _log.warning('Falha ao carregar perfil de $uid', e, st);
       _profileError = _authService.friendlyError(e);
@@ -78,6 +80,19 @@ class AuthProvider extends ChangeNotifier {
       _loadingProfile = false;
       notifyListeners();
     }
+  }
+
+  Future<UserProfile> _createDefaultProfile(String uid) async {
+    _log.info('Perfil não encontrado para $uid — criando um padrão.');
+    final profile = UserProfile(
+      uid: uid,
+      name: _user?.displayName?.trim().isNotEmpty == true
+          ? _user!.displayName!.trim()
+          : (_user?.email?.split('@').first ?? 'Usuário'),
+      email: _user?.email ?? '',
+    );
+    await _firestoreService.createUserProfile(profile);
+    return profile;
   }
 
   /// Tenta buscar o perfil de novo (usado pela UI num botão "Tentar de novo").
