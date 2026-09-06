@@ -107,7 +107,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ],
       ),
       body: profile == null
-          ? const Center(child: CircularProgressIndicator())
+          ? _buildProfileMissingBody(auth)
           : ListView(
               padding: const EdgeInsets.all(16),
               children: [
@@ -202,6 +202,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ],
             ),
+    );
+  }
+
+  Widget _buildProfileMissingBody(AuthProvider auth) {
+    if (auth.profileError == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+            const SizedBox(height: 16),
+            Text(
+              auth.profileError!,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey.shade700),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: auth.isLoadingProfile ? null : auth.retryLoadProfile,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Tentar de novo'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

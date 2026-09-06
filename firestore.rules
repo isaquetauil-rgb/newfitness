@@ -1,0 +1,43 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId} {
+      // O próprio usuário sempre pode ler/escrever seu perfil.
+      // Um instrutor também pode LER o perfil de um aluno vinculado a ele.
+      allow read: if request.auth != null && (
+        request.auth.uid == userId ||
+        resource.data.instructorId == request.auth.uid
+      );
+      allow write: if request.auth != null && request.auth.uid == userId;
+
+      match /workouts/{workoutId} {
+        allow read: if request.auth != null && (
+          request.auth.uid == userId ||
+          get(/databases/$(database)/documents/users/$(userId)).data.instructorId == request.auth.uid
+        );
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
+      match /reminders/{reminderId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      match /body_photos/{photoId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      match /chat_messages/{messageId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      match /meal_photos/{photoId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      match /students/{studentId} {
+        // Só o próprio instrutor (dono deste documento users/{userId}) mexe
+        // na sua lista de alunos.
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+    match /exercises/{exerciseId} {
+      allow read: if request.auth != null;
+      allow write: if false; // gerenciado por admin/backend
+    }
+  }
+}

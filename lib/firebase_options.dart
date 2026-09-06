@@ -1,13 +1,7 @@
-// ATENÇÃO: este arquivo é um PLACEHOLDER.
-//
-// Ele deve ser substituído pelo arquivo real, gerado automaticamente ao
-// rodar o comando abaixo na raiz do projeto (depois de instalar a CLI do
-// FlutterFire — veja o README.md para o passo a passo completo):
-//
-//   flutterfire configure
-//
-// Esse comando cria/atualiza este arquivo com as chaves reais do seu
-// projeto Firebase para cada plataforma (Android, iOS, Web).
+// Gerado por `flutterfire configure` para o projeto Firebase
+// "newfitnessappbr". Não editar à mão — para regenerar (ex: depois de
+// adicionar uma nova plataforma), rode `flutterfire configure` novamente
+// na raiz do projeto.
 
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
@@ -32,28 +26,28 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'SUBSTITUA_VIA_FLUTTERFIRE_CONFIGURE',
-    appId: 'SUBSTITUA_VIA_FLUTTERFIRE_CONFIGURE',
-    messagingSenderId: 'SUBSTITUA_VIA_FLUTTERFIRE_CONFIGURE',
-    projectId: 'SUBSTITUA_VIA_FLUTTERFIRE_CONFIGURE',
-    authDomain: 'SUBSTITUA_VIA_FLUTTERFIRE_CONFIGURE',
-    storageBucket: 'SUBSTITUA_VIA_FLUTTERFIRE_CONFIGURE',
+    apiKey: 'AIzaSyClaM065auQLqVZQCgRwf3u9DMqdD8yEIk',
+    appId: '1:665761525967:web:99d888a13061494d4f07ba',
+    messagingSenderId: '665761525967',
+    projectId: 'newfitnessappbr',
+    authDomain: 'newfitnessappbr.firebaseapp.com',
+    storageBucket: 'newfitnessappbr.firebasestorage.app',
+    measurementId: 'G-FZ2CQ5DGG2',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'SUBSTITUA_VIA_FLUTTERFIRE_CONFIGURE',
-    appId: 'SUBSTITUA_VIA_FLUTTERFIRE_CONFIGURE',
-    messagingSenderId: 'SUBSTITUA_VIA_FLUTTERFIRE_CONFIGURE',
-    projectId: 'SUBSTITUA_VIA_FLUTTERFIRE_CONFIGURE',
-    storageBucket: 'SUBSTITUA_VIA_FLUTTERFIRE_CONFIGURE',
+    apiKey: 'AIzaSyB8qK9y1r3meU6TfuuPNACT9Si0xb2CsNk',
+    appId: '1:665761525967:android:8562eba73c7be19b4f07ba',
+    messagingSenderId: '665761525967',
+    projectId: 'newfitnessappbr',
+    storageBucket: 'newfitnessappbr.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'SUBSTITUA_VIA_FLUTTERFIRE_CONFIGURE',
-    appId: 'SUBSTITUA_VIA_FLUTTERFIRE_CONFIGURE',
-    messagingSenderId: 'SUBSTITUA_VIA_FLUTTERFIRE_CONFIGURE',
-    projectId: 'SUBSTITUA_VIA_FLUTTERFIRE_CONFIGURE',
-    storageBucket: 'SUBSTITUA_VIA_FLUTTERFIRE_CONFIGURE',
-    iosBundleId: 'com.example.newfitness',
+    apiKey: 'AIzaSyCUNG7dtWTeh_QdosrRMSF3y1f3evyvAYs',
+    appId: '1:665761525967:ios:0ea252b48108edf14f07ba',
+    messagingSenderId: '665761525967',
+    projectId: 'newfitnessappbr',
+    storageBucket: 'newfitnessappbr.firebasestorage.app',
+    iosBundleId: 'com.newfitness.newfitness',
   );
 }
