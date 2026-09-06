@@ -259,22 +259,37 @@ flutter run
   cadastrar; aluno informa esse código no próprio cadastro (ou depois, no
   perfil) para se vincular; instrutor vê a lista de alunos vinculados e o
   histórico de treinos de cada um
+- ✅ **Interface e Início diferentes para instrutor e aluno** — o instrutor
+  vê número de alunos, atalho para a lista e acesso direto ao assistente
+  de IA em vez dos cards de treino/lembretes do aluno
+- ✅ **Assistente de IA para instrutores**: sugestões gerais ("me dê mais
+  ideias de treino de braço") ou contextualizadas a um aluno específico —
+  o instrutor anota algo sobre o aluno (ex: "dor nas costas") na tela do
+  aluno, pede sugestão à IA e pode transformar a resposta num **plano de
+  treino** de verdade (título, instruções, exercícios com séries/reps
+  alvo escolhidos da biblioteca)
+- ✅ **Planos de treino**: o aluno vê os planos que o instrutor montou pra
+  ele na aba Treino e inicia o registro de séries já com os exercícios
+  prescritos carregados
 - ✅ Perfil do usuário (peso, altura, meta) salvo no Firestore
 
 ## Backend de IA (Cloud Functions)
 
-O chat e as análises de foto **não chamam a API de IA diretamente do app**
-— isso exporia a chave de API. Em vez disso, o app chama uma Cloud Function
-que guarda a chave em segredo. Veja `functions/README.md` para o passo a
-passo completo (instalar dependências, criar a chave da Anthropic, guardar
-como secret, fazer o deploy). **Sem seguir esses passos, o chat e a análise
-de foto retornam erro** — o resto do app funciona normalmente.
+O chat, as análises de foto e o assistente de IA do instrutor **não chamam
+a API de IA diretamente do app** — isso exporia a chave de API. Em vez
+disso, o app chama uma Cloud Function (`chatWithAI`, `analyzeMealPhoto`,
+`analyzeBodyPhoto`, `suggestTrainingPlan`) que guarda a chave em segredo.
+Veja `functions/README.md` para o passo a passo completo (instalar
+dependências, criar a chave da Anthropic, guardar como secret, fazer o
+deploy). **Sem seguir esses passos, essas quatro funções retornam erro** —
+o resto do app (incluindo criar planos manualmente e o aluno vê-los)
+funciona normalmente sem depender da IA.
 
 ## Próximos passos sugeridos
 
 - Notificações push (Firebase Cloud Messaging) para o instrutor avisar
   alunos diretamente
-- Instrutor poder montar/atribuir planos de treino para os alunos
+- Marcar exercícios do plano como concluídos e comparar com o prescrito
 - Editar/excluir um treino já salvo
 - Limite de uso diário do chat/análise de IA por usuário (controle de custo)
 - Testes de integração com Firebase real/emulado (`firebase_auth_mocks`,

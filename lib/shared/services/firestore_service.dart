@@ -8,6 +8,7 @@ import '../models/chat_message.dart';
 import '../models/exercise.dart';
 import '../models/meal_photo.dart';
 import '../models/reminder.dart';
+import '../models/training_plan.dart';
 import '../models/user_profile.dart';
 import '../models/workout.dart';
 
@@ -377,5 +378,58 @@ class FirestoreService {
       'deleteMealPhoto',
       () => _mealPhotosRef(uid).doc(photoId).delete(),
     );
+  }
+
+  // ---------- Planos de treino (instrutor -> aluno) ----------
+
+  CollectionReference<Map<String, dynamic>> _trainingPlansRef(String uid) =>
+      _db.collection(FirestorePaths.trainingPlans(uid));
+
+  Stream<List<TrainingPlan>> watchTrainingPlans(String studentUid) {
+    return _guardStream(
+      'watchTrainingPlans',
+      _trainingPlansRef(studentUid)
+          .orderBy('createdAt', descending: true)
+          .snapshots()
+          .map(
+            (snap) => snap.docs
+                .map((d) => TrainingPlan.fromMap(d.id, d.data()))
+                .toList(),
+          ),
+    );
+  }
+
+  Future<void> saveTrainingPlan(TrainingPlan plan) {
+    return _guard('saveTrainingPlan', () async {
+      final ref = _trainingPlansRef(plan.studentUid);
+      if (plan.id.isEmpty) {
+        await ref.add(plan.toMap());
+      } else {
+        await ref.doc(plan.id).set(plan.toMap());
+      }
+    });
+  }
+
+  Future<void> deleteTrainingPlan(String studentUid, String planId) {
+    return _guard(
+      'deleteTrainingPlan',
+      () => _trainingPlansRef(studentUid).doc(planId).delete(),
+    );
+  }
+
+  /// Atualiza a nota do instrutor sobre um aluno (ex: "dor lombar
+  /// crônica"), usada como contexto para as sugestões de IA. Guardada
+  /// junto da entrada denormalizada em `users/{instructorId}/students`.
+  Future<void> updateStudentNote(
+    String instructorId,
+    String studentUid,
+    String note,
+  ) {
+    return _guard('updateStudentNote', () {
+      return _db
+          .collection(FirestorePaths.students(instructorId))
+          .doc(studentUid)
+          .set({'notes': note}, SetOptions(merge: true));
+    });
   }
 }

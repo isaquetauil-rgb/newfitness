@@ -11,6 +11,17 @@ const SYSTEM_PROMPT =
   "saudáveis. Você não é médico nem nutricionista — para questões " +
   "clínicas, sempre recomende procurar um profissional.";
 
+const INSTRUCTOR_SYSTEM_PROMPT =
+  "Você é um assistente de um personal trainer no app NewFitness. " +
+  "Responda sempre em português do Brasil, de forma objetiva e prática. " +
+  "O instrutor pode te pedir ideias gerais de exercícios/treinos, ou " +
+  "contexto sobre um aluno específico (ex: uma dor ou limitação relatada). " +
+  "Quando sugerir exercícios, inclua séries/repetições aproximadas e o " +
+  "motivo da escolha. Você não substitui avaliação médica ou fisioterapêutica " +
+  "— sempre que o pedido envolver dor, lesão ou condição de saúde, deixe " +
+  "claro que a sugestão é um ponto de partida e recomende avaliação " +
+  "profissional antes de aplicar o treino.";
+
 /**
  * Chat de texto com a IA. Espera { messages: [{role, content}], history? }.
  * Exige usuário autenticado.
@@ -133,5 +144,39 @@ export const analyzeBodyPhoto = onCall(
     });
 
     return { analysis };
+  }
+);
+
+/**
+ * Apoio de IA para instrutores montarem treinos: sugestão geral (sem
+ * aluno associado) ou contextualizada a um aluno específico. Espera
+ * { prompt: string, studentName?: string }. Retorna texto livre — o
+ * instrutor decide como transformar isso num plano de verdade.
+ */
+export const suggestTrainingPlan = onCall(
+  { secrets: [anthropicApiKey] },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "É preciso estar logado.");
+    }
+
+    const prompt = request.data?.prompt as string | undefined;
+    const studentName = request.data?.studentName as string | undefined;
+
+    if (!prompt || prompt.trim().length === 0) {
+      throw new HttpsError("invalid-argument", "Pedido vazio.");
+    }
+
+    const userMessage = studentName
+      ? `Contexto: aluno(a) "${studentName}". Pedido do instrutor: ${prompt}`
+      : prompt;
+
+    const suggestion = await callClaude({
+      system: INSTRUCTOR_SYSTEM_PROMPT,
+      messages: [{ role: "user", content: userMessage }],
+      maxTokens: 700,
+    });
+
+    return { suggestion };
   }
 );

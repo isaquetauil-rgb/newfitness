@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 import 'package:newfitness/core/di/injector.dart';
 import 'package:newfitness/shared/models/exercise.dart';
 import 'package:newfitness/shared/models/logged_exercise.dart';
+import 'package:newfitness/shared/models/training_plan.dart';
 import 'package:newfitness/shared/models/workout.dart';
 import 'package:newfitness/shared/models/workout_set.dart';
 import 'package:newfitness/shared/services/firestore_service.dart';
@@ -42,6 +43,21 @@ class WorkoutProvider extends ChangeNotifier {
     _activeWorkout!.exercises.add(
       LoggedExercise(exerciseId: exercise.id, exerciseName: exercise.name),
     );
+    notifyListeners();
+  }
+
+  /// Inicia um treino já com os exercícios de um [TrainingPlan] prescrito
+  /// pelo instrutor — o aluno cai direto na tela de registro de séries.
+  void startFromPlan(String userId, TrainingPlan plan) {
+    startWorkout(userId, name: plan.title);
+    for (final planExercise in plan.exercises) {
+      _activeWorkout!.exercises.add(
+        LoggedExercise(
+          exerciseId: planExercise.exerciseId,
+          exerciseName: planExercise.exerciseName,
+        ),
+      );
+    }
     notifyListeners();
   }
 

@@ -12,6 +12,7 @@ import 'package:newfitness/features/exercises/presentation/exercise_detail_scree
 import 'package:newfitness/features/exercises/presentation/exercise_library_screen.dart';
 import 'package:newfitness/features/home/presentation/home_dashboard_screen.dart';
 import 'package:newfitness/features/instructor/presentation/instructor_dashboard_screen.dart';
+import 'package:newfitness/features/instructor/presentation/plan_editor_screen.dart';
 import 'package:newfitness/features/instructor/presentation/student_detail_screen.dart';
 import 'package:newfitness/features/notifications/presentation/reminders_screen.dart';
 import 'package:newfitness/features/profile/presentation/profile_screen.dart';
@@ -161,9 +162,21 @@ GoRouter buildAppRouter(AuthProvider authProvider) {
                         StudentDetailScreen(
                           studentUid: args.uid,
                           studentName: args.name,
+                          initialNotes: args.notes,
                         ),
                       );
                     },
+                    routes: [
+                      GoRoute(
+                        path: 'plan',
+                        pageBuilder: (context, state) => _fadeThrough(
+                          state,
+                          PlanEditorScreen(
+                            args: state.extra! as PlanEditorArgs,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -207,7 +220,8 @@ CustomTransitionPage<void> _fadeThrough(GoRouterState state, Widget child) {
 /// Argumentos para `/instructor/student` (evita passar UID/nome soltos por
 /// `extra` sem tipo).
 class StudentDetailArgs {
-  const StudentDetailArgs({required this.uid, required this.name});
+  const StudentDetailArgs({required this.uid, required this.name, this.notes});
   final String uid;
   final String name;
+  final String? notes;
 }

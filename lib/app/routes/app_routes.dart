@@ -21,5 +21,6 @@ class AppRoutes {
   static const ai = '/ai';
   static const instructor = '/instructor';
   static const instructorStudent = '/instructor/student';
+  static const instructorPlanEditor = '/instructor/student/plan';
   static const profile = '/profile';
 }

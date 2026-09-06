@@ -16,4 +16,5 @@ class FirestorePaths {
   static String mealPhotos(String uid) => '$users/$uid/meal_photos';
   static String students(String instructorId) =>
       '$users/$instructorId/students';
+  static String trainingPlans(String uid) => '$users/$uid/training_plans';
 }

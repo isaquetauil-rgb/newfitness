@@ -8,8 +8,10 @@ import 'package:newfitness/features/ai/logic/chat_provider.dart';
 import 'package:newfitness/features/ai/logic/meal_photo_provider.dart';
 import 'package:newfitness/features/auth/logic/auth_provider.dart';
 import 'package:newfitness/features/exercises/logic/exercise_provider.dart';
+import 'package:newfitness/features/instructor/logic/instructor_ai_provider.dart';
 import 'package:newfitness/features/notifications/logic/reminder_provider.dart';
 import 'package:newfitness/features/progress/logic/body_photo_provider.dart';
+import 'package:newfitness/features/workout/logic/training_plan_provider.dart';
 import 'package:newfitness/features/workout/logic/workout_provider.dart';
 
 /// Widget raiz do app. O [AuthProvider] e o [GoRouter] são criados uma única
@@ -44,6 +46,8 @@ class _NewFitnessAppState extends State<NewFitnessApp> {
         ChangeNotifierProvider(create: (_) => BodyPhotoProvider()),
         ChangeNotifierProvider(create: (_) => ChatProvider()),
         ChangeNotifierProvider(create: (_) => MealPhotoProvider()),
+        ChangeNotifierProvider(create: (_) => TrainingPlanProvider()),
+        ChangeNotifierProvider(create: (_) => InstructorAiProvider()),
       ],
       child: MaterialApp.router(
         title: 'NewFitness',

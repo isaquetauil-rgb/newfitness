@@ -7,6 +7,7 @@ import 'package:newfitness/app/routes/app_router.dart';
 import 'package:newfitness/app/routes/app_routes.dart';
 import 'package:newfitness/core/di/injector.dart';
 import 'package:newfitness/features/auth/logic/auth_provider.dart';
+import 'package:newfitness/features/instructor/presentation/ai_suggestion_sheet.dart';
 import 'package:newfitness/shared/services/firestore_service.dart';
 
 class InstructorDashboardScreen extends StatelessWidget {
@@ -22,7 +23,16 @@ class InstructorDashboardScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Meus alunos')),
+      appBar: AppBar(
+        title: const Text('Meus alunos'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.smart_toy_outlined),
+            tooltip: 'Assistente de IA',
+            onPressed: () => showAiSuggestionSheet(context),
+          ),
+        ],
+      ),
       body: Column(
         children: [
           Padding(
@@ -76,6 +86,7 @@ class InstructorDashboardScreen extends StatelessWidget {
                           extra: StudentDetailArgs(
                             uid: student['uid'] as String,
                             name: student['name'] as String? ?? '',
+                            notes: student['notes'] as String?,
                           ),
                         ),
                       ),

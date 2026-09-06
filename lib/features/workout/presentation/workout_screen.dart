@@ -4,9 +4,11 @@ import 'package:provider/provider.dart';
 
 import 'package:newfitness/app/routes/app_routes.dart';
 import 'package:newfitness/features/auth/logic/auth_provider.dart';
+import 'package:newfitness/features/workout/logic/training_plan_provider.dart';
 import 'package:newfitness/features/workout/logic/workout_provider.dart';
 import 'package:newfitness/shared/models/exercise.dart';
 import 'package:newfitness/shared/models/logged_exercise.dart';
+import 'package:newfitness/shared/models/training_plan.dart';
 
 import 'rest_timer_sheet.dart';
 
@@ -99,35 +101,100 @@ class _StartWorkoutBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final uid = context.read<AuthProvider>().user?.uid ?? '';
+    final planProvider = context.watch<TrainingPlanProvider>();
 
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.fitness_center, size: 72, color: Colors.grey),
-            const SizedBox(height: 16),
-            const Text(
-              'Nenhum treino em andamento',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Inicie um treino para começar a registrar suas séries.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey.shade600),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () =>
-                  context.read<WorkoutProvider>().startWorkout(uid),
-              icon: const Icon(Icons.play_arrow),
-              label: const Text('Iniciar treino'),
-            ),
-          ],
+    return ListView(
+      padding: const EdgeInsets.all(32),
+      children: [
+        const Icon(Icons.fitness_center, size: 72, color: Colors.grey),
+        const SizedBox(height: 16),
+        const Text(
+          'Nenhum treino em andamento',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
         ),
-      ),
+        const SizedBox(height: 8),
+        Text(
+          'Inicie um treino livre ou siga um plano do seu instrutor.',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: Colors.grey.shade600),
+        ),
+        const SizedBox(height: 24),
+        Center(
+          child: ElevatedButton.icon(
+            onPressed: () => context.read<WorkoutProvider>().startWorkout(uid),
+            icon: const Icon(Icons.play_arrow),
+            label: const Text('Iniciar treino livre'),
+          ),
+        ),
+        if (uid.isNotEmpty)
+          StreamBuilder<List<TrainingPlan>>(
+            stream: planProvider.watchPlans(uid),
+            builder: (context, snapshot) {
+              final plans = snapshot.data ?? [];
+              if (plans.isEmpty) return const SizedBox.shrink();
+              return Padding(
+                padding: const EdgeInsets.only(top: 32),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Plano do seu instrutor',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 8),
+                    for (final plan in plans)
+                      Card(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                plan.title,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              if (plan.instructions != null) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  plan.instructions!,
+                                  style: TextStyle(color: Colors.grey.shade700),
+                                ),
+                              ],
+                              const SizedBox(height: 8),
+                              Text(
+                                plan.exercises
+                                    .map(
+                                      (e) =>
+                                          '${e.exerciseName} (${e.targetSets}x${e.targetReps})',
+                                    )
+                                    .join(' · '),
+                                style: const TextStyle(fontSize: 13),
+                              ),
+                              const SizedBox(height: 8),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: TextButton.icon(
+                                  onPressed: () => context
+                                      .read<WorkoutProvider>()
+                                      .startFromPlan(uid, plan),
+                                  icon: const Icon(Icons.play_arrow, size: 18),
+                                  label: const Text('Iniciar este treino'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              );
+            },
+          ),
+      ],
     );
   }
 }
