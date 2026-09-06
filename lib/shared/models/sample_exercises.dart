@@ -1,10 +1,12 @@
-import '../models/exercise.dart';
+import 'exercise.dart';
 
-/// Exercícios de exemplo para popular a biblioteca inicialmente.
+/// Biblioteca inicial de exercícios, usada como fallback enquanto a
+/// coleção `exercises` do Firestore está vazia (ver
+/// `ExerciseProvider._seedIfEmpty`, que copia esta lista para o Firestore
+/// na primeira vez que o app roda com a coleção vazia).
 ///
-/// As URLs de vídeo abaixo são placeholders (Google Test Videos, de uso
-/// livre) — troque pelos vídeos reais do seu catálogo (Firebase Storage,
-/// YouTube, etc.) antes de publicar o app.
+/// Os vídeos são do YouTube (tocados via `youtube_player_iframe`) e foram
+/// escolhidos por ensinarem a execução correta de cada movimento.
 final List<Exercise> sampleExercises = [
   Exercise(
     id: 'squat',
@@ -12,7 +14,7 @@ final List<Exercise> sampleExercises = [
     muscleGroup: 'Pernas',
     equipment: 'Barra',
     description: 'Exercício composto fundamental para quadríceps, glúteos e posterior de coxa.',
-    videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+    videoUrl: 'https://www.youtube.com/watch?v=HPnSFx5CIzs',
     instructions: const [
       'Posicione a barra sobre o trapézio, pés na largura dos ombros.',
       'Desça flexionando quadril e joelhos, mantendo o peito erguido.',
@@ -26,7 +28,7 @@ final List<Exercise> sampleExercises = [
     muscleGroup: 'Peito',
     equipment: 'Barra',
     description: 'Principal exercício para desenvolvimento do peitoral.',
-    videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+    videoUrl: 'https://www.youtube.com/watch?v=vIGvt-vgrvY',
     instructions: const [
       'Deite no banco com os pés apoiados no chão.',
       'Segure a barra um pouco mais aberta que a largura dos ombros.',
@@ -40,7 +42,7 @@ final List<Exercise> sampleExercises = [
     muscleGroup: 'Costas',
     equipment: 'Barra',
     description: 'Exercício composto para posterior de coxa, glúteos e lombar.',
-    videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+    videoUrl: 'https://www.youtube.com/watch?v=3otpFrCvjLw',
     instructions: const [
       'Fique com os pés na largura do quadril, barra próxima às canelas.',
       'Segure a barra e mantenha a coluna neutra.',
@@ -54,7 +56,7 @@ final List<Exercise> sampleExercises = [
     muscleGroup: 'Costas',
     equipment: 'Peso do corpo',
     description: 'Excelente para dorsais e bíceps.',
-    videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+    videoUrl: 'https://www.youtube.com/watch?v=o0T3AU3GAdA',
     instructions: const [
       'Segure a barra com pegada pronada, um pouco mais aberta que os ombros.',
       'Puxe o corpo até o queixo passar da barra.',
@@ -63,28 +65,226 @@ final List<Exercise> sampleExercises = [
   ),
   Exercise(
     id: 'shoulder_press',
-    name: 'Desenvolvimento com halteres',
+    name: 'Desenvolvimento militar',
     muscleGroup: 'Ombro',
-    equipment: 'Halteres',
-    description: 'Desenvolve deltoides e estabilizadores do ombro.',
-    videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
+    equipment: 'Barra',
+    description: 'Desenvolve deltoides, trapézio e estabilizadores do ombro.',
+    videoUrl: 'https://www.youtube.com/watch?v=PZBZboWL_tY',
     instructions: const [
-      'Sente-se com um halter em cada mão na altura dos ombros.',
-      'Empurre os halteres para cima até estender os braços.',
+      'Segure a barra na altura dos ombros, mãos um pouco mais abertas que eles.',
+      'Contraia o abdômen para proteger a lombar.',
+      'Empurre a barra para cima até estender totalmente os braços.',
       'Desça controladamente até a posição inicial.',
     ],
   ),
   Exercise(
     id: 'plank',
     name: 'Prancha abdominal',
-    muscleGroup: 'Core',
+    muscleGroup: 'Abdômen',
     equipment: 'Peso do corpo',
     description: 'Fortalece o core e melhora a estabilidade da coluna.',
-    videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
+    videoUrl: 'https://www.youtube.com/watch?v=Yu0wjtD5FkU',
     instructions: const [
       'Apoie antebraços e pontas dos pés no chão.',
       'Mantenha o corpo alinhado, sem elevar ou baixar o quadril.',
       'Contraia o abdômen e segure a posição pelo tempo determinado.',
+    ],
+  ),
+  Exercise(
+    id: 'push_up',
+    name: 'Flexão de braço',
+    muscleGroup: 'Peito',
+    equipment: 'Peso do corpo',
+    description: 'Exercício clássico para peito, ombros e tríceps.',
+    videoUrl: 'https://www.youtube.com/watch?v=J7qIBHnHRmA',
+    instructions: const [
+      'Mãos apoiadas no chão, um pouco mais abertas que os ombros.',
+      'Corpo alinhado da cabeça aos calcanhares, abdômen contraído.',
+      'Desça flexionando os cotovelos até quase tocar o peito no chão.',
+      'Empurre o chão para voltar à posição inicial.',
+    ],
+  ),
+  Exercise(
+    id: 'lunge',
+    name: 'Afundo',
+    muscleGroup: 'Pernas',
+    equipment: 'Halteres',
+    description: 'Trabalha quadríceps, glúteos e equilíbrio unilateral.',
+    videoUrl: 'https://www.youtube.com/watch?v=mPtTzNYAHi0',
+    instructions: const [
+      'Segure um halter em cada mão, tronco ereto.',
+      'Dê um passo à frente e desça o joelho de trás em direção ao chão.',
+      'Mantenha o joelho da frente alinhado com o pé, sem passar da ponta dele.',
+      'Empurre o chão com o pé da frente para voltar à posição inicial.',
+    ],
+  ),
+  Exercise(
+    id: 'bicep_curl',
+    name: 'Rosca direta',
+    muscleGroup: 'Braço',
+    equipment: 'Barra',
+    description: 'Isola o bíceps através da flexão do cotovelo.',
+    videoUrl: 'https://www.youtube.com/watch?v=Et1wgGMGW8w',
+    instructions: const [
+      'Segure a barra com pegada supinada, cotovelos junto ao corpo.',
+      'Flexione os cotovelos elevando a barra até a altura do peito.',
+      'Evite balançar o tronco para ajudar o movimento.',
+      'Desça controladamente até estender quase totalmente os braços.',
+    ],
+  ),
+  Exercise(
+    id: 'tricep_extension',
+    name: 'Tríceps testa',
+    muscleGroup: 'Braço',
+    equipment: 'Halteres',
+    description: 'Foca na cabeça longa do tríceps.',
+    videoUrl: 'https://www.youtube.com/watch?v=GwZzKiEmbcU',
+    instructions: const [
+      'Deite no banco segurando os halteres estendidos acima do peito.',
+      'Mantenha os cotovelos fixos, apontando para o teto.',
+      'Flexione os cotovelos descendo os halteres em direção à testa.',
+      'Estenda os braços de volta, sem travar os cotovelos com força.',
+    ],
+  ),
+  Exercise(
+    id: 'lat_pulldown',
+    name: 'Puxada frontal',
+    muscleGroup: 'Costas',
+    equipment: 'Polia',
+    description: 'Alternativa à barra fixa para desenvolver os dorsais.',
+    videoUrl: 'https://www.youtube.com/watch?v=25XTUWnt_R4',
+    instructions: const [
+      'Sente-se e segure a barra com pegada aberta, um pouco além dos ombros.',
+      'Puxe a barra para baixo, em direção à parte superior do peito.',
+      'Mantenha o peito estufado e conduza o movimento pelos cotovelos.',
+      'Retorne controladamente até estender os braços.',
+    ],
+  ),
+  Exercise(
+    id: 'leg_press',
+    name: 'Leg press 45°',
+    muscleGroup: 'Pernas',
+    equipment: 'Máquina',
+    description: 'Exercício de empurrar para quadríceps e glúteos.',
+    videoUrl: 'https://www.youtube.com/watch?v=waAxlYvtCcI',
+    instructions: const [
+      'Sente-se no equipamento com os pés na largura dos ombros na plataforma.',
+      'Destrave o carro e desça controladamente flexionando os joelhos.',
+      'Desça até formar cerca de 90° nos joelhos, sem tirar o quadril do banco.',
+      'Empurre a plataforma de volta sem travar os joelhos no topo.',
+    ],
+  ),
+  Exercise(
+    id: 'bent_over_row',
+    name: 'Remada curvada',
+    muscleGroup: 'Costas',
+    equipment: 'Barra',
+    description: 'Trabalha dorsais, trapézio e bíceps em cadeia posterior.',
+    videoUrl: 'https://www.youtube.com/watch?v=VJHBEy2duVc',
+    instructions: const [
+      'Incline o tronco para frente mantendo a coluna neutra, joelhos levemente flexionados.',
+      'Segure a barra com os braços estendidos abaixo do peito.',
+      'Puxe a barra em direção ao abdômen, cotovelos próximos ao corpo.',
+      'Desça controladamente até estender os braços novamente.',
+    ],
+  ),
+  Exercise(
+    id: 'lateral_raise',
+    name: 'Elevação lateral',
+    muscleGroup: 'Ombro',
+    equipment: 'Halteres',
+    description: 'Isola o deltoide lateral, dando largura aos ombros.',
+    videoUrl: 'https://www.youtube.com/watch?v=jannLx4RxKo',
+    instructions: const [
+      'Em pé, segure um halter em cada mão ao lado do corpo.',
+      'Eleve os braços lateralmente até a altura dos ombros.',
+      'Evite balançar o tronco ou usar impulso.',
+      'Desça controladamente até a posição inicial.',
+    ],
+  ),
+  Exercise(
+    id: 'romanian_deadlift',
+    name: 'Stiff (levantamento terra romeno)',
+    muscleGroup: 'Pernas',
+    equipment: 'Barra',
+    description:
+        'Foca no posterior de coxa e glúteos com joelhos quase estendidos.',
+    videoUrl: 'https://www.youtube.com/watch?v=jSomWOwLiGE',
+    instructions: const [
+      'Segure a barra com os braços estendidos, pés na largura do quadril.',
+      'Mantenha os joelhos levemente flexionados durante todo o movimento.',
+      'Incline o tronco para frente, levando o quadril para trás e a barra próxima às pernas.',
+      'Retorne à posição inicial contraindo glúteos e posterior de coxa.',
+    ],
+  ),
+  Exercise(
+    id: 'leg_extension',
+    name: 'Cadeira extensora',
+    muscleGroup: 'Pernas',
+    equipment: 'Máquina',
+    description: 'Isola o quadríceps através da extensão do joelho.',
+    videoUrl: 'https://www.youtube.com/watch?v=RHgqvYAed_8',
+    instructions: const [
+      'Sente-se com as costas apoiadas e os tornozelos sob o rolo acolchoado.',
+      'Estenda os joelhos até as pernas ficarem quase retas.',
+      'Contraia o quadríceps no topo do movimento por um instante.',
+      'Desça controladamente sem soltar o peso de forma brusca.',
+    ],
+  ),
+  Exercise(
+    id: 'leg_curl',
+    name: 'Mesa flexora',
+    muscleGroup: 'Pernas',
+    equipment: 'Máquina',
+    description: 'Isola o posterior de coxa através da flexão do joelho.',
+    videoUrl: 'https://www.youtube.com/watch?v=8Nat6GRiEoc',
+    instructions: const [
+      'Deite de bruços com os tornozelos sob o rolo acolchoado.',
+      'Flexione os joelhos trazendo o rolo em direção aos glúteos.',
+      'Evite elevar o quadril do banco durante o movimento.',
+      'Desça controladamente até estender as pernas novamente.',
+    ],
+  ),
+  Exercise(
+    id: 'hip_thrust',
+    name: 'Elevação pélvica',
+    muscleGroup: 'Glúteos',
+    equipment: 'Barra',
+    description: 'Um dos exercícios mais efetivos para hipertrofia de glúteos.',
+    videoUrl: 'https://www.youtube.com/watch?v=kvmT_ZlgVI0',
+    instructions: const [
+      'Apoie a parte superior das costas num banco, barra sobre o quadril.',
+      'Pés apoiados no chão, joelhos flexionados a cerca de 90°.',
+      'Empurre o quadril para cima contraindo os glúteos no topo.',
+      'Desça controladamente sem encostar o quadril no chão entre repetições.',
+    ],
+  ),
+  Exercise(
+    id: 'calf_raise',
+    name: 'Panturrilha em pé',
+    muscleGroup: 'Pernas',
+    equipment: 'Máquina',
+    description: 'Desenvolve a panturrilha (gastrocnêmio).',
+    videoUrl: 'https://www.youtube.com/watch?v=cklp_Xh5V8M',
+    instructions: const [
+      'Fique em pé com os ombros sob o apoio do equipamento.',
+      'Apoie a ponta dos pés numa plataforma elevada, calcanhares livres.',
+      'Suba na ponta dos pés o máximo possível, contraindo a panturrilha.',
+      'Desça controladamente até sentir o alongamento da panturrilha.',
+    ],
+  ),
+  Exercise(
+    id: 'crunch',
+    name: 'Abdominal supra',
+    muscleGroup: 'Abdômen',
+    equipment: 'Peso do corpo',
+    description: 'Trabalha a porção superior do reto abdominal.',
+    videoUrl: 'https://www.youtube.com/watch?v=c4yjTN9uKRY',
+    instructions: const [
+      'Deite de costas com os joelhos flexionados e pés apoiados no chão.',
+      'Mãos ao lado da cabeça, sem puxar o pescoço.',
+      'Eleve a cabeça e os ombros do chão, contraindo o abdômen.',
+      'Desça controladamente sem relaxar totalmente entre repetições.',
     ],
   ),
 ];

@@ -36,8 +36,14 @@ service cloud.firestore {
       }
     }
     match /exercises/{exerciseId} {
+      // Coleção compartilhada (não é por usuário). O app não tem painel
+      // admin separado: qualquer usuário autenticado pode popular/editar a
+      // biblioteca (usado por ExerciseProvider._seedIfEmpty para semear a
+      // biblioteca padrão na primeira vez que a coleção está vazia). Se um
+      // papel de admin de verdade for necessário no futuro, restrinja isto
+      // com custom claims em vez de "qualquer autenticado".
       allow read: if request.auth != null;
-      allow write: if false; // gerenciado por admin/backend
+      allow write: if request.auth != null;
     }
   }
 }

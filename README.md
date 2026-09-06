@@ -213,14 +213,21 @@ service firebase.storage {
 }
 ```
 
-### 4. Popular a biblioteca de exercícios
+### 4. Biblioteca de exercícios
 
-Por enquanto o app usa `lib/shared/models/sample_exercises.dart` como fallback caso a
-coleção `exercises` do Firestore esteja vazia. Para persistir esses dados de
-verdade, você pode rodar um script simples chamando
-`FirestoreService().seedExercise(...)` para cada item de `sampleExercises`,
-ou cadastrar manualmente no Console. **Troque as URLs de vídeo de exemplo**
-pelos vídeos reais (hospedados no Firebase Storage, YouTube, Vimeo, etc.).
+`lib/shared/models/sample_exercises.dart` traz 20 exercícios reais (nome,
+grupo muscular, equipamento, descrição, passo a passo e vídeo do YouTube
+ensinando a execução correta) cobrindo os principais grupos musculares. Os
+vídeos tocam via `youtube_player_iframe` (funciona em Android, iOS e Web).
+
+Você não precisa fazer nada manualmente: na primeira vez que o app roda com
+a coleção `exercises` do Firestore vazia, `ExerciseProvider._seedIfEmpty`
+copia essa lista para o Firestore automaticamente — a biblioteca "de
+verdade" (persistida, sincronizada entre dispositivos) fica pronta sozinha.
+
+Quer adicionar mais exercícios depois? Edite `sample_exercises.dart` e
+apague os documentos antigos da coleção `exercises` no Console (ou publique
+os novos direto lá) — o app não sobrescreve documentos já existentes.
 
 ### 5. Rodar o app
 

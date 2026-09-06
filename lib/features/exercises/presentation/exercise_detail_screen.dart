@@ -1,6 +1,5 @@
-import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
-import 'package:video_player/video_player.dart';
+import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 
 import 'package:newfitness/shared/models/exercise.dart';
 
@@ -14,40 +13,26 @@ class ExerciseDetailScreen extends StatefulWidget {
 }
 
 class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
-  VideoPlayerController? _videoController;
-  ChewieController? _chewieController;
-  bool _loadFailed = false;
+  YoutubePlayerController? _controller;
 
   @override
   void initState() {
     super.initState();
-    _initVideo();
-  }
-
-  Future<void> _initVideo() async {
-    if (widget.exercise.videoUrl.isEmpty) return;
-    try {
-      final controller = VideoPlayerController.networkUrl(
-        Uri.parse(widget.exercise.videoUrl),
-      );
-      await controller.initialize();
-      _videoController = controller;
-      _chewieController = ChewieController(
-        videoPlayerController: controller,
+    final videoId = YoutubePlayerController.convertUrlToId(
+      widget.exercise.videoUrl,
+    );
+    if (videoId != null) {
+      _controller = YoutubePlayerController.fromVideoId(
+        videoId: videoId,
         autoPlay: false,
-        looping: true,
-        aspectRatio: controller.value.aspectRatio,
+        params: const YoutubePlayerParams(showFullscreenButton: true),
       );
-      if (mounted) setState(() {});
-    } catch (_) {
-      if (mounted) setState(() => _loadFailed = true);
     }
   }
 
   @override
   void dispose() {
-    _chewieController?.dispose();
-    _videoController?.dispose();
+    _controller?.close();
     super.dispose();
   }
 
@@ -115,23 +100,12 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
   }
 
   Widget _buildVideoArea() {
-    if (exerciseHasNoVideo(widget.exercise)) {
+    if (_controller == null) {
       return const Center(
         child: Icon(Icons.videocam_off, color: Colors.grey, size: 40),
       );
     }
-    if (_loadFailed) {
-      return const Center(
-        child: Text(
-          'Não foi possível carregar o vídeo',
-          style: TextStyle(color: Colors.grey),
-        ),
-      );
-    }
-    if (_chewieController == null) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    return Chewie(controller: _chewieController!);
+    return YoutubePlayer(controller: _controller!);
   }
 }
 
