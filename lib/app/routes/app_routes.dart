@@ -27,4 +27,15 @@ class AppRoutes {
   static const adminExercises = '/admin/exercises';
   static const adminExerciseForm = '/admin/exercises/edit';
   static const profile = '/profile';
+  static const progressCalendar = '/progress-calendar';
+
+  // Itens do menu lateral inspirados no Next Fit — telas "em breve" até
+  // termos backend real de agenda/pagamento/contrato.
+  static const timeline = '/timeline';
+  static const physicalAssessment = '/physical-assessment';
+  static const finance = '/finance';
+  static const agenda = '/agenda';
+  static const myCards = '/my-cards';
+  static const activeContracts = '/active-contracts';
+  static const documents = '/documents';
 }

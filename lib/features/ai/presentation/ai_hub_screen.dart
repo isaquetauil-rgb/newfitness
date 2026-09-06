@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:newfitness/app/widgets/drawer_menu_button.dart';
+
 import 'chat_screen.dart';
 import 'meals_screen.dart';
 
@@ -12,6 +14,7 @@ class AiHubScreen extends StatelessWidget {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
+          leading: const DrawerMenuButton(),
           title: const Text('IA'),
           bottom: const TabBar(
             tabs: [

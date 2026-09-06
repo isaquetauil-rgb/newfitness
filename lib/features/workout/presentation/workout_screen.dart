@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import 'package:newfitness/app/routes/app_routes.dart';
+import 'package:newfitness/app/widgets/drawer_menu_button.dart';
 import 'package:newfitness/features/auth/logic/auth_provider.dart';
 import 'package:newfitness/features/workout/logic/training_plan_provider.dart';
 import 'package:newfitness/features/workout/logic/workout_provider.dart';
@@ -21,6 +22,7 @@ class WorkoutScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
+        leading: const DrawerMenuButton(),
         title: Text(
           workout.hasActiveWorkout ? workout.activeWorkout!.name : 'Treino',
         ),

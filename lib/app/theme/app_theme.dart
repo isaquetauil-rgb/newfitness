@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  static const Color primary = Color(0xFF1FC77D); // verde energia
-  static const Color secondary = Color(0xFFFF7A45); // laranja destaque
-  static const Color background = Color(0xFFF7F8FA);
+  static const Color primary = Color(0xFF4CC98A); // verde claro
+  static const Color secondary = Color(0xFF8A94A6); // cinza neutro
+  static const Color background = Color(0xFFF5F6F7);
   static const Color surface = Colors.white;
   static const Color textDark = Color(0xFF1A1D1F);
 
@@ -77,6 +77,15 @@ class AppTheme {
         unselectedItemColor: Color(0xFFAEB4BB),
         showUnselectedLabels: true,
         type: BottomNavigationBarType.fixed,
+      ),
+      drawerTheme: const DrawerThemeData(
+        backgroundColor: surface,
+        surfaceTintColor: Colors.transparent,
+      ),
+      listTileTheme: ListTileThemeData(
+        selectedColor: textDark,
+        selectedTileColor: primary.withValues(alpha: 0.12),
+        iconColor: secondary,
       ),
     );
   }

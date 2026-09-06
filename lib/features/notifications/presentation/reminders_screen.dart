@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'package:newfitness/app/widgets/drawer_menu_button.dart';
 import 'package:newfitness/features/auth/logic/auth_provider.dart';
 import 'package:newfitness/features/notifications/logic/reminder_provider.dart';
 import 'package:newfitness/shared/models/reminder.dart';
@@ -33,7 +34,10 @@ class _RemindersScreenState extends State<RemindersScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Lembretes')),
+      appBar: AppBar(
+        leading: const DrawerMenuButton(),
+        title: const Text('Lembretes'),
+      ),
       body: uid == null
           ? const Center(child: Text('Faça login para configurar lembretes'))
           : ListView(

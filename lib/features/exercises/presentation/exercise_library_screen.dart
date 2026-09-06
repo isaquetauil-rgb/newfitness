@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import 'package:newfitness/app/routes/app_routes.dart';
+import 'package:newfitness/app/widgets/drawer_menu_button.dart';
 import 'package:newfitness/features/exercises/logic/exercise_provider.dart';
 import 'package:newfitness/shared/models/exercise.dart';
 import 'package:newfitness/shared/models/sample_exercises.dart';
@@ -42,7 +43,10 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
     }).toList();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Exercícios')),
+      appBar: AppBar(
+        leading: const DrawerMenuButton(),
+        title: const Text('Exercícios'),
+      ),
       body: Column(
         children: [
           Padding(

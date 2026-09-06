@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import 'package:newfitness/app/widgets/drawer_menu_button.dart';
 import 'package:newfitness/features/auth/logic/auth_provider.dart';
 import 'package:newfitness/features/workout/logic/workout_provider.dart';
 import 'package:newfitness/shared/models/workout.dart';
@@ -18,6 +19,7 @@ class ProgressScreen extends StatelessWidget {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
+          leading: const DrawerMenuButton(),
           title: const Text('Progresso'),
           bottom: const TabBar(
             tabs: [

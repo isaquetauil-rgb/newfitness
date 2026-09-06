@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:newfitness/app/widgets/app_shell.dart';
+import 'package:newfitness/app/widgets/coming_soon_screen.dart';
 import 'package:newfitness/features/admin/presentation/admin_dashboard_screen.dart';
 import 'package:newfitness/features/admin/presentation/admin_exercise_form_screen.dart';
 import 'package:newfitness/features/admin/presentation/admin_exercises_screen.dart';
@@ -73,6 +74,77 @@ GoRouter buildAppRouter(AuthProvider authProvider) {
         pageBuilder: (context, state) =>
             _fadeThrough(state, const ForgotPasswordScreen()),
       ),
+
+      // Itens do menu lateral sem aba própria — telas cheias com seta de
+      // voltar, fora do StatefulShellRoute (mesmo padrão de detalhe usado
+      // em exercícios/progresso).
+      GoRoute(
+        path: AppRoutes.timeline,
+        pageBuilder: (context, state) => _fadeThrough(
+          state,
+          const ComingSoonScreen(title: 'Timeline', icon: Icons.forum_outlined),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.physicalAssessment,
+        pageBuilder: (context, state) => _fadeThrough(
+          state,
+          const ComingSoonScreen(
+            title: 'Avaliação física',
+            message: 'Nenhuma avaliação física cadastrada.',
+            icon: Icons.monitor_weight_outlined,
+          ),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.finance,
+        pageBuilder: (context, state) => _fadeThrough(
+          state,
+          const ComingSoonScreen(
+            title: 'Financeiro',
+            message: 'Nenhum registro encontrado.',
+            icon: Icons.payments_outlined,
+          ),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.agenda,
+        pageBuilder: (context, state) => _fadeThrough(
+          state,
+          const ComingSoonScreen(title: 'Agenda', icon: Icons.event_outlined),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.myCards,
+        pageBuilder: (context, state) => _fadeThrough(
+          state,
+          const ComingSoonScreen(
+            title: 'Meus cartões',
+            icon: Icons.credit_card_outlined,
+          ),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.activeContracts,
+        pageBuilder: (context, state) => _fadeThrough(
+          state,
+          const ComingSoonScreen(
+            title: 'Contratos ativos',
+            icon: Icons.description_outlined,
+          ),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.documents,
+        pageBuilder: (context, state) => _fadeThrough(
+          state,
+          const ComingSoonScreen(
+            title: 'Documentos',
+            icon: Icons.folder_outlined,
+          ),
+        ),
+      ),
+
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>
             AppShell(navigationShell: navigationShell),

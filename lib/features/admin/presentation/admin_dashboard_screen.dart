@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import 'package:newfitness/app/routes/app_routes.dart';
+import 'package:newfitness/app/widgets/drawer_menu_button.dart';
 import 'package:newfitness/features/admin/logic/admin_provider.dart';
 
 /// Painel de administração — visível só para o dono do app
@@ -34,6 +35,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: const DrawerMenuButton(),
         title: const Text('Painel admin'),
         actions: [
           IconButton(

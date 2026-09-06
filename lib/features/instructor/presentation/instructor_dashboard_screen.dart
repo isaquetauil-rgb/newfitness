@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import 'package:newfitness/app/routes/app_router.dart';
 import 'package:newfitness/app/routes/app_routes.dart';
+import 'package:newfitness/app/widgets/drawer_menu_button.dart';
 import 'package:newfitness/core/di/injector.dart';
 import 'package:newfitness/features/auth/logic/auth_provider.dart';
 import 'package:newfitness/features/instructor/presentation/ai_suggestion_sheet.dart';
@@ -24,6 +25,7 @@ class InstructorDashboardScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
+        leading: const DrawerMenuButton(),
         title: const Text('Meus alunos'),
         actions: [
           IconButton(
