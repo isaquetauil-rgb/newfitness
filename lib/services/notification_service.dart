@@ -1,5 +1,4 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:flutter/foundation.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
@@ -26,10 +25,6 @@ class NotificationService {
 
   Future<void> init() async {
     if (_initialized) return;
-    if (kIsWeb) {
-      _initialized = true;
-      return;
-    }
 
     tz_data.initializeTimeZones();
     // Usa o fuso horário local do dispositivo. Se sua base de usuários for
@@ -55,13 +50,11 @@ class NotificationService {
 
   /// Pede permissão de notificação ao usuário (obrigatório no Android 13+ e no iOS).
   Future<bool> requestPermission() async {
-    if (kIsWeb) return false;
     final status = await Permission.notification.request();
     return status.isGranted;
   }
 
   Future<void> scheduleReminder(Reminder reminder) async {
-    if (kIsWeb) return;
     await init();
     if (!reminder.enabled) {
       await cancelReminder(reminder);
@@ -98,11 +91,10 @@ class NotificationService {
   }
 
   Future<void> cancelReminder(Reminder reminder) {
-    if (kIsWeb) return Future.value();
     return _plugin.cancel(reminder.notificationId);
   }
 
-  Future<void> cancelAll() => kIsWeb ? Future.value() : _plugin.cancelAll();
+  Future<void> cancelAll() => _plugin.cancelAll();
 
   tz.TZDateTime _nextInstanceOf(int hour, int minute) {
     final now = tz.TZDateTime.now(tz.local);

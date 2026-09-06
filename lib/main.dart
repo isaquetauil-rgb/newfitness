@@ -5,7 +5,9 @@ import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'providers/auth_provider.dart';
 import 'providers/body_photo_provider.dart';
+import 'providers/chat_provider.dart';
 import 'providers/exercise_provider.dart';
+import 'providers/meal_photo_provider.dart';
 import 'providers/reminder_provider.dart';
 import 'providers/workout_provider.dart';
 import 'screens/auth/login_screen.dart';
@@ -14,7 +16,9 @@ import 'theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const NewFitnessApp());
 }
 
@@ -30,6 +34,8 @@ class NewFitnessApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ExerciseProvider()),
         ChangeNotifierProvider(create: (_) => ReminderProvider()),
         ChangeNotifierProvider(create: (_) => BodyPhotoProvider()),
+        ChangeNotifierProvider(create: (_) => ChatProvider()),
+        ChangeNotifierProvider(create: (_) => MealPhotoProvider()),
       ],
       child: MaterialApp(
         title: 'NewFitness',

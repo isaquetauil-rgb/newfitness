@@ -54,9 +54,7 @@ class BodyProgressScreen extends StatelessWidget {
               final photo = photos[i];
               return GestureDetector(
                 onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => _PhotoViewerScreen(photo: photo),
-                  ),
+                  MaterialPageRoute(builder: (_) => _PhotoViewerScreen(photo: photo)),
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
@@ -73,10 +71,7 @@ class BodyProgressScreen extends StatelessWidget {
             ? const SizedBox(
                 height: 20,
                 width: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white,
-                ),
+                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
               )
             : const Icon(Icons.add_a_photo_outlined),
       ),

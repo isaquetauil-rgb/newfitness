@@ -1,3 +1,5 @@
+enum UserRole { student, instructor }
+
 /// Dados de perfil do usuário armazenados no Firestore.
 class UserProfile {
   final String uid;
@@ -7,6 +9,9 @@ class UserProfile {
   final double? heightCm;
   final double? goalWeightKg;
   final DateTime? birthDate;
+  final UserRole role;
+  final String? instructorId; // preenchido só para alunos, depois de vincular
+  final String? inviteCode; // preenchido só para instrutores
 
   const UserProfile({
     required this.uid,
@@ -16,6 +21,9 @@ class UserProfile {
     this.heightCm,
     this.goalWeightKg,
     this.birthDate,
+    this.role = UserRole.student,
+    this.instructorId,
+    this.inviteCode,
   });
 
   factory UserProfile.fromMap(String uid, Map<String, dynamic> map) {
@@ -29,6 +37,9 @@ class UserProfile {
       birthDate: map['birthDate'] != null
           ? DateTime.fromMillisecondsSinceEpoch(map['birthDate'] as int)
           : null,
+      role: (map['role'] as String?) == 'instructor' ? UserRole.instructor : UserRole.student,
+      instructorId: map['instructorId'] as String?,
+      inviteCode: map['inviteCode'] as String?,
     );
   }
 
@@ -40,6 +51,9 @@ class UserProfile {
       'heightCm': heightCm,
       'goalWeightKg': goalWeightKg,
       'birthDate': birthDate?.millisecondsSinceEpoch,
+      'role': role == UserRole.instructor ? 'instructor' : 'student',
+      'instructorId': instructorId,
+      'inviteCode': inviteCode,
     };
   }
 
@@ -49,6 +63,9 @@ class UserProfile {
     double? heightCm,
     double? goalWeightKg,
     DateTime? birthDate,
+    UserRole? role,
+    String? instructorId,
+    String? inviteCode,
   }) {
     return UserProfile(
       uid: uid,
@@ -58,6 +75,9 @@ class UserProfile {
       heightCm: heightCm ?? this.heightCm,
       goalWeightKg: goalWeightKg ?? this.goalWeightKg,
       birthDate: birthDate ?? this.birthDate,
+      role: role ?? this.role,
+      instructorId: instructorId ?? this.instructorId,
+      inviteCode: inviteCode ?? this.inviteCode,
     );
   }
 }

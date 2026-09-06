@@ -27,9 +27,8 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
   Future<void> _initVideo() async {
     if (widget.exercise.videoUrl.isEmpty) return;
     try {
-      final controller = VideoPlayerController.networkUrl(
-        Uri.parse(widget.exercise.videoUrl),
-      );
+      final controller =
+          VideoPlayerController.networkUrl(Uri.parse(widget.exercise.videoUrl));
       await controller.initialize();
       _videoController = controller;
       _chewieController = ChewieController(
@@ -61,7 +60,10 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
         children: [
           AspectRatio(
             aspectRatio: 16 / 9,
-            child: Container(color: Colors.black12, child: _buildVideoArea()),
+            child: Container(
+              color: Colors.black12,
+              child: _buildVideoArea(),
+            ),
           ),
           Padding(
             padding: const EdgeInsets.all(16),
@@ -76,10 +78,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                Text(
-                  exercise.description,
-                  style: const TextStyle(fontSize: 15),
-                ),
+                Text(exercise.description, style: const TextStyle(fontSize: 15)),
                 if (exercise.instructions.isNotEmpty) ...[
                   const SizedBox(height: 24),
                   const Text(
@@ -95,10 +94,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
                         children: [
                           CircleAvatar(
                             radius: 12,
-                            child: Text(
-                              '${i + 1}',
-                              style: const TextStyle(fontSize: 12),
-                            ),
+                            child: Text('${i + 1}', style: const TextStyle(fontSize: 12)),
                           ),
                           const SizedBox(width: 12),
                           Expanded(child: Text(exercise.instructions[i])),
@@ -116,16 +112,11 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
 
   Widget _buildVideoArea() {
     if (exerciseHasNoVideo(widget.exercise)) {
-      return const Center(
-        child: Icon(Icons.videocam_off, color: Colors.grey, size: 40),
-      );
+      return const Center(child: Icon(Icons.videocam_off, color: Colors.grey, size: 40));
     }
     if (_loadFailed) {
       return const Center(
-        child: Text(
-          'Não foi possível carregar o vídeo',
-          style: TextStyle(color: Colors.grey),
-        ),
+        child: Text('Não foi possível carregar o vídeo', style: TextStyle(color: Colors.grey)),
       );
     }
     if (_chewieController == null) {

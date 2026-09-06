@@ -61,6 +61,12 @@ class AuthService {
           return 'Erro: ${error.message ?? error.code}';
       }
     }
+    if (error is Exception) {
+      // Mensagens de validação lançadas pelo próprio app (ex: código de
+      // instrutor inválido) já vêm prontas para exibir ao usuário.
+      final message = error.toString().replaceFirst('Exception: ', '');
+      if (message.isNotEmpty) return message;
+    }
     return 'Ocorreu um erro inesperado. Tente novamente.';
   }
 }

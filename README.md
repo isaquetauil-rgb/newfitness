@@ -62,14 +62,36 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      // O próprio usuário sempre pode ler/escrever seu perfil.
+      // Um instrutor também pode LER o perfil de um aluno vinculado a ele.
+      allow read: if request.auth != null && (
+        request.auth.uid == userId ||
+        resource.data.instructorId == request.auth.uid
+      );
+      allow write: if request.auth != null && request.auth.uid == userId;
+
       match /workouts/{workoutId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read: if request.auth != null && (
+          request.auth.uid == userId ||
+          get(/databases/$(database)/documents/users/$(userId)).data.instructorId == request.auth.uid
+        );
+        allow write: if request.auth != null && request.auth.uid == userId;
       }
       match /reminders/{reminderId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
       match /body_photos/{photoId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      match /chat_messages/{messageId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      match /meal_photos/{photoId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      match /students/{studentId} {
+        // Só o próprio instrutor (dono deste documento users/{userId}) mexe
+        // na sua lista de alunos.
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
     }
@@ -81,13 +103,22 @@ service cloud.firestore {
 }
 ```
 
-### 3.1 Regras do Storage (fotos de evolução do corpo)
+> **Nota sobre índices**: a busca de instrutor por código
+> (`findInstructorByCode`) filtra por `role` e `inviteCode` ao mesmo tempo.
+> Na primeira vez que isso rodar, o Firebase pode mostrar um erro no
+> console/logs com um link para criar o índice composto necessário — é só
+> clicar no link, ele cria automaticamente.
+
+### 3.1 Regras do Storage (fotos de evolução do corpo e de refeições)
 
 ```
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     match /users/{userId}/body_photos/{fileName} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    match /users/{userId}/meal_photos/{fileName} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
   }
@@ -111,29 +142,42 @@ flutter run
 
 ## O que já está implementado
 
-- ✅ Login e cadastro com Firebase Auth (e-mail/senha)
+- ✅ Login e cadastro com Firebase Auth (e-mail/senha), com escolha de
+  **papel** (aluno ou instrutor) direto no cadastro
 - ✅ Início/registro de treino com múltiplos exercícios, séries, reps e peso
 - ✅ Cronômetro de descanso entre séries (com presets de 30/60/90/120s)
 - ✅ Biblioteca de exercícios com busca, filtro por grupo muscular e vídeo
   demonstrativo do movimento (player embutido)
 - ✅ Progresso: gráfico de volume de treino ao longo do tempo (fl_chart) +
   histórico, e uma aba de **fotos de evolução do corpo** (galeria + upload
-  via câmera/galeria, guardadas no Firebase Storage)
+  via câmera/galeria)
 - ✅ **Lembretes de água e suplementos**: notificações locais diárias
-  recorrentes (aba "Lembretes"), configuráveis por horário, com dosagem
-  opcional para suplementos
+  recorrentes, configuráveis por horário
+- ✅ **Chat com IA** (aba "IA") — tira dúvidas de treino/dieta/suplementação
+- ✅ **Fotos de refeição** (café/almoço/janta/lanche) com **análise de IA**
+  automática logo após o upload
+- ✅ **Área instrutor/aluno**: instrutor recebe um código único ao se
+  cadastrar; aluno informa esse código no próprio cadastro (ou depois, no
+  perfil) para se vincular; instrutor vê a lista de alunos vinculados e o
+  histórico de treinos de cada um
 - ✅ Perfil do usuário (peso, altura, meta) salvo no Firestore
+
+## Backend de IA (Cloud Functions)
+
+O chat e as análises de foto **não chamam a API de IA diretamente do app**
+— isso exporia a chave de API. Em vez disso, o app chama uma Cloud Function
+que guarda a chave em segredo. Veja `functions/README.md` para o passo a
+passo completo (instalar dependências, criar a chave da Anthropic, guardar
+como secret, fazer o deploy). **Sem seguir esses passos, o chat e a análise
+de foto retornam erro** — o resto do app funciona normalmente.
 
 ## Próximos passos sugeridos
 
-- Fotos de refeições (café/almoço/janta) com análise por IA de visão —
-  precisa de um backend (Cloud Function) para chamar a API de IA sem expor
-  a chave no app
-- Chat com IA (assistente dentro do app) usando o mesmo backend acima
-- Área de instrutor/aluno: papéis de usuário diferentes, onde o instrutor
-  acompanha o progresso dos alunos e pode enviar notificações push (via
-  Firebase Cloud Messaging) diretamente para eles
+- Notificações push (Firebase Cloud Messaging) para o instrutor avisar
+  alunos diretamente
+- Instrutor poder montar/atribuir planos de treino para os alunos
 - Editar/excluir um treino já salvo
+- Limite de uso diário do chat/análise de IA por usuário (controle de custo)
 - Testes automatizados com mock do Firebase (`firebase_auth_mocks`,
   `fake_cloud_firestore`)
 

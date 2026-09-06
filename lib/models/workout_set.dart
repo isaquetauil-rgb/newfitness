@@ -4,7 +4,11 @@ class WorkoutSet {
   double weightKg;
   bool completed;
 
-  WorkoutSet({this.reps = 0, this.weightKg = 0, this.completed = false});
+  WorkoutSet({
+    this.reps = 0,
+    this.weightKg = 0,
+    this.completed = false,
+  });
 
   factory WorkoutSet.fromMap(Map<String, dynamic> map) {
     return WorkoutSet(
@@ -15,7 +19,11 @@ class WorkoutSet {
   }
 
   Map<String, dynamic> toMap() {
-    return {'reps': reps, 'weightKg': weightKg, 'completed': completed};
+    return {
+      'reps': reps,
+      'weightKg': weightKg,
+      'completed': completed,
+    };
   }
 
   WorkoutSet copy() =>

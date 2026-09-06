@@ -20,8 +20,7 @@ class LoggedExercise {
     return LoggedExercise(
       exerciseId: map['exerciseId'] as String? ?? '',
       exerciseName: map['exerciseName'] as String? ?? '',
-      sets:
-          (map['sets'] as List<dynamic>?)
+      sets: (map['sets'] as List<dynamic>?)
               ?.map((s) => WorkoutSet.fromMap(s as Map<String, dynamic>))
               .toList() ??
           [WorkoutSet()],

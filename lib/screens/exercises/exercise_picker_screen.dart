@@ -20,9 +20,7 @@ class _ExercisePickerScreenState extends State<ExercisePickerScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<ExerciseProvider>();
-    final all = provider.exercises.isNotEmpty
-        ? provider.exercises
-        : sampleExercises;
+    final all = provider.exercises.isNotEmpty ? provider.exercises : sampleExercises;
     final filtered = all
         .where((e) => e.name.toLowerCase().contains(_query.toLowerCase()))
         .toList();

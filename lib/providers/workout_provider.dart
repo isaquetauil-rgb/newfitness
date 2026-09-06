@@ -14,7 +14,7 @@ class WorkoutProvider extends ChangeNotifier {
   final FirestoreService _firestoreService;
 
   WorkoutProvider({FirestoreService? firestoreService})
-    : _firestoreService = firestoreService ?? FirestoreService();
+      : _firestoreService = firestoreService ?? FirestoreService();
 
   Workout? _activeWorkout;
   DateTime? _startedAt;

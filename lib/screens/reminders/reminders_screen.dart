@@ -41,8 +41,7 @@ class _RemindersScreenState extends State<RemindersScreen> {
                 _SectionHeader(
                   icon: Icons.water_drop_outlined,
                   title: 'Água',
-                  onAdd: () =>
-                      _openReminderSheet(context, uid, ReminderType.water),
+                  onAdd: () => _openReminderSheet(context, uid, ReminderType.water),
                 ),
                 const SizedBox(height: 8),
                 if (reminderProvider.waterReminders.isEmpty)
@@ -54,8 +53,7 @@ class _RemindersScreenState extends State<RemindersScreen> {
                 _SectionHeader(
                   icon: Icons.medication_outlined,
                   title: 'Suplementos',
-                  onAdd: () =>
-                      _openReminderSheet(context, uid, ReminderType.supplement),
+                  onAdd: () => _openReminderSheet(context, uid, ReminderType.supplement),
                 ),
                 const SizedBox(height: 8),
                 if (reminderProvider.supplementReminders.isEmpty)
@@ -85,11 +83,7 @@ class _SectionHeader extends StatelessWidget {
   final String title;
   final VoidCallback onAdd;
 
-  const _SectionHeader({
-    required this.icon,
-    required this.title,
-    required this.onAdd,
-  });
+  const _SectionHeader({required this.icon, required this.title, required this.onAdd});
 
   @override
   Widget build(BuildContext context) {
@@ -97,10 +91,7 @@ class _SectionHeader extends StatelessWidget {
       children: [
         Icon(icon),
         const SizedBox(width: 8),
-        Text(
-          title,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-        ),
+        Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
         const Spacer(),
         TextButton.icon(
           onPressed: onAdd,
@@ -135,8 +126,7 @@ class _ReminderTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = context.read<ReminderProvider>();
-    final subtitle =
-        reminder.type == ReminderType.supplement && reminder.dosage != null
+    final subtitle = reminder.type == ReminderType.supplement && reminder.dosage != null
         ? reminder.dosage!
         : null;
 
@@ -210,18 +200,13 @@ class _ReminderFormSheetState extends State<_ReminderFormSheet> {
       id: '',
       type: widget.type,
       label: _labelCtrl.text.trim(),
-      dosage:
-          widget.type == ReminderType.supplement &&
-              _dosageCtrl.text.trim().isNotEmpty
+      dosage: widget.type == ReminderType.supplement && _dosageCtrl.text.trim().isNotEmpty
           ? _dosageCtrl.text.trim()
           : null,
       hour: _time.hour,
       minute: _time.minute,
     );
-    await context.read<ReminderProvider>().addOrUpdateReminder(
-      widget.uid,
-      reminder,
-    );
+    await context.read<ReminderProvider>().addOrUpdateReminder(widget.uid, reminder);
     if (mounted) Navigator.pop(context);
   }
 
@@ -241,9 +226,7 @@ class _ReminderFormSheetState extends State<_ReminderFormSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            isSupplement
-                ? 'Novo lembrete de suplemento'
-                : 'Novo lembrete de água',
+            isSupplement ? 'Novo lembrete de suplemento' : 'Novo lembrete de água',
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 16),
@@ -281,10 +264,7 @@ class _ReminderFormSheetState extends State<_ReminderFormSheet> {
                 ? const SizedBox(
                     height: 20,
                     width: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                   )
                 : const Text('Salvar lembrete'),
           ),

@@ -12,7 +12,7 @@ class ExerciseProvider extends ChangeNotifier {
   StreamSubscription<List<Exercise>>? _sub;
 
   ExerciseProvider({FirestoreService? firestoreService})
-    : _firestoreService = firestoreService ?? FirestoreService() {
+      : _firestoreService = firestoreService ?? FirestoreService() {
     _sub = _firestoreService.watchExercises().listen(
       (list) {
         _exercises = list;

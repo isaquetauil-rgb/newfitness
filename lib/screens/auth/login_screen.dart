@@ -64,9 +64,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     labelText: 'E-mail',
                     prefixIcon: Icon(Icons.email_outlined),
                   ),
-                  validator: (v) => (v == null || !v.contains('@'))
-                      ? 'E-mail inválido'
-                      : null,
+                  validator: (v) =>
+                      (v == null || !v.contains('@')) ? 'E-mail inválido' : null,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(

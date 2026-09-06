@@ -1,7 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/body_photo.dart';
+import '../models/chat_message.dart';
 import '../models/exercise.dart';
+import '../models/meal_photo.dart';
 import '../models/reminder.dart';
 import '../models/user_profile.dart';
 import '../models/workout.dart';
@@ -34,6 +36,81 @@ class FirestoreService {
         .set(profile.toMap(), SetOptions(merge: true));
   }
 
+  // ---------- Instrutor / Aluno ----------
+
+  /// Gera um código de convite curto e garante que ele é único entre os
+  /// instrutores já cadastrados.
+  Future<String> generateUniqueInviteCode() async {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // sem O/0/I/1 (evita confusão)
+    final random = DateTime.now().microsecondsSinceEpoch;
+
+    for (int attempt = 0; attempt < 10; attempt++) {
+      final seed = random + attempt;
+      final code = List.generate(6, (i) {
+        final index = (seed ~/ (i + 1) + i * 31) % chars.length;
+        return chars[index.abs()];
+      }).join();
+
+      final existing = await _db
+          .collection('users')
+          .where('inviteCode', isEqualTo: code)
+          .limit(1)
+          .get();
+      if (existing.docs.isEmpty) return code;
+    }
+    // Extremamente improvável de chegar aqui, mas garante um valor válido.
+    return 'F${DateTime.now().millisecondsSinceEpoch}';
+  }
+
+  /// Procura um instrutor pelo código de convite. Retorna null se não existir.
+  Future<UserProfile?> findInstructorByCode(String code) async {
+    final query = await _db
+        .collection('users')
+        .where('role', isEqualTo: 'instructor')
+        .where('inviteCode', isEqualTo: code.trim().toUpperCase())
+        .limit(1)
+        .get();
+    if (query.docs.isEmpty) return null;
+    final doc = query.docs.first;
+    return UserProfile.fromMap(doc.id, doc.data());
+  }
+
+  /// Vincula um aluno a um instrutor: grava instructorId no perfil do aluno
+  /// e adiciona uma entrada denormalizada em users/{instructorId}/students.
+  Future<void> linkStudentToInstructor({
+    required UserProfile student,
+    required String instructorId,
+  }) async {
+    final batch = _db.batch();
+
+    final studentRef = _db.collection('users').doc(student.uid);
+    batch.set(studentRef, {'instructorId': instructorId}, SetOptions(merge: true));
+
+    final studentEntryRef = _db
+        .collection('users')
+        .doc(instructorId)
+        .collection('students')
+        .doc(student.uid);
+    batch.set(studentEntryRef, {
+      'name': student.name,
+      'email': student.email,
+      'linkedAt': DateTime.now().millisecondsSinceEpoch,
+    });
+
+    await batch.commit();
+  }
+
+  /// Lista (com atualização em tempo real) os alunos vinculados a um instrutor.
+  Stream<List<Map<String, dynamic>>> watchStudents(String instructorId) {
+    return _db
+        .collection('users')
+        .doc(instructorId)
+        .collection('students')
+        .orderBy('name')
+        .snapshots()
+        .map((snap) => snap.docs.map((d) => {'uid': d.id, ...d.data()}).toList());
+  }
+
   // ---------- Treinos ----------
 
   CollectionReference<Map<String, dynamic>> _workoutsRef(String uid) =>
@@ -54,10 +131,9 @@ class FirestoreService {
     return _workoutsRef(uid)
         .orderBy('date', descending: true)
         .snapshots()
-        .map(
-          (snap) =>
-              snap.docs.map((d) => Workout.fromMap(d.id, d.data())).toList(),
-        );
+        .map((snap) => snap.docs
+            .map((d) => Workout.fromMap(d.id, d.data()))
+            .toList());
   }
 
   Future<void> deleteWorkout(String uid, String workoutId) {
@@ -67,14 +143,9 @@ class FirestoreService {
   // ---------- Biblioteca de exercícios ----------
 
   Stream<List<Exercise>> watchExercises() {
-    return _db
-        .collection('exercises')
-        .orderBy('name')
-        .snapshots()
-        .map(
-          (snap) =>
-              snap.docs.map((d) => Exercise.fromMap(d.id, d.data())).toList(),
-        );
+    return _db.collection('exercises').orderBy('name').snapshots().map(
+        (snap) =>
+            snap.docs.map((d) => Exercise.fromMap(d.id, d.data())).toList());
   }
 
   Future<void> seedExercise(Exercise exercise) {
@@ -90,13 +161,8 @@ class FirestoreService {
       _db.collection('users').doc(uid).collection('reminders');
 
   Stream<List<Reminder>> watchReminders(String uid) {
-    return _remindersRef(uid)
-        .orderBy('hour')
-        .snapshots()
-        .map(
-          (snap) =>
-              snap.docs.map((d) => Reminder.fromMap(d.id, d.data())).toList(),
-        );
+    return _remindersRef(uid).orderBy('hour').snapshots().map((snap) =>
+        snap.docs.map((d) => Reminder.fromMap(d.id, d.data())).toList());
   }
 
   Future<String> saveReminder(String uid, Reminder reminder) async {
@@ -123,10 +189,8 @@ class FirestoreService {
     return _bodyPhotosRef(uid)
         .orderBy('date', descending: true)
         .snapshots()
-        .map(
-          (snap) =>
-              snap.docs.map((d) => BodyPhoto.fromMap(d.id, d.data())).toList(),
-        );
+        .map((snap) =>
+            snap.docs.map((d) => BodyPhoto.fromMap(d.id, d.data())).toList());
   }
 
   Future<void> addBodyPhoto(BodyPhoto photo) {
@@ -135,5 +199,45 @@ class FirestoreService {
 
   Future<void> deleteBodyPhoto(String uid, String photoId) {
     return _bodyPhotosRef(uid).doc(photoId).delete();
+  }
+
+  // ---------- Chat com IA ----------
+
+  CollectionReference<Map<String, dynamic>> _chatRef(String uid) =>
+      _db.collection('users').doc(uid).collection('chat_messages');
+
+  Stream<List<ChatMessage>> watchChatMessages(String uid) {
+    return _chatRef(uid).orderBy('createdAt').snapshots().map((snap) =>
+        snap.docs.map((d) => ChatMessage.fromMap(d.id, d.data())).toList());
+  }
+
+  Future<void> addChatMessage(String uid, ChatMessage message) {
+    return _chatRef(uid).add(message.toMap());
+  }
+
+  // ---------- Fotos de refeição ----------
+
+  CollectionReference<Map<String, dynamic>> _mealPhotosRef(String uid) =>
+      _db.collection('users').doc(uid).collection('meal_photos');
+
+  Stream<List<MealPhoto>> watchMealPhotos(String uid) {
+    return _mealPhotosRef(uid)
+        .orderBy('date', descending: true)
+        .snapshots()
+        .map((snap) =>
+            snap.docs.map((d) => MealPhoto.fromMap(d.id, d.data())).toList());
+  }
+
+  Future<String> addMealPhoto(MealPhoto photo) async {
+    final doc = await _mealPhotosRef(photo.userId).add(photo.toMap());
+    return doc.id;
+  }
+
+  Future<void> updateMealPhotoAnalysis(String uid, String photoId, String analysis) {
+    return _mealPhotosRef(uid).doc(photoId).update({'aiAnalysis': analysis});
+  }
+
+  Future<void> deleteMealPhoto(String uid, String photoId) {
+    return _mealPhotosRef(uid).doc(photoId).delete();
   }
 }

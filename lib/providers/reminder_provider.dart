@@ -18,8 +18,8 @@ class ReminderProvider extends ChangeNotifier {
   ReminderProvider({
     FirestoreService? firestoreService,
     NotificationService? notificationService,
-  }) : _firestoreService = firestoreService ?? FirestoreService(),
-       _notificationService = notificationService ?? NotificationService();
+  })  : _firestoreService = firestoreService ?? FirestoreService(),
+        _notificationService = notificationService ?? NotificationService();
 
   List<Reminder> _reminders = [];
   List<Reminder> get reminders => _reminders;

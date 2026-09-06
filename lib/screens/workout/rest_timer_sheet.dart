@@ -83,17 +83,15 @@ class _RestTimerSheetState extends State<RestTimerSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final progress = _totalSeconds == 0 ? 0.0 : _remaining / _totalSeconds;
+    final progress =
+        _totalSeconds == 0 ? 0.0 : _remaining / _totalSeconds;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text(
-            'Descanso',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-          ),
+          const Text('Descanso', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
           const SizedBox(height: 24),
           SizedBox(
             height: 180,
@@ -124,13 +122,11 @@ class _RestTimerSheetState extends State<RestTimerSheet> {
           Wrap(
             spacing: 8,
             children: _presets
-                .map(
-                  (p) => ChoiceChip(
-                    label: Text('${p}s'),
-                    selected: _totalSeconds == p,
-                    onSelected: (_) => _reset(p),
-                  ),
-                )
+                .map((p) => ChoiceChip(
+                      label: Text('${p}s'),
+                      selected: _totalSeconds == p,
+                      onSelected: (_) => _reset(p),
+                    ))
                 .toList(),
           ),
           const SizedBox(height: 24),

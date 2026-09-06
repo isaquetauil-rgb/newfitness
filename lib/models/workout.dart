@@ -19,9 +19,11 @@ class Workout {
   }) : exercises = exercises ?? [];
 
   /// Volume total do treino (soma de reps * peso de todas as séries).
-  double get totalVolume => exercises.fold(0, (sum, e) => sum + e.totalVolume);
+  double get totalVolume =>
+      exercises.fold(0, (sum, e) => sum + e.totalVolume);
 
-  int get totalSets => exercises.fold(0, (sum, e) => sum + e.sets.length);
+  int get totalSets =>
+      exercises.fold(0, (sum, e) => sum + e.sets.length);
 
   factory Workout.fromMap(String id, Map<String, dynamic> map) {
     return Workout(
@@ -31,8 +33,7 @@ class Workout {
         map['date'] as int? ?? DateTime.now().millisecondsSinceEpoch,
       ),
       name: map['name'] as String? ?? 'Treino',
-      exercises:
-          (map['exercises'] as List<dynamic>?)
+      exercises: (map['exercises'] as List<dynamic>?)
               ?.map((e) => LoggedExercise.fromMap(e as Map<String, dynamic>))
               .toList() ??
           [],

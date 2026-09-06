@@ -50,18 +50,63 @@ class AuthProvider extends ChangeNotifier {
     });
   }
 
-  Future<bool> signUp(String name, String email, String password) async {
+  /// [instructorCode] só é usado quando [role] é [UserRole.student]. Se
+  /// informado, é validado ANTES de criar a conta — assim, se o código
+  /// estiver errado, nenhuma conta é criada e o usuário pode corrigir.
+  Future<bool> signUp(
+    String name,
+    String email,
+    String password, {
+    UserRole role = UserRole.student,
+    String? instructorCode,
+  }) async {
     return _run(() async {
+      String? validatedInstructorId;
+
+      if (role == UserRole.student &&
+          instructorCode != null &&
+          instructorCode.trim().isNotEmpty) {
+        final instructor = await _firestoreService!.findInstructorByCode(
+          instructorCode,
+        );
+        if (instructor == null) {
+          throw Exception(
+            'Código de instrutor inválido. Confira e tente de novo.',
+          );
+        }
+        validatedInstructorId = instructor.uid;
+      }
+
       final user = await _authService!.signUp(
         email: email,
         password: password,
         name: name,
       );
-      if (user != null) {
-        final newProfile = UserProfile(uid: user.uid, name: name, email: email);
-        await _firestoreService!.createUserProfile(newProfile);
-        _profile = newProfile;
+      if (user == null) return;
+
+      String? inviteCode;
+      if (role == UserRole.instructor) {
+        inviteCode = await _firestoreService!.generateUniqueInviteCode();
       }
+
+      final newProfile = UserProfile(
+        uid: user.uid,
+        name: name,
+        email: email,
+        role: role,
+        inviteCode: inviteCode,
+        instructorId: validatedInstructorId,
+      );
+      await _firestoreService!.createUserProfile(newProfile);
+
+      if (validatedInstructorId != null) {
+        await _firestoreService.linkStudentToInstructor(
+          student: newProfile,
+          instructorId: validatedInstructorId,
+        );
+      }
+
+      _profile = newProfile;
     });
   }
 

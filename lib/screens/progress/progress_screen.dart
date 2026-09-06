@@ -26,7 +26,10 @@ class ProgressScreen extends StatelessWidget {
           ),
         ),
         body: const TabBarView(
-          children: [_WorkoutProgressTab(), BodyProgressScreen()],
+          children: [
+            _WorkoutProgressTab(),
+            BodyProgressScreen(),
+          ],
         ),
       ),
     );
@@ -49,8 +52,7 @@ class _WorkoutProgressTab extends StatelessWidget {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
               }
-              final workouts = (snapshot.data ?? [])
-                ..sort((a, b) => a.date.compareTo(b.date));
+              final workouts = (snapshot.data ?? [])..sort((a, b) => a.date.compareTo(b.date));
 
               if (workouts.isEmpty) {
                 return const Center(
@@ -74,18 +76,14 @@ class _WorkoutProgressTab extends StatelessWidget {
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 12),
-                  SizedBox(
-                    height: 220,
-                    child: _VolumeChart(workouts: workouts),
-                  ),
+                  SizedBox(height: 220, child: _VolumeChart(workouts: workouts)),
                   const SizedBox(height: 24),
                   const Text(
                     'Histórico',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 8),
-                  for (final w in workouts.reversed)
-                    _WorkoutHistoryTile(workout: w),
+                  for (final w in workouts.reversed) _WorkoutHistoryTile(workout: w),
                 ],
               );
             },
@@ -101,16 +99,11 @@ class _SummaryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final totalWorkouts = workouts.length;
-    final totalVolume = workouts.fold<double>(
-      0,
-      (sum, w) => sum + w.totalVolume,
-    );
+    final totalVolume = workouts.fold<double>(0, (sum, w) => sum + w.totalVolume);
 
     return Row(
       children: [
-        Expanded(
-          child: _StatCard(label: 'Treinos', value: '$totalWorkouts'),
-        ),
+        Expanded(child: _StatCard(label: 'Treinos', value: '$totalWorkouts')),
         const SizedBox(width: 12),
         Expanded(
           child: _StatCard(
@@ -137,10 +130,7 @@ class _StatCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              value,
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
-            ),
+            Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
             const SizedBox(height: 4),
             Text(label, style: TextStyle(color: Colors.grey.shade600)),
           ],
@@ -165,12 +155,8 @@ class _VolumeChart extends StatelessWidget {
       LineChartData(
         gridData: const FlGridData(show: false),
         titlesData: FlTitlesData(
-          topTitles: const AxisTitles(
-            sideTitles: SideTitles(showTitles: false),
-          ),
-          rightTitles: const AxisTitles(
-            sideTitles: SideTitles(showTitles: false),
-          ),
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
           leftTitles: AxisTitles(
             sideTitles: SideTitles(showTitles: true, reservedSize: 40),
           ),
@@ -179,9 +165,7 @@ class _VolumeChart extends StatelessWidget {
               showTitles: true,
               getTitlesWidget: (value, meta) {
                 final i = value.toInt();
-                if (i < 0 || i >= workouts.length) {
-                  return const SizedBox.shrink();
-                }
+                if (i < 0 || i >= workouts.length) return const SizedBox.shrink();
                 return Padding(
                   padding: const EdgeInsets.only(top: 6),
                   child: Text(

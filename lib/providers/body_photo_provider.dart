@@ -13,8 +13,8 @@ class BodyPhotoProvider extends ChangeNotifier {
   BodyPhotoProvider({
     FirestoreService? firestoreService,
     StorageService? storageService,
-  }) : _firestoreService = firestoreService ?? FirestoreService(),
-       _storageService = storageService ?? StorageService();
+  })  : _firestoreService = firestoreService ?? FirestoreService(),
+        _storageService = storageService ?? StorageService();
 
   bool _uploading = false;
   bool get isUploading => _uploading;

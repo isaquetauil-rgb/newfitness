@@ -14,6 +14,14 @@ class StorageService {
     return task.ref.getDownloadURL();
   }
 
+  /// Envia uma foto de refeição e retorna a URL pública de download.
+  Future<String> uploadMealPhoto(String uid, File file) async {
+    final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
+    final ref = _storage.ref().child('users/$uid/meal_photos/$fileName');
+    final task = await ref.putFile(file);
+    return task.ref.getDownloadURL();
+  }
+
   Future<void> deleteByUrl(String url) async {
     try {
       await _storage.refFromURL(url).delete();

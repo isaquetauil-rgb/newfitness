@@ -16,9 +16,7 @@ class WorkoutScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          workout.hasActiveWorkout ? workout.activeWorkout!.name : 'Treino',
-        ),
+        title: Text(workout.hasActiveWorkout ? workout.activeWorkout!.name : 'Treino'),
         actions: workout.hasActiveWorkout
             ? [
                 IconButton(
@@ -41,9 +39,7 @@ class WorkoutScreen extends StatelessWidget {
               onPressed: workout.isSaving
                   ? null
                   : () async {
-                      final ok = await context
-                          .read<WorkoutProvider>()
-                          .finishWorkout();
+                      final ok = await context.read<WorkoutProvider>().finishWorkout();
                       if (context.mounted && ok) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('Treino salvo! 💪')),
@@ -54,10 +50,7 @@ class WorkoutScreen extends StatelessWidget {
                   ? const SizedBox(
                       height: 16,
                       width: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                     )
                   : const Icon(Icons.check),
               label: const Text('Finalizar treino'),
@@ -182,10 +175,7 @@ class _ExerciseCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     exercise.exerciseName,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                 ),
                 IconButton(
@@ -197,29 +187,14 @@ class _ExerciseCard extends StatelessWidget {
             const SizedBox(height: 8),
             Row(
               children: const [
-                SizedBox(
-                  width: 32,
-                  child: Text('Série', style: TextStyle(color: Colors.grey)),
-                ),
-                Expanded(
-                  child: Center(
-                    child: Text('Kg', style: TextStyle(color: Colors.grey)),
-                  ),
-                ),
-                Expanded(
-                  child: Center(
-                    child: Text('Reps', style: TextStyle(color: Colors.grey)),
-                  ),
-                ),
+                SizedBox(width: 32, child: Text('Série', style: TextStyle(color: Colors.grey))),
+                Expanded(child: Center(child: Text('Kg', style: TextStyle(color: Colors.grey)))),
+                Expanded(child: Center(child: Text('Reps', style: TextStyle(color: Colors.grey)))),
                 SizedBox(width: 40),
               ],
             ),
             for (int s = 0; s < exercise.sets.length; s++)
-              _SetRow(
-                exerciseIndex: exerciseIndex,
-                setIndex: s,
-                setNumber: s + 1,
-              ),
+              _SetRow(exerciseIndex: exerciseIndex, setIndex: s, setNumber: s + 1),
             TextButton.icon(
               onPressed: () => provider.addSet(exerciseIndex),
               icon: const Icon(Icons.add, size: 18),

@@ -30,8 +30,7 @@ class Exercise {
       description: map['description'] as String? ?? '',
       videoUrl: map['videoUrl'] as String? ?? '',
       thumbnailUrl: map['thumbnailUrl'] as String?,
-      instructions:
-          (map['instructions'] as List<dynamic>?)
+      instructions: (map['instructions'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
           const [],
