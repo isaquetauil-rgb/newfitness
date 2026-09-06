@@ -2,12 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:newfitness/app/routes/app_routes.dart';
 import 'package:newfitness/app/widgets/drawer_menu_button.dart';
+import 'package:newfitness/core/constants/admin_config.dart';
 import 'package:newfitness/core/di/injector.dart';
 import 'package:newfitness/features/auth/logic/auth_provider.dart';
+import 'package:newfitness/features/workout/logic/workout_provider.dart';
 import 'package:newfitness/shared/models/user_profile.dart';
+import 'package:newfitness/shared/models/workout.dart';
 import 'package:newfitness/shared/services/firestore_service.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -69,6 +73,92 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _goalCtrl.dispose();
     _linkCodeCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _changePassword(UserProfile profile) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Alterar senha'),
+        content: Text(
+          'Vamos enviar um link de redefinição de senha para ${profile.email}.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Enviar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    final auth = context.read<AuthProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+    final ok = await auth.resetPassword(profile.email);
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          ok
+              ? 'E-mail enviado! Confira sua caixa de entrada.'
+              : (auth.errorMessage ?? 'Não foi possível enviar o e-mail.'),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _togglePrivate(UserProfile profile, bool value) async {
+    final authProvider = context.read<AuthProvider>();
+    await _firestoreService.updateUserProfile(
+      profile.copyWith(isPrivate: value),
+    );
+    if (mounted) await authProvider.refreshProfile();
+  }
+
+  void _inviteFriends() {
+    const message =
+        'Baixe o NewFitness e comece a treinar com acompanhamento '
+        'profissional! 💪';
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Indicar amigos'),
+        content: const Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Fechar'),
+          ),
+          TextButton(
+            onPressed: () {
+              Clipboard.setData(const ClipboardData(text: message));
+              Navigator.pop(ctx);
+              ScaffoldMessenger.of(context)
+                  .showSnackBar(const SnackBar(content: Text('Texto copiado')));
+            },
+            child: const Text('Copiar texto'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _contactSupport() async {
+    final uri = Uri(
+      scheme: 'mailto',
+      path: ownerEmail,
+      query: 'subject=Suporte NewFitness',
+    );
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Não foi possível abrir o e-mail.')),
+      );
+    }
   }
 
   Future<void> _save(UserProfile current) async {
@@ -139,6 +229,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
+                _WeeklyProgressCard(uid: profile.uid),
+                const SizedBox(height: 20),
                 if (profile.role == UserRole.instructor)
                   _InstructorCard(profile: profile)
                 else if (profile.instructorId != null)
@@ -202,6 +294,64 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         )
                       : const Text('Salvar alterações'),
                 ),
+                const SizedBox(height: 28),
+                const Text(
+                  'Configurações',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 8),
+                Card(
+                  child: Column(
+                    children: [
+                      ListTile(
+                        leading: const Icon(Icons.lock_outline),
+                        title: const Text('Alterar senha'),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => _changePassword(profile),
+                      ),
+                      const Divider(height: 1),
+                      ListTile(
+                        leading: const Icon(Icons.credit_card_outlined),
+                        title: const Text('Meus cartões'),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => context.push(AppRoutes.myCards),
+                      ),
+                      const Divider(height: 1),
+                      ListTile(
+                        leading: const Icon(Icons.description_outlined),
+                        title: const Text('Contratos ativos'),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => context.push(AppRoutes.activeContracts),
+                      ),
+                      const Divider(height: 1),
+                      ListTile(
+                        leading: const Icon(Icons.folder_outlined),
+                        title: const Text('Documentos'),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => context.push(AppRoutes.documents),
+                      ),
+                      const Divider(height: 1),
+                      SwitchListTile(
+                        secondary: const Icon(Icons.visibility_off_outlined),
+                        title: const Text('Tornar perfil privado'),
+                        value: profile.isPrivate,
+                        onChanged: (value) => _togglePrivate(profile, value),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: _inviteFriends,
+                  icon: const Icon(Icons.share_outlined),
+                  label: const Text('Indicar amigos'),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: _contactSupport,
+                  icon: const Icon(Icons.mail_outline),
+                  label: const Text('Entrar em contato'),
+                ),
               ],
             ),
     );
@@ -233,6 +383,129 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Card "Meu progresso": 7 bolinhas da semana atual (segunda a domingo),
+/// marcadas conforme há treino registrado naquele dia. Calculado em cima
+/// de `WorkoutProvider.watchHistory` — sem coleção nova no Firestore.
+class _WeeklyProgressCard extends StatelessWidget {
+  const _WeeklyProgressCard({required this.uid});
+
+  final String uid;
+
+  static const _weekdayLabels = ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'];
+
+  @override
+  Widget build(BuildContext context) {
+    final workoutProvider = context.watch<WorkoutProvider>();
+
+    return Card(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => context.push(AppRoutes.progressCalendar),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: StreamBuilder<List<Workout>>(
+            stream: workoutProvider.watchHistory(uid),
+            builder: (context, snapshot) {
+              final workouts = snapshot.data ?? [];
+              final workoutDays = workouts
+                  .map((w) => _dateOnly(w.date))
+                  .toSet();
+
+              final now = DateTime.now();
+              final monday = _dateOnly(
+                now.subtract(Duration(days: now.weekday - 1)),
+              );
+              final week = List.generate(
+                7,
+                (i) => monday.add(Duration(days: i)),
+              );
+              final doneCount = week
+                  .where((d) => workoutDays.contains(d))
+                  .length;
+              final percent = ((doneCount / 7) * 100).round();
+
+              return Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.calendar_month_outlined),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'Meu progresso',
+                              style: TextStyle(fontWeight: FontWeight.w700),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            for (int i = 0; i < 7; i++)
+                              _DayDot(
+                                label: _weekdayLabels[i],
+                                done: workoutDays.contains(week[i]),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '$doneCount de 7 dias concluídos',
+                          style: TextStyle(color: Colors.grey.shade600),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Text(
+                    '$percent%',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  DateTime _dateOnly(DateTime date) =>
+      DateTime(date.year, date.month, date.day);
+}
+
+class _DayDot extends StatelessWidget {
+  const _DayDot({required this.label, required this.done});
+
+  final String label;
+  final bool done;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Icon(
+          done ? Icons.check_circle : Icons.circle_outlined,
+          color: done
+              ? Theme.of(context).colorScheme.primary
+              : Colors.grey.shade400,
+          size: 22,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+        ),
+      ],
     );
   }
 }

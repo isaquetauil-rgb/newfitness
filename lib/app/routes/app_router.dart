@@ -22,6 +22,7 @@ import 'package:newfitness/features/instructor/presentation/student_detail_scree
 import 'package:newfitness/features/notifications/presentation/reminders_screen.dart';
 import 'package:newfitness/features/profile/presentation/profile_screen.dart';
 import 'package:newfitness/features/progress/presentation/body_progress_screen.dart';
+import 'package:newfitness/features/progress/presentation/progress_calendar_screen.dart';
 import 'package:newfitness/features/progress/presentation/progress_screen.dart';
 import 'package:newfitness/features/workout/presentation/exercise_picker_screen.dart';
 import 'package:newfitness/features/workout/presentation/workout_screen.dart';
@@ -78,6 +79,11 @@ GoRouter buildAppRouter(AuthProvider authProvider) {
       // Itens do menu lateral sem aba própria — telas cheias com seta de
       // voltar, fora do StatefulShellRoute (mesmo padrão de detalhe usado
       // em exercícios/progresso).
+      GoRoute(
+        path: AppRoutes.progressCalendar,
+        pageBuilder: (context, state) =>
+            _fadeThrough(state, const ProgressCalendarScreen()),
+      ),
       GoRoute(
         path: AppRoutes.timeline,
         pageBuilder: (context, state) => _fadeThrough(

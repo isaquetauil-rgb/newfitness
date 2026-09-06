@@ -12,6 +12,7 @@ class UserProfile {
   final UserRole role;
   final String? instructorId; // preenchido só para alunos, depois de vincular
   final String? inviteCode; // preenchido só para instrutores
+  final bool isPrivate;
 
   const UserProfile({
     required this.uid,
@@ -24,6 +25,7 @@ class UserProfile {
     this.role = UserRole.student,
     this.instructorId,
     this.inviteCode,
+    this.isPrivate = false,
   });
 
   factory UserProfile.fromMap(String uid, Map<String, dynamic> map) {
@@ -42,6 +44,7 @@ class UserProfile {
           : UserRole.student,
       instructorId: map['instructorId'] as String?,
       inviteCode: map['inviteCode'] as String?,
+      isPrivate: map['isPrivate'] as bool? ?? false,
     );
   }
 
@@ -56,6 +59,7 @@ class UserProfile {
       'role': role == UserRole.instructor ? 'instructor' : 'student',
       'instructorId': instructorId,
       'inviteCode': inviteCode,
+      'isPrivate': isPrivate,
     };
   }
 
@@ -68,6 +72,7 @@ class UserProfile {
     UserRole? role,
     String? instructorId,
     String? inviteCode,
+    bool? isPrivate,
   }) {
     return UserProfile(
       uid: uid,
@@ -80,6 +85,7 @@ class UserProfile {
       role: role ?? this.role,
       instructorId: instructorId ?? this.instructorId,
       inviteCode: inviteCode ?? this.inviteCode,
+      isPrivate: isPrivate ?? this.isPrivate,
     );
   }
 }
