@@ -160,7 +160,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
                       margin: const EdgeInsets.only(bottom: 8),
                       child: ListTile(
                         title: Text(plan.title),
-                        subtitle: Text('${plan.exercises.length} exercício(s)'),
+                        subtitle: Text('${plan.workouts.length} sub-treino(s)'),
                         trailing: IconButton(
                           icon: const Icon(Icons.delete_outline, size: 20),
                           onPressed: () => planProvider.deletePlan(

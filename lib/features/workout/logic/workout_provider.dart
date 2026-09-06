@@ -46,11 +46,13 @@ class WorkoutProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Inicia um treino já com os exercícios de um [TrainingPlan] prescrito
-  /// pelo instrutor — o aluno cai direto na tela de registro de séries.
-  void startFromPlan(String userId, TrainingPlan plan) {
-    startWorkout(userId, name: plan.title);
-    for (final planExercise in plan.exercises) {
+  /// Inicia o treino a partir de um sub-treino específico do plano (ex:
+  /// "Treino A"), identificado por [subWorkoutIndex] — o aluno cai direto
+  /// na tela de registro de séries já com os exercícios prescritos.
+  void startFromPlan(String userId, TrainingPlan plan, int subWorkoutIndex) {
+    final subWorkout = plan.workouts[subWorkoutIndex];
+    startWorkout(userId, name: '${plan.title} · ${subWorkout.label}');
+    for (final planExercise in subWorkout.exercises) {
       _activeWorkout!.exercises.add(
         LoggedExercise(
           exerciseId: planExercise.exerciseId,

@@ -166,27 +166,51 @@ class _StartWorkoutBody extends StatelessWidget {
                                   style: TextStyle(color: Colors.grey.shade700),
                                 ),
                               ],
-                              const SizedBox(height: 8),
-                              Text(
-                                plan.exercises
-                                    .map(
-                                      (e) =>
-                                          '${e.exerciseName} (${e.targetSets}x${e.targetReps})',
-                                    )
-                                    .join(' · '),
-                                style: const TextStyle(fontSize: 13),
-                              ),
-                              const SizedBox(height: 8),
-                              Align(
-                                alignment: Alignment.centerRight,
-                                child: TextButton.icon(
-                                  onPressed: () => context
-                                      .read<WorkoutProvider>()
-                                      .startFromPlan(uid, plan),
-                                  icon: const Icon(Icons.play_arrow, size: 18),
-                                  label: const Text('Iniciar este treino'),
+                              for (
+                                int w = 0;
+                                w < plan.workouts.length;
+                                w++
+                              ) ...[
+                                const SizedBox(height: 12),
+                                const Divider(height: 1),
+                                const SizedBox(height: 8),
+                                Text(
+                                  plan.workouts[w].label,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
-                              ),
+                                const SizedBox(height: 4),
+                                for (final e in plan.workouts[w].exercises)
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 2,
+                                    ),
+                                    child: Text(
+                                      '${e.exerciseName} — ${e.targetSets}x'
+                                      '${e.targetReps}'
+                                      '${e.targetWeightsKg.isNotEmpty ? ' · ${e.targetWeightsKg} kg' : ''}'
+                                      ' · ${e.restSeconds}s descanso',
+                                      style: const TextStyle(fontSize: 13),
+                                    ),
+                                  ),
+                                const SizedBox(height: 4),
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: TextButton.icon(
+                                    onPressed: () => context
+                                        .read<WorkoutProvider>()
+                                        .startFromPlan(uid, plan, w),
+                                    icon: const Icon(
+                                      Icons.play_arrow,
+                                      size: 18,
+                                    ),
+                                    label: Text(
+                                      'Iniciar ${plan.workouts[w].label}',
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         ),

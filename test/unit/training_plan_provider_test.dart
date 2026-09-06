@@ -35,12 +35,17 @@ void main() {
     instructorUid: 'instructor1',
     title: 'Treino de pernas',
     instructions: 'Foco em quadríceps',
-    exercises: const [
-      PlanExercise(
-        exerciseId: 'squat',
-        exerciseName: 'Agachamento livre',
-        targetSets: 4,
-        targetReps: '8-10',
+    workouts: const [
+      TrainingSubWorkout(
+        label: 'Treino A',
+        exercises: [
+          PlanExercise(
+            exerciseId: 'squat',
+            exerciseName: 'Agachamento livre',
+            targetSets: 4,
+            targetReps: '8-10',
+          ),
+        ],
       ),
     ],
     createdAt: DateTime(2024, 1, 1),
