@@ -94,6 +94,23 @@ class FirestoreService {
     });
   }
 
+  /// Lista todos os usuários cadastrados — só o admin tem permissão para
+  /// isso (ver `firestore.rules`).
+  Stream<List<UserProfile>> watchAllUsers() {
+    return _guardStream(
+      'watchAllUsers',
+      _db
+          .collection(FirestorePaths.users)
+          .orderBy('name')
+          .snapshots()
+          .map(
+            (snap) => snap.docs
+                .map((d) => UserProfile.fromMap(d.id, d.data()))
+                .toList(),
+          ),
+    );
+  }
+
   // ---------- Instrutor / Aluno ----------
 
   /// Gera um código de convite curto e garante que ele é único entre os
@@ -240,6 +257,13 @@ class FirestoreService {
           .doc(exercise.id)
           .set(exercise.toMap(), SetOptions(merge: true));
     });
+  }
+
+  Future<void> deleteExercise(String id) {
+    return _guard(
+      'deleteExercise',
+      () => _db.collection(FirestorePaths.exercises).doc(id).delete(),
+    );
   }
 
   // ---------- Lembretes (água / suplementos) ----------
@@ -430,6 +454,46 @@ class FirestoreService {
           .collection(FirestorePaths.students(instructorId))
           .doc(studentUid)
           .set({'notes': note}, SetOptions(merge: true));
+    });
+  }
+
+  // ---------- Estatísticas (painel de administração) ----------
+  //
+  // Usa aggregate queries (`.count()`) — o Firestore conta no servidor sem
+  // baixar os documentos, então isso é barato mesmo com muitos registros.
+
+  Future<int> countUsers() {
+    return _guard('countUsers', () async {
+      final snap = await _db.collection(FirestorePaths.users).count().get();
+      return snap.count ?? 0;
+    });
+  }
+
+  Future<int> countUsersByRole(String role) {
+    return _guard('countUsersByRole', () async {
+      final snap = await _db
+          .collection(FirestorePaths.users)
+          .where('role', isEqualTo: role)
+          .count()
+          .get();
+      return snap.count ?? 0;
+    });
+  }
+
+  Future<int> countExercises() {
+    return _guard('countExercises', () async {
+      final snap = await _db.collection(FirestorePaths.exercises).count().get();
+      return snap.count ?? 0;
+    });
+  }
+
+  /// Total de treinos registrados por todos os usuários — usa uma
+  /// *collection group query* (soma a subcoleção `workouts` de todo mundo
+  /// de uma vez).
+  Future<int> countWorkoutsLogged() {
+    return _guard('countWorkoutsLogged', () async {
+      final snap = await _db.collectionGroup('workouts').count().get();
+      return snap.count ?? 0;
     });
   }
 }

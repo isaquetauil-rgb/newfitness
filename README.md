@@ -271,6 +271,14 @@ flutter run
 - ✅ **Planos de treino**: o aluno vê os planos que o instrutor montou pra
   ele na aba Treino e inicia o registro de séries já com os exercícios
   prescritos carregados
+- ✅ **Painel de administração** (aba "Admin", só visível para o dono do
+  app — identificado pelo e-mail, checado também nas regras do Firestore,
+  não só na UI): estatísticas gerais (usuários, alunos, instrutores,
+  exercícios, treinos registrados), lista de todos os usuários com busca e
+  promoção/rebaixamento de papel (aluno ↔ instrutor) sem precisar do fluxo
+  de código de convite, e gerenciamento completo da biblioteca de
+  exercícios (criar/editar/remover) — só o admin pode escrever nessa
+  coleção compartilhada
 - ✅ Perfil do usuário (peso, altura, meta) salvo no Firestore
 
 ## Backend de IA (Cloud Functions)
@@ -284,6 +292,15 @@ dependências, criar a chave da Anthropic, guardar como secret, fazer o
 deploy). **Sem seguir esses passos, essas quatro funções retornam erro** —
 o resto do app (incluindo criar planos manualmente e o aluno vê-los)
 funciona normalmente sem depender da IA.
+
+## Painel de administração
+
+O e-mail do dono do app está fixo em `lib/core/constants/admin_config.dart`
+(`ownerEmail`) e replicado em `firestore.rules` (função `isAdmin()`) — são
+os dois lugares que precisam mudar juntos se um dia você trocar de conta.
+Não existe fluxo de "virar admin" pelo app de propósito: é sempre a mesma
+conta, verificada tanto na UI (mostra/esconde a aba) quanto no servidor
+(regra do Firestore, que é a barreira de segurança real).
 
 ## Próximos passos sugeridos
 

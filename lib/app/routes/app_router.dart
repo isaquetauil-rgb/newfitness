@@ -3,6 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:newfitness/app/widgets/app_shell.dart';
+import 'package:newfitness/features/admin/presentation/admin_dashboard_screen.dart';
+import 'package:newfitness/features/admin/presentation/admin_exercise_form_screen.dart';
+import 'package:newfitness/features/admin/presentation/admin_exercises_screen.dart';
+import 'package:newfitness/features/admin/presentation/admin_users_screen.dart';
 import 'package:newfitness/features/ai/presentation/ai_hub_screen.dart';
 import 'package:newfitness/features/auth/logic/auth_provider.dart';
 import 'package:newfitness/features/auth/presentation/forgot_password_screen.dart';
@@ -45,6 +49,12 @@ GoRouter buildAppRouter(AuthProvider authProvider) {
 
       if (!loggedIn && !loggingIn) return AppRoutes.login;
       if (loggedIn && loggingIn) return AppRoutes.home;
+
+      // Painel admin: mesmo escondido da barra de navegação para quem não
+      // é dono do app, um link direto não pode dar acesso.
+      final isAdminRoute = state.matchedLocation.startsWith(AppRoutes.admin);
+      if (isAdminRoute && !authProvider.isAdmin) return AppRoutes.home;
+
       return null;
     },
     routes: [
@@ -173,6 +183,38 @@ GoRouter buildAppRouter(AuthProvider authProvider) {
                           state,
                           PlanEditorScreen(
                             args: state.extra! as PlanEditorArgs,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.admin,
+                pageBuilder: (context, state) =>
+                    _fadeThrough(state, const AdminDashboardScreen()),
+                routes: [
+                  GoRoute(
+                    path: 'users',
+                    pageBuilder: (context, state) =>
+                        _fadeThrough(state, const AdminUsersScreen()),
+                  ),
+                  GoRoute(
+                    path: 'exercises',
+                    pageBuilder: (context, state) =>
+                        _fadeThrough(state, const AdminExercisesScreen()),
+                    routes: [
+                      GoRoute(
+                        path: 'edit',
+                        pageBuilder: (context, state) => _fadeThrough(
+                          state,
+                          AdminExerciseFormScreen(
+                            existing: state.extra as Exercise?,
                           ),
                         ),
                       ),

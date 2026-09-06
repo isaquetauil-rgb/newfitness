@@ -5,9 +5,12 @@ import 'package:provider/provider.dart';
 import 'package:newfitness/features/auth/logic/auth_provider.dart';
 import 'package:newfitness/shared/models/user_profile.dart';
 
-/// Índice fixo do branch do instrutor dentro do [StatefulShellRoute] — só
-/// aparece na barra inferior quando o perfil logado é [UserRole.instructor].
+/// Índices fixos dos branches condicionais dentro do [StatefulShellRoute]
+/// — só aparecem na barra inferior conforme o papel/permissão do usuário
+/// logado (instrutor / dono do app).
 const _instructorBranchIndex = 6;
+const _adminBranchIndex = 7;
+const _profileBranchIndex = 8;
 
 /// Casca de navegação por abas (bottom nav) montada sobre o
 /// [StatefulShellRoute] do go_router — cada aba mantém sua própria pilha de
@@ -21,8 +24,9 @@ class AppShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final profile = context.watch<AuthProvider>().profile;
-    final isInstructor = profile?.role == UserRole.instructor;
+    final auth = context.watch<AuthProvider>();
+    final isInstructor = auth.profile?.role == UserRole.instructor;
+    final isAdmin = auth.isAdmin;
 
     final visibleBranches = [
       0,
@@ -32,7 +36,8 @@ class AppShell extends StatelessWidget {
       4,
       5,
       if (isInstructor) _instructorBranchIndex,
-      7,
+      if (isAdmin) _adminBranchIndex,
+      _profileBranchIndex,
     ];
 
     final items = [
@@ -64,6 +69,11 @@ class AppShell extends StatelessWidget {
         const BottomNavigationBarItem(
           icon: Icon(Icons.groups_outlined),
           label: 'Alunos',
+        ),
+      if (isAdmin)
+        const BottomNavigationBarItem(
+          icon: Icon(Icons.admin_panel_settings_outlined),
+          label: 'Admin',
         ),
       const BottomNavigationBarItem(
         icon: Icon(Icons.person_outline),

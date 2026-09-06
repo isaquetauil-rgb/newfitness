@@ -119,4 +119,36 @@ void main() {
 
     verify(() => authService.signOut()).called(1);
   });
+
+  test('isAdmin é true só para o e-mail do dono do app', () async {
+    final owner = MockUser();
+    when(() => owner.uid).thenReturn('owner-uid');
+    when(() => owner.email).thenReturn('isaquetrabalho005@gmail.com');
+    when(() => firestoreService.getUserProfile('owner-uid'))
+        .thenAnswer((_) async => null);
+    when(() => firestoreService.createUserProfile(any()))
+        .thenAnswer((_) async {});
+
+    final provider = buildProvider();
+    authStateController.add(owner);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(provider.isAdmin, isTrue);
+  });
+
+  test('isAdmin é false para qualquer outro usuário', () async {
+    final other = MockUser();
+    when(() => other.uid).thenReturn('u2');
+    when(() => other.email).thenReturn('outra.pessoa@example.com');
+    when(() => firestoreService.getUserProfile('u2'))
+        .thenAnswer((_) async => null);
+    when(() => firestoreService.createUserProfile(any()))
+        .thenAnswer((_) async {});
+
+    final provider = buildProvider();
+    authStateController.add(other);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(provider.isAdmin, isFalse);
+  });
 }

@@ -22,5 +22,9 @@ class AppRoutes {
   static const instructor = '/instructor';
   static const instructorStudent = '/instructor/student';
   static const instructorPlanEditor = '/instructor/student/plan';
+  static const admin = '/admin';
+  static const adminUsers = '/admin/users';
+  static const adminExercises = '/admin/exercises';
+  static const adminExerciseForm = '/admin/exercises/edit';
   static const profile = '/profile';
 }

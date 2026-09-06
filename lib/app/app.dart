@@ -7,6 +7,7 @@ import 'package:newfitness/app/theme/app_theme.dart';
 import 'package:newfitness/features/ai/logic/chat_provider.dart';
 import 'package:newfitness/features/ai/logic/meal_photo_provider.dart';
 import 'package:newfitness/features/auth/logic/auth_provider.dart';
+import 'package:newfitness/features/admin/logic/admin_provider.dart';
 import 'package:newfitness/features/exercises/logic/exercise_provider.dart';
 import 'package:newfitness/features/instructor/logic/instructor_ai_provider.dart';
 import 'package:newfitness/features/notifications/logic/reminder_provider.dart';
@@ -48,6 +49,7 @@ class _NewFitnessAppState extends State<NewFitnessApp> {
         ChangeNotifierProvider(create: (_) => MealPhotoProvider()),
         ChangeNotifierProvider(create: (_) => TrainingPlanProvider()),
         ChangeNotifierProvider(create: (_) => InstructorAiProvider()),
+        ChangeNotifierProvider(create: (_) => AdminProvider()),
       ],
       child: MaterialApp.router(
         title: 'NewFitness',

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
+import 'package:newfitness/core/constants/admin_config.dart';
 import 'package:newfitness/core/di/injector.dart';
 import 'package:newfitness/core/logging/app_logger.dart';
 import 'package:newfitness/features/auth/data/auth_service.dart';
@@ -37,6 +38,11 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoading => _loading;
   bool get isLoggedIn => _user != null;
   String? get errorMessage => _errorMessage;
+
+  /// Único usuário com acesso ao painel de administração — a barreira de
+  /// segurança real fica nas regras do Firestore (`request.auth.token.email`);
+  /// isso só controla o que a UI mostra.
+  bool get isAdmin => _user?.email?.toLowerCase() == ownerEmail.toLowerCase();
 
   /// true enquanto o perfil do usuário logado ainda está sendo buscado no
   /// Firestore — a UI pode usar isso para mostrar um spinner só nesse
