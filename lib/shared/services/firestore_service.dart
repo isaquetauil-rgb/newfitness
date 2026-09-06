@@ -7,6 +7,7 @@ import '../models/body_photo.dart';
 import '../models/chat_message.dart';
 import '../models/exercise.dart';
 import '../models/meal_photo.dart';
+import '../models/announcement.dart';
 import '../models/reminder.dart';
 import '../models/training_plan.dart';
 import '../models/user_profile.dart';
@@ -494,6 +495,49 @@ class FirestoreService {
     return _guard('countWorkoutsLogged', () async {
       final snap = await _db.collectionGroup('workouts').count().get();
       return snap.count ?? 0;
+    });
+  }
+
+  // ---------- Timeline (mural de avisos) ----------
+
+  CollectionReference<Map<String, dynamic>> get _announcementsRef =>
+      _db.collection('announcements');
+
+  Stream<List<Announcement>> watchAnnouncements() {
+    return _guardStream(
+      'watchAnnouncements',
+      _announcementsRef
+          .orderBy('createdAt', descending: true)
+          .snapshots()
+          .map(
+            (snap) => snap.docs
+                .map((d) => Announcement.fromMap(d.id, d.data()))
+                .toList(),
+          ),
+    );
+  }
+
+  Future<void> createAnnouncement(Announcement announcement) {
+    return _guard(
+      'createAnnouncement',
+      () => _announcementsRef.add(announcement.toMap()),
+    );
+  }
+
+  Future<void> deleteAnnouncement(String id) {
+    return _guard(
+      'deleteAnnouncement',
+      () => _announcementsRef.doc(id).delete(),
+    );
+  }
+
+  Future<void> toggleAnnouncementLike(String id, String uid, bool liked) {
+    return _guard('toggleAnnouncementLike', () {
+      return _announcementsRef.doc(id).update({
+        'likeUids': liked
+            ? FieldValue.arrayUnion([uid])
+            : FieldValue.arrayRemove([uid]),
+      });
     });
   }
 }

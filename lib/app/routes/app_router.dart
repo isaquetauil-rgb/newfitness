@@ -24,6 +24,7 @@ import 'package:newfitness/features/profile/presentation/profile_screen.dart';
 import 'package:newfitness/features/progress/presentation/body_progress_screen.dart';
 import 'package:newfitness/features/progress/presentation/progress_calendar_screen.dart';
 import 'package:newfitness/features/progress/presentation/progress_screen.dart';
+import 'package:newfitness/features/timeline/presentation/timeline_screen.dart';
 import 'package:newfitness/features/workout/presentation/exercise_picker_screen.dart';
 import 'package:newfitness/features/workout/presentation/workout_screen.dart';
 import 'package:newfitness/shared/models/body_photo.dart';
@@ -86,10 +87,8 @@ GoRouter buildAppRouter(AuthProvider authProvider) {
       ),
       GoRoute(
         path: AppRoutes.timeline,
-        pageBuilder: (context, state) => _fadeThrough(
-          state,
-          const ComingSoonScreen(title: 'Timeline', icon: Icons.forum_outlined),
-        ),
+        pageBuilder: (context, state) =>
+            _fadeThrough(state, const TimelineScreen()),
       ),
       GoRoute(
         path: AppRoutes.physicalAssessment,
