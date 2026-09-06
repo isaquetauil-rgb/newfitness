@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:newfitness/core/network/functions_client.dart';
 
@@ -7,6 +7,9 @@ import 'package:newfitness/core/network/functions_client.dart';
 /// fica no app — ela mora só no backend (veja functions/README.md).
 /// Tratamento de erro (rede, autenticação, argumentos inválidos) é feito
 /// de forma uniforme pelo [FunctionsClient].
+///
+/// Os métodos de análise de foto recebem `Uint8List` (não `dart:io.File`)
+/// de propósito — funciona igual em Android/iOS/Web.
 class AiService {
   AiService({FunctionsClient? client}) : _client = client ?? FunctionsClient();
 
@@ -24,24 +27,34 @@ class AiService {
   }
 
   Future<String> analyzeMealPhoto({
-    required File image,
+    required Uint8List imageBytes,
     required String mealType,
   }) async {
-    final bytes = await image.readAsBytes();
     final data = await _client.call('analyzeMealPhoto', {
-      'imageBase64': base64Encode(bytes),
+      'imageBase64': base64Encode(imageBytes),
       'mediaType': 'image/jpeg',
       'mealType': mealType,
     });
     return data['analysis'] as String? ?? '';
   }
 
-  Future<String> analyzeBodyPhoto({required File image}) async {
-    final bytes = await image.readAsBytes();
+  Future<String> analyzeBodyPhoto({required Uint8List imageBytes}) async {
     final data = await _client.call('analyzeBodyPhoto', {
-      'imageBase64': base64Encode(bytes),
+      'imageBase64': base64Encode(imageBytes),
       'mediaType': 'image/jpeg',
     });
     return data['analysis'] as String? ?? '';
+  }
+
+  /// Pede à IA uma sugestão de treino para apoiar o instrutor — geral (sem
+  /// [studentName]) ou contextualizada a um aluno específico.
+  Future<String> suggestTrainingPlan({
+    required String prompt,
+    String? studentName,
+  }) async {
+    final payload = <String, dynamic>{'prompt': prompt};
+    if (studentName != null) payload['studentName'] = studentName;
+    final data = await _client.call('suggestTrainingPlan', payload);
+    return data['suggestion'] as String? ?? '';
   }
 }

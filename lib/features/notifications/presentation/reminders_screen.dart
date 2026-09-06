@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -38,6 +39,28 @@ class _RemindersScreenState extends State<RemindersScreen> {
           : ListView(
               padding: const EdgeInsets.all(16),
               children: [
+                if (kIsWeb)
+                  Card(
+                    color: Colors.amber.shade50,
+                    child: const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: Row(
+                        children: [
+                          Icon(Icons.info_outline, size: 18),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'No navegador, os lembretes ficam salvos mas as '
+                              'notificações não disparam automaticamente — '
+                              'use o app no celular para isso.',
+                              style: TextStyle(fontSize: 13),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                if (kIsWeb) const SizedBox(height: 16),
                 _SectionHeader(
                   icon: Icons.water_drop_outlined,
                   title: 'Água',

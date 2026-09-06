@@ -26,6 +26,12 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Usamos a câmera para tirar fotos de progresso corporal e de refeições.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Usamos a galeria para escolher fotos de progresso corporal e de refeições.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Precisamos salvar fotos na sua galeria quando você optar por isso.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

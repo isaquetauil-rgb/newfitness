@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -111,11 +109,7 @@ class MealsScreen extends StatelessWidget {
     final picked = await picker.pickImage(source: source, imageQuality: 85);
     if (picked == null || !context.mounted) return;
 
-    await context.read<MealPhotoProvider>().addPhoto(
-      uid,
-      File(picked.path),
-      mealType,
-    );
+    await context.read<MealPhotoProvider>().addPhoto(uid, picked, mealType);
   }
 }
 

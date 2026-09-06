@@ -1,6 +1,5 @@
-import 'dart:io';
-
 import 'package:flutter/foundation.dart';
+import 'package:image_picker/image_picker.dart';
 
 import 'package:newfitness/core/di/injector.dart';
 import 'package:newfitness/features/ai/data/ai_service.dart';
@@ -28,13 +27,17 @@ class MealPhotoProvider extends ChangeNotifier {
     return _firestoreService.watchMealPhotos(uid);
   }
 
+  /// [file] é um [XFile] (do `image_picker`) em vez de `dart:io.File` para
+  /// funcionar também no Flutter Web.
+  ///
   /// Faz upload da foto, salva o registro e depois pede a análise da IA
   /// (a análise chega um pouco depois, via update do documento).
-  Future<void> addPhoto(String uid, File file, MealType mealType) async {
+  Future<void> addPhoto(String uid, XFile file, MealType mealType) async {
     _uploading = true;
     notifyListeners();
     try {
-      final url = await _storageService.uploadMealPhoto(uid, file);
+      final bytes = await file.readAsBytes();
+      final url = await _storageService.uploadMealPhoto(uid, bytes);
       final photo = MealPhoto(
         id: '',
         userId: uid,
@@ -50,7 +53,7 @@ class MealPhotoProvider extends ChangeNotifier {
       // continua salva normalmente, só sem o comentário.
       try {
         final analysis = await _aiService.analyzeMealPhoto(
-          image: file,
+          imageBytes: bytes,
           mealType: mealType.label,
         );
         await _firestoreService.updateMealPhotoAnalysis(uid, id, analysis);

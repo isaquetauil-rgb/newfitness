@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
@@ -8,6 +9,11 @@ import 'package:newfitness/shared/models/reminder.dart';
 /// Encapsula o agendamento de notificações locais diárias (lembretes de
 /// água e suplemento). Cada [Reminder] vira uma notificação que se repete
 /// todo dia no mesmo horário até ser cancelada ou desativada.
+///
+/// `flutter_local_notifications` não tem implementação para Web — todos os
+/// métodos viram no-op nessa plataforma (a lista de lembretes continua
+/// funcionando normalmente via Firestore, só o alarme do sistema
+/// operacional não dispara no navegador).
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
@@ -24,7 +30,7 @@ class NotificationService {
       'Lembretes de água e suplementos do NewFitness';
 
   Future<void> init() async {
-    if (_initialized) return;
+    if (kIsWeb || _initialized) return;
 
     tz_data.initializeTimeZones();
     // Usa o fuso horário local do dispositivo. Se sua base de usuários for
@@ -49,12 +55,15 @@ class NotificationService {
   }
 
   /// Pede permissão de notificação ao usuário (obrigatório no Android 13+ e no iOS).
+  /// No Web, sempre retorna false — não há como agendar notificações locais lá.
   Future<bool> requestPermission() async {
+    if (kIsWeb) return false;
     final status = await Permission.notification.request();
     return status.isGranted;
   }
 
   Future<void> scheduleReminder(Reminder reminder) async {
+    if (kIsWeb) return;
     await init();
     if (!reminder.enabled) {
       await cancelReminder(reminder);
@@ -90,11 +99,15 @@ class NotificationService {
     );
   }
 
-  Future<void> cancelReminder(Reminder reminder) {
-    return _plugin.cancel(reminder.notificationId);
+  Future<void> cancelReminder(Reminder reminder) async {
+    if (kIsWeb) return;
+    await _plugin.cancel(reminder.notificationId);
   }
 
-  Future<void> cancelAll() => _plugin.cancelAll();
+  Future<void> cancelAll() async {
+    if (kIsWeb) return;
+    await _plugin.cancelAll();
+  }
 
   tz.TZDateTime _nextInstanceOf(int hour, int minute) {
     final now = tz.TZDateTime.now(tz.local);

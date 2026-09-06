@@ -1,6 +1,5 @@
-import 'dart:io';
-
 import 'package:flutter/foundation.dart';
+import 'package:image_picker/image_picker.dart';
 
 import 'package:newfitness/core/di/injector.dart';
 import 'package:newfitness/shared/models/body_photo.dart';
@@ -24,11 +23,14 @@ class BodyPhotoProvider extends ChangeNotifier {
     return _firestoreService.watchBodyPhotos(uid);
   }
 
-  Future<void> addPhoto(String uid, File file, {String? note}) async {
+  /// [file] é um [XFile] (do `image_picker`) em vez de `dart:io.File` para
+  /// funcionar também no Flutter Web.
+  Future<void> addPhoto(String uid, XFile file, {String? note}) async {
     _uploading = true;
     notifyListeners();
     try {
-      final url = await _storageService.uploadBodyPhoto(uid, file);
+      final bytes = await file.readAsBytes();
+      final url = await _storageService.uploadBodyPhoto(uid, bytes);
       final photo = BodyPhoto(
         id: '',
         userId: uid,

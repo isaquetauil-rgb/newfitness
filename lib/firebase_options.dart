@@ -42,6 +42,7 @@ class DefaultFirebaseOptions {
     projectId: 'newfitnessappbr',
     storageBucket: 'newfitnessappbr.firebasestorage.app',
   );
+
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyCUNG7dtWTeh_QdosrRMSF3y1f3evyvAYs',
     appId: '1:665761525967:ios:0ea252b48108edf14f07ba',
