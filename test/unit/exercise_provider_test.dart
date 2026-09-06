@@ -36,11 +36,20 @@ void main() {
 
   tearDown(() => exercisesController.close());
 
+  test('sincroniza a biblioteca padrão ao iniciar', () async {
+    ExerciseProvider(firestoreService: firestoreService);
+    await Future<void>.delayed(Duration.zero);
+
+    verify(() => firestoreService.seedExercise(any()))
+        .called(sampleExercises.length);
+  });
+
   test(
-    'quando o Firestore está vazio, popula com a biblioteca padrão',
+    'sincroniza de novo mesmo quando o Firestore já tem exercícios — '
+    'corrige documentos desatualizados (ex: sem descrição/passo-a-passo)',
     () async {
       ExerciseProvider(firestoreService: firestoreService);
-      exercisesController.add([]);
+      exercisesController.add(sampleExercises.take(1).toList());
       await Future<void>.delayed(Duration.zero);
 
       verify(() => firestoreService.seedExercise(any()))
@@ -48,11 +57,13 @@ void main() {
     },
   );
 
-  test('quando o Firestore já tem exercícios, não popula de novo', () async {
-    ExerciseProvider(firestoreService: firestoreService);
-    exercisesController.add(sampleExercises.take(1).toList());
+  test('expõe a lista recebida do Firestore via watchExercises', () async {
+    final provider = ExerciseProvider(firestoreService: firestoreService);
+    final custom = sampleExercises.take(2).toList();
+
+    exercisesController.add(custom);
     await Future<void>.delayed(Duration.zero);
 
-    verifyNever(() => firestoreService.seedExercise(any()));
+    expect(provider.exercises, custom);
   });
 }

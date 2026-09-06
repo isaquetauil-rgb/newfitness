@@ -15,7 +15,6 @@ final _log = AppLogger.of('ExerciseProvider');
 class ExerciseProvider extends ChangeNotifier {
   final FirestoreService _firestoreService;
   StreamSubscription<List<Exercise>>? _sub;
-  bool _seeding = false;
 
   ExerciseProvider({FirestoreService? firestoreService})
     : _firestoreService = firestoreService ?? getIt<FirestoreService>() {
@@ -23,34 +22,33 @@ class ExerciseProvider extends ChangeNotifier {
       (list) {
         _exercises = list;
         notifyListeners();
-        if (list.isEmpty) _seedIfEmpty();
       },
       onError: (_) {
         // Sem conexão com o Firestore ainda configurado: a tela usa a
         // lista de exemplo local (ver sample_exercises.dart) como fallback.
       },
     );
+    _syncCanonicalExercises();
   }
 
   List<Exercise> _exercises = [];
   List<Exercise> get exercises => _exercises;
 
-  /// Popula a coleção `exercises` do Firestore com a biblioteca padrão na
-  /// primeira vez que ela está vazia — assim o app já nasce com uma
-  /// biblioteca de verdade, em vez de depender só do fallback local
-  /// ([sampleExercises], usado enquanto isso não acontece).
-  Future<void> _seedIfEmpty() async {
-    if (_seeding) return;
-    _seeding = true;
+  /// Sincroniza a coleção `exercises` do Firestore com [sampleExercises]
+  /// (merge-set, um write pequeno por exercício) toda vez que o app abre —
+  /// não só quando a coleção está vazia. Isso corrige automaticamente
+  /// documentos criados por uma versão anterior da biblioteca (ex: sem
+  /// descrição/passo-a-passo) em vez de deixá-los desatualizados para
+  /// sempre, já que o app não tem uma tela própria de edição da
+  /// biblioteca compartilhada.
+  Future<void> _syncCanonicalExercises() async {
     try {
       for (final exercise in sampleExercises) {
         await _firestoreService.seedExercise(exercise);
       }
-      _log.info('Biblioteca de exercícios populada com os dados padrão.');
+      _log.info('Biblioteca de exercícios sincronizada com os dados padrão.');
     } catch (e, st) {
-      _log.warning('Falha ao popular a biblioteca de exercícios', e, st);
-    } finally {
-      _seeding = false;
+      _log.warning('Falha ao sincronizar a biblioteca de exercícios', e, st);
     }
   }
 
