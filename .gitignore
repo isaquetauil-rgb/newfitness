@@ -46,3 +46,10 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Configuração nativa do Firebase (gerada por `flutterfire configure` /
+# baixada do console) — específica de cada projeto Firebase, não deve ir
+# para o controle de versão.
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+macos/Runner/GoogleService-Info.plist

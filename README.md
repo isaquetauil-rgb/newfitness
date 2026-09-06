@@ -4,26 +4,114 @@ App de treino em Flutter com login, registro de treinos (exercícios/séries/
 repetições), cronômetro de descanso, biblioteca de exercícios com vídeo
 demonstrativo, histórico com gráfico de progresso e perfil do usuário.
 
-## Estrutura do projeto
+## Arquitetura
+
+O app é organizado **feature-first**, com camadas separadas dentro de cada
+feature:
 
 ```
 lib/
-  models/            # Exercise, Workout, LoggedExercise, WorkoutSet, UserProfile
-  services/          # AuthService (Firebase Auth), FirestoreService (Firestore)
-  providers/         # AuthProvider, WorkoutProvider, ExerciseProvider (estado global)
-  screens/
-    auth/            # login_screen.dart, register_screen.dart
-    home/            # home_screen.dart (navegação inferior)
-    workout/         # workout_screen.dart, rest_timer_sheet.dart
-    exercises/       # exercise_library_screen.dart, exercise_detail_screen.dart,
-                      # exercise_picker_screen.dart
-    progress/        # progress_screen.dart (gráficos com fl_chart)
-    profile/         # profile_screen.dart
-  theme/             # app_theme.dart
-  data/              # sample_exercises.dart (dados de exemplo/fallback)
-  firebase_options.dart  # PLACEHOLDER — veja passo 2 abaixo
-  main.dart
+├── main.dart                # bootstrap: runZonedGuarded, Firebase.initializeApp,
+│                             # ErrorHandler.init, setupInjector, runApp
+├── app/
+│   ├── app.dart              # MaterialApp.router + composição dos providers (MultiProvider)
+│   ├── routes/
+│   │   ├── app_routes.dart   # constantes de caminho (AppRoutes.login, .workout, ...)
+│   │   └── app_router.dart   # GoRouter: StatefulShellRoute das abas, redirect de auth
+│   ├── theme/app_theme.dart
+│   └── widgets/
+│       ├── app_shell.dart    # bottom-nav (StatefulShellRoute.indexedStack)
+│       └── error_view.dart   # fallback do ErrorWidget.builder
+├── core/                     # infraestrutura sem regra de negócio
+│   ├── di/injector.dart      # get_it: registra os services como singletons
+│   ├── error/                # AppException (hierarquia tipada) + ErrorHandler global
+│   ├── logging/app_logger.dart
+│   ├── network/functions_client.dart  # chamada de Cloud Functions com erro tratado
+│   ├── storage/local_prefs.dart       # SharedPreferences (preferências de UI)
+│   └── constants/firestore_paths.dart # nomes de coleção num único lugar
+├── shared/
+│   ├── models/                # Workout, Exercise, Reminder, UserProfile, etc.
+│   │                           # (usados por 2+ features — ficam aqui para não
+│   │                           #  criar import cíclico entre features)
+│   └── services/               # FirestoreService, StorageService
+│                                # (usados por 4+ features)
+└── features/
+    ├── auth/           data/auth_service.dart · logic/auth_provider.dart ·
+    │                    presentation/{login,register,forgot_password}_screen.dart
+    ├── home/           presentation/home_dashboard_screen.dart
+    ├── profile/        presentation/profile_screen.dart
+    ├── notifications/  data/notification_service.dart · logic/reminder_provider.dart ·
+    │                    presentation/reminders_screen.dart
+    ├── workout/        logic/workout_provider.dart ·
+    │                    presentation/{workout_screen,rest_timer_sheet,exercise_picker_screen}.dart
+    ├── exercises/      logic/exercise_provider.dart ·
+    │                    presentation/{exercise_library_screen,exercise_detail_screen}.dart
+    ├── progress/       logic/body_photo_provider.dart ·
+    │                    presentation/{progress_screen,body_progress_screen}.dart
+    ├── ai/             data/ai_service.dart · logic/{chat_provider,meal_photo_provider}.dart ·
+    │                    presentation/{ai_hub_screen,chat_screen,meals_screen}.dart
+    └── instructor/     presentation/{instructor_dashboard_screen,student_detail_screen}.dart
 ```
+
+`firebase_options.dart` fica na raiz de `lib/` (gerado pelo `flutterfire
+configure`, não é código do app). `functions/` (Cloud Functions em
+TypeScript) é um projeto Node separado, fora de `lib/`.
+
+### Decisões de arquitetura
+
+- **Gerenciamento de estado: `provider`.** Cada feature expõe um
+  `ChangeNotifier` em `logic/`, registrado uma vez em `app/app.dart` via
+  `MultiProvider`. Não usamos Riverpod/Bloc — `provider` já resolve bem o
+  tamanho atual do app, e trocar geraria uma reescrita grande sem ganho
+  proporcional agora.
+- **Injeção de dependência: `get_it`** (`core/di/injector.dart`), só para
+  resolver *quem constrói* os services (`FirestoreService`, `StorageService`,
+  `AuthService`, `NotificationService`, `AiService`) como singletons — os
+  `ChangeNotifier`s recebem esses services pelo construtor
+  (`WorkoutProvider({FirestoreService? firestoreService})`), o que também
+  facilita passar mocks nos testes. Isso substitui o padrão anterior de
+  cada tela instanciar `FirestoreService()` direto.
+- **Navegação: `go_router`**, com `StatefulShellRoute.indexedStack` para a
+  barra inferior (cada aba mantém sua própria pilha) e um `redirect` baseado
+  em `refreshListenable: authProvider` para proteger as rotas autenticadas —
+  substitui o antigo widget `AuthGate` que fazia essa checagem manualmente.
+- **Tratamento de erro**: `core/error/app_exception.dart` define uma
+  hierarquia tipada (`NetworkException`, `AuthException`,
+  `NotFoundException`, `ValidationException`, `UnknownException`).
+  `FirestoreService`, `StorageService` e as chamadas de Cloud Functions
+  (`core/network/functions_client.dart`, usado por `AiService`) capturam a
+  exceção original, logam via `AppLogger` e relançam como `AppException` com
+  mensagem amigável. `main.dart` + `core/error/error_handler.dart` capturam
+  qualquer erro não tratado (`runZonedGuarded`, `FlutterError.onError`,
+  `PlatformDispatcher.onError`, `ErrorWidget.builder`) para nunca mostrar a
+  tela vermelha de erro do Flutter em produção.
+- **Logging**: `AppLogger` (`core/logging/app_logger.dart`) envolve
+  `package:logging`; é o único ponto de saída de log do app, pronto para
+  depois plugar um backend (Crashlytics, Sentry) sem mexer em quem chama.
+- **Persistência local**: `core/storage/local_prefs.dart` usa
+  `shared_preferences` para preferências de UI (ex: última aba aberta) — o
+  Firestore continua sendo a fonte de verdade dos dados do usuário.
+
+### Testes
+
+```
+test/
+├── helpers/mocks.dart     # Mocks (mocktail) dos 5 services + fallback values
+├── unit/                  # AuthProvider, WorkoutProvider, ReminderProvider
+└── widget/                # LoginScreen, ForgotPasswordScreen
+```
+
+Rodar tudo: `flutter test`. Os testes de provider mockam os services
+(`AuthService`, `FirestoreService`, `NotificationService`) com `mocktail` —
+nenhum teste toca o Firebase de verdade.
+
+### CI
+
+`.github/workflows/flutter_ci.yml` roda em todo push/PR para `main`:
+`flutter pub get` → `dart format --set-exit-if-changed` → `flutter analyze`
+→ `flutter test`. Não faz `flutter build` porque isso exigiria
+`google-services.json`/`GoogleService-Info.plist` (específicos de cada
+projeto Firebase, de propósito fora do repositório — veja `.gitignore`).
 
 ## Como rodar
 
@@ -127,7 +215,7 @@ service firebase.storage {
 
 ### 4. Popular a biblioteca de exercícios
 
-Por enquanto o app usa `lib/data/sample_exercises.dart` como fallback caso a
+Por enquanto o app usa `lib/shared/models/sample_exercises.dart` como fallback caso a
 coleção `exercises` do Firestore esteja vazia. Para persistir esses dados de
 verdade, você pode rodar um script simples chamando
 `FirestoreService().seedExercise(...)` para cada item de `sampleExercises`,
@@ -142,8 +230,12 @@ flutter run
 
 ## O que já está implementado
 
-- ✅ Login e cadastro com Firebase Auth (e-mail/senha), com escolha de
-  **papel** (aluno ou instrutor) direto no cadastro
+- ✅ Login, cadastro e **recuperação de senha** com Firebase Auth
+  (e-mail/senha), com escolha de **papel** (aluno ou instrutor) direto no
+  cadastro
+- ✅ Aba **Início** com resumo do dia (treino em andamento, lembretes ativos)
+  e atalhos para as outras abas
+- ✅ Navegação por `go_router` com transições animadas entre telas
 - ✅ Início/registro de treino com múltiplos exercícios, séries, reps e peso
 - ✅ Cronômetro de descanso entre séries (com presets de 30/60/90/120s)
 - ✅ Biblioteca de exercícios com busca, filtro por grupo muscular e vídeo
@@ -178,8 +270,8 @@ de foto retornam erro** — o resto do app funciona normalmente.
 - Instrutor poder montar/atribuir planos de treino para os alunos
 - Editar/excluir um treino já salvo
 - Limite de uso diário do chat/análise de IA por usuário (controle de custo)
-- Testes automatizados com mock do Firebase (`firebase_auth_mocks`,
-  `fake_cloud_firestore`)
+- Testes de integração com Firebase real/emulado (`firebase_auth_mocks`,
+  `fake_cloud_firestore`) complementando os testes unitários existentes
 
 ## Permissões nativas já configuradas
 

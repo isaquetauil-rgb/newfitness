@@ -1,0 +1,33 @@
+name: Flutter CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  analyze-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version-file: pubspec.yaml
+          channel: stable
+
+      - name: Instalar dependências
+        run: flutter pub get
+
+      - name: Checar formatação
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Analisar código estático
+        run: flutter analyze
+
+      - name: Rodar testes
+        run: flutter test
+
+      # Não fazemos `flutter build` aqui: o build de Android/iOS depende de
+      # google-services.json / GoogleService-Info.plist, que são específicos
+      # de cada projeto Firebase e não ficam no repositório (veja .gitignore).
