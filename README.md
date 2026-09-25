@@ -296,11 +296,44 @@ funciona normalmente sem depender da IA.
 ## Painel de administração
 
 O e-mail do dono do app está fixo em `lib/core/constants/admin_config.dart`
-(`ownerEmail`) e replicado em `firestore.rules` (função `isAdmin()`) — são
-os dois lugares que precisam mudar juntos se um dia você trocar de conta.
+(`ownerEmail`) e replicado em `firestore.rules` (função `isAdmin()`) e em
+`functions/src/admin.ts` (`ADMIN_EMAIL`, usado por `getAdminStats`) — são
+os três lugares que precisam mudar juntos se um dia você trocar de conta.
+Trocar o papel de um usuário (aluno/instrutor/nutricionista) é feito SÓ
+pela Cloud Function `setUserRole` (`functions/src/admin.ts`) — as regras
+não deixam nenhum cliente, nem o admin, gravar `role` direto. Ao tirar
+alguém de instrutor, a Function encerra antes todos os vínculos de
+instrutor dessa pessoa (senão ela continuaria acessando os alunos antigos).
+
 Não existe fluxo de "virar admin" pelo app de propósito: é sempre a mesma
 conta, verificada tanto na UI (mostra/esconde a aba) quanto no servidor
 (regra do Firestore, que é a barreira de segurança real).
+
+## Deploy de regras e fotos privadas (checklist)
+
+Nada disto é aplicado automaticamente — rode manualmente, com uma conta que
+tenha acesso ao projeto `newfitnessappbr`.
+
+1. **Functions antes das regras** — o cadastro de instrutor/nutricionista
+   depende de `ensureInviteCode`:
+   `firebase deploy --only functions`
+2. **Regras juntas** (as de Storage consultam o Firestore):
+   `firebase deploy --only firestore:rules,storage`
+   Na primeira vez, a CLI pede para conceder ao Storage a permissão de ler
+   o Firestore (regras "cross-service"). Aceite — sem isso toda leitura de
+   foto de evolução é negada.
+3. **CORS do bucket (só para o Flutter Web)** — fotos de evolução novas
+   não têm URL pública; o app baixa os bytes pelo SDK, e o navegador só
+   permite isso com CORS configurado no bucket:
+   ```bash
+   gsutil cors set storage.cors.json gs://newfitnessappbr.firebasestorage.app
+   gsutil cors get gs://newfitnessappbr.firebasestorage.app   # conferir
+   ```
+   Ajuste as origens em `storage.cors.json` se o app Web for servido em
+   outro domínio. Android/iOS não precisam disso.
+4. **Fotos antigas** (gravadas com `imageUrl`) continuam com link público
+   até o token ser revogado no Console do Firebase (Storage → arquivo →
+   "Revogar token") ou a foto ser reenviada.
 
 ## Próximos passos sugeridos
 
@@ -318,8 +351,10 @@ conta, verificada tanto na UI (mostra/esconde a aba) quanto no servidor
   (`SCHEDULE_EXACT_ALARM`), reagendamento após reboot
   (`RECEIVE_BOOT_COMPLETED`), câmera. Também foi habilitado
   *core library desugaring*, exigido pelo `flutter_local_notifications`.
-- **iOS**: descrições de uso de câmera e galeria (`NSCameraUsageDescription`,
-  `NSPhotoLibraryUsageDescription`) exigidas pela Apple; a permissão de
+- **iOS**: descrições de uso de câmera, microfone (áudio dos vídeos de
+  exercício) e galeria (`NSCameraUsageDescription`,
+  `NSMicrophoneUsageDescription`, `NSPhotoLibraryUsageDescription`)
+  exigidas pela Apple; a permissão de
   notificação é solicitada em tempo de execução pelo app (tela de
   Lembretes) via `permission_handler`.
 
