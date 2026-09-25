@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'package:newfitness/core/di/injector.dart';
+import 'package:newfitness/core/error/app_exception.dart';
 import 'package:newfitness/features/ai/data/ai_service.dart';
 import 'package:newfitness/shared/models/meal_photo.dart';
 import 'package:newfitness/shared/services/firestore_service.dart';
@@ -57,8 +58,16 @@ class MealPhotoProvider extends ChangeNotifier {
           mealType: mealType.label,
         );
         await _firestoreService.updateMealPhotoAnalysis(uid, id, analysis);
-      } catch (_) {
-        // Falha silenciosa na análise — a foto já está salva.
+      } catch (e) {
+        // A foto já está salva; só registra por que não houve análise
+        // (ex: limite do plano atingido), para o card não ficar em
+        // "Analisando..." para sempre.
+        final reason = e is AppException
+            ? e.message
+            : 'Não foi possível analisar esta foto agora.';
+        try {
+          await _firestoreService.markMealPhotoAnalysisFailed(uid, id, reason);
+        } catch (_) {}
       }
     } catch (e) {
       _uploading = false;

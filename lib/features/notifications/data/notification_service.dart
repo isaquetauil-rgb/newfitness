@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, visibleForTesting;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
@@ -109,19 +109,26 @@ class NotificationService {
     await _plugin.cancelAll();
   }
 
+  /// Próximo horário [hour]:[minute] no RELÓGIO DO APARELHO.
+  ///
+  /// `tz.local` do pacote `timezone` é UTC por padrão (o app não usa um
+  /// plugin para descobrir o fuso do aparelho), então montar o horário
+  /// direto em `tz.local` agendava "08:00" para 08:00 UTC — 05:00 no
+  /// horário de Brasília. Aqui o horário é montado com o `DateTime` local
+  /// e convertido para o mesmo instante; a repetição diária
+  /// (`DateTimeComponents.time`) mantém esse horário todo dia. Limitação:
+  /// em regiões com horário de verão o alarme desloca 1h após a troca até
+  /// o próximo reagendamento (o app reagenda ao abrir).
   tz.TZDateTime _nextInstanceOf(int hour, int minute) {
-    final now = tz.TZDateTime.now(tz.local);
-    var scheduled = tz.TZDateTime(
-      tz.local,
-      now.year,
-      now.month,
-      now.day,
-      hour,
-      minute,
-    );
-    if (scheduled.isBefore(now)) {
-      scheduled = scheduled.add(const Duration(days: 1));
+    return nextLocalOccurrence(hour, minute, DateTime.now());
+  }
+
+  @visibleForTesting
+  static tz.TZDateTime nextLocalOccurrence(int hour, int minute, DateTime now) {
+    var scheduled = DateTime(now.year, now.month, now.day, hour, minute);
+    if (!scheduled.isAfter(now)) {
+      scheduled = DateTime(now.year, now.month, now.day + 1, hour, minute);
     }
-    return scheduled;
+    return tz.TZDateTime.from(scheduled, tz.UTC);
   }
 }

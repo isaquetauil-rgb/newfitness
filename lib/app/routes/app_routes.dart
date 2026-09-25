@@ -20,12 +20,19 @@ class AppRoutes {
   static const notifications = '/notifications';
   static const ai = '/ai';
   static const instructor = '/instructor';
+  static const instructorTemplates = '/instructor/templates';
+  static const instructorExercises = '/instructor/exercises';
+  static const instructorExerciseForm = '/instructor/exercises/edit';
+  static const nutritionist = '/nutritionist';
+  static const nutritionistStudent = '/nutritionist/student';
+  static const nutritionistPlanEditor = '/nutritionist/student/plan';
   static const instructorStudent = '/instructor/student';
   static const instructorPlanEditor = '/instructor/student/plan';
   static const admin = '/admin';
   static const adminUsers = '/admin/users';
   static const adminExercises = '/admin/exercises';
   static const adminExerciseForm = '/admin/exercises/edit';
+  static const adminTaxonomy = '/admin/taxonomy';
   static const profile = '/profile';
   static const progressCalendar = '/progress-calendar';
 
@@ -35,6 +42,7 @@ class AppRoutes {
   static const physicalAssessment = '/physical-assessment';
   static const finance = '/finance';
   static const agenda = '/agenda';
+  static const nutrition = '/nutrition';
   static const myCards = '/my-cards';
   static const activeContracts = '/active-contracts';
   static const documents = '/documents';

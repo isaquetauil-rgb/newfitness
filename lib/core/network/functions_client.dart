@@ -52,8 +52,25 @@ class FunctionsClient {
           stackTrace: stack,
         );
       case 'invalid-argument':
+        // As Functions já mandam mensagens prontas para o usuário (ex:
+        // "Código de instrutor inválido.") — antes elas eram trocadas por
+        // um texto técnico com o nome da Function.
         return ValidationException(
-          'Dados inválidos enviados para "$name".',
+          e.message ?? 'Dados inválidos.',
+          cause: e,
+          stackTrace: stack,
+        );
+      case 'resource-exhausted':
+        // Limite mensal de uso de IA do plano Básico atingido — a mensagem
+        // amigável já vem pronta de `assertAiUsageAllowed` no backend.
+        return ValidationException(
+          e.message ?? 'Limite de uso atingido.',
+          cause: e,
+          stackTrace: stack,
+        );
+      case 'permission-denied':
+        return AuthException(
+          e.message ?? 'Você não tem permissão para fazer isso.',
           cause: e,
           stackTrace: stack,
         );

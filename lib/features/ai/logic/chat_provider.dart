@@ -33,15 +33,15 @@ class ChatProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
 
-    final userMessage = ChatMessage(
-      id: '',
-      role: ChatRole.user,
-      content: text.trim(),
-      createdAt: DateTime.now(),
-    );
-    await _firestoreService.addChatMessage(uid, userMessage);
-
     try {
+      final userMessage = ChatMessage(
+        id: '',
+        role: ChatRole.user,
+        content: text.trim(),
+        createdAt: DateTime.now(),
+      );
+      await _firestoreService.addChatMessage(uid, userMessage);
+
       final history = historySoFar
           .map(
             (m) => {

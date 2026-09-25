@@ -21,9 +21,55 @@ class StorageService {
 
   final FirebaseStorage _storage;
 
-  /// Envia uma foto de evolução do corpo e retorna a URL pública de download.
-  Future<String> uploadBodyPhoto(String uid, Uint8List bytes) {
-    return _upload('users/$uid/body_photos', bytes);
+  /// Envia uma foto de evolução do corpo e retorna o CAMINHO no Storage
+  /// (não uma URL de download). Foto corporal é dado sensível: uma URL de
+  /// download tem token embutido e abre para qualquer um que tenha o link,
+  /// ignorando as Storage Rules. Guardando só o caminho, a leitura é feita
+  /// com [getBytes], que passa pelas regras a cada acesso.
+  Future<String> uploadBodyPhoto(String uid, Uint8List bytes) async {
+    final path =
+        'users/$uid/body_photos/${DateTime.now().millisecondsSinceEpoch}.jpg';
+    try {
+      await _storage
+          .ref()
+          .child(path)
+          .putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
+      return path;
+    } catch (e, st) {
+      _log.warning('Falha ao enviar foto de evolução', e, st);
+      throw NetworkException(
+        'Não foi possível enviar o arquivo. Tente novamente.',
+        cause: e,
+        stackTrace: st,
+      );
+    }
+  }
+
+  /// Baixa um arquivo privado pelo caminho — sujeito às Storage Rules.
+  Future<Uint8List> getBytes(
+    String path, {
+    int maxSize = 15 * 1024 * 1024,
+  }) async {
+    try {
+      final data = await _storage.ref().child(path).getData(maxSize);
+      if (data == null) throw StateError('Arquivo vazio: $path');
+      return data;
+    } catch (e, st) {
+      _log.info('Falha ao baixar "$path"', e, st);
+      throw NetworkException(
+        'Não foi possível carregar a imagem.',
+        cause: e,
+        stackTrace: st,
+      );
+    }
+  }
+
+  Future<void> deleteByPath(String path) async {
+    try {
+      await _storage.ref().child(path).delete();
+    } catch (e, st) {
+      _log.info('Arquivo já não existia ou falhou ao remover: $path', e, st);
+    }
   }
 
   /// Envia uma foto de refeição e retorna a URL pública de download.
@@ -31,19 +77,46 @@ class StorageService {
     return _upload('users/$uid/meal_photos', bytes);
   }
 
-  Future<String> _upload(String folder, Uint8List bytes) async {
+  /// Envia o vídeo próprio de um exercício gravado/selecionado pelo
+  /// instrutor e retorna a URL pública de download — alternativa a colar um
+  /// link do YouTube (ver `Exercise.videoUrl`, que aceita os dois formatos).
+  Future<String> uploadExerciseVideo(
+    String instructorUid,
+    Uint8List bytes, {
+    String extension = 'mp4',
+  }) {
+    const mimeByExtension = {
+      'mov': 'video/quicktime',
+      'm4v': 'video/x-m4v',
+      '3gp': 'video/3gpp',
+      'mkv': 'video/x-matroska',
+    };
+    return _upload(
+      'users/$instructorUid/exercise_videos',
+      bytes,
+      extension: extension,
+      contentType: mimeByExtension[extension] ?? 'video/$extension',
+    );
+  }
+
+  Future<String> _upload(
+    String folder,
+    Uint8List bytes, {
+    String extension = 'jpg',
+    String contentType = 'image/jpeg',
+  }) async {
     try {
-      final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final fileName = '${DateTime.now().millisecondsSinceEpoch}.$extension';
       final ref = _storage.ref().child('$folder/$fileName');
       final task = await ref.putData(
         bytes,
-        SettableMetadata(contentType: 'image/jpeg'),
+        SettableMetadata(contentType: contentType),
       );
       return await task.ref.getDownloadURL();
     } catch (e, st) {
       _log.warning('Falha ao enviar arquivo para "$folder"', e, st);
       throw NetworkException(
-        'Não foi possível enviar a foto. Tente novamente.',
+        'Não foi possível enviar o arquivo. Tente novamente.',
         cause: e,
         stackTrace: st,
       );

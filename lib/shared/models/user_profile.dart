@@ -1,4 +1,26 @@
-enum UserRole { student, instructor }
+enum UserRole { student, instructor, nutritionist }
+
+String userRoleToString(UserRole role) {
+  switch (role) {
+    case UserRole.instructor:
+      return 'instructor';
+    case UserRole.nutritionist:
+      return 'nutritionist';
+    case UserRole.student:
+      return 'student';
+  }
+}
+
+UserRole userRoleFromString(String? value) {
+  switch (value) {
+    case 'instructor':
+      return UserRole.instructor;
+    case 'nutritionist':
+      return UserRole.nutritionist;
+    default:
+      return UserRole.student;
+  }
+}
 
 /// Dados de perfil do usuário armazenados no Firestore.
 class UserProfile {
@@ -11,7 +33,13 @@ class UserProfile {
   final DateTime? birthDate;
   final UserRole role;
   final String? instructorId; // preenchido só para alunos, depois de vincular
-  final String? inviteCode; // preenchido só para instrutores
+  // Vínculo independente do instrutor — um aluno pode ter os dois, um só,
+  // ou nenhum. A nutricionista fica isolada do domínio de treino (e
+  // vice-versa): ver `firestore.rules` (nutrition_chat/nutrition_plans não
+  // são legíveis pelo instrutor, training_plans não é legível pela
+  // nutricionista).
+  final String? nutritionistId;
+  final String? inviteCode; // preenchido só para instrutores/nutricionistas
   final bool isPrivate;
 
   const UserProfile({
@@ -24,6 +52,7 @@ class UserProfile {
     this.birthDate,
     this.role = UserRole.student,
     this.instructorId,
+    this.nutritionistId,
     this.inviteCode,
     this.isPrivate = false,
   });
@@ -39,10 +68,9 @@ class UserProfile {
       birthDate: map['birthDate'] != null
           ? DateTime.fromMillisecondsSinceEpoch(map['birthDate'] as int)
           : null,
-      role: (map['role'] as String?) == 'instructor'
-          ? UserRole.instructor
-          : UserRole.student,
+      role: userRoleFromString(map['role'] as String?),
       instructorId: map['instructorId'] as String?,
+      nutritionistId: map['nutritionistId'] as String?,
       inviteCode: map['inviteCode'] as String?,
       isPrivate: map['isPrivate'] as bool? ?? false,
     );
@@ -56,8 +84,9 @@ class UserProfile {
       'heightCm': heightCm,
       'goalWeightKg': goalWeightKg,
       'birthDate': birthDate?.millisecondsSinceEpoch,
-      'role': role == UserRole.instructor ? 'instructor' : 'student',
+      'role': userRoleToString(role),
       'instructorId': instructorId,
+      'nutritionistId': nutritionistId,
       'inviteCode': inviteCode,
       'isPrivate': isPrivate,
     };
@@ -71,6 +100,7 @@ class UserProfile {
     DateTime? birthDate,
     UserRole? role,
     String? instructorId,
+    String? nutritionistId,
     String? inviteCode,
     bool? isPrivate,
   }) {
@@ -84,6 +114,7 @@ class UserProfile {
       birthDate: birthDate ?? this.birthDate,
       role: role ?? this.role,
       instructorId: instructorId ?? this.instructorId,
+      nutritionistId: nutritionistId ?? this.nutritionistId,
       inviteCode: inviteCode ?? this.inviteCode,
       isPrivate: isPrivate ?? this.isPrivate,
     );

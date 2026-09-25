@@ -11,6 +11,14 @@ class PlanExercise {
   final int restSeconds;
   final String? notes;
 
+  /// Preenchido quando este exercício substituiu outro no plano (ver
+  /// "Trocar exercício" em `PlanEditorScreen`) — guarda o exercício
+  /// originalmente prescrito pelo instrutor, não o imediatamente anterior,
+  /// então uma segunda troca continua apontando para a origem da cadeia.
+  /// `null` quando nunca foi trocado.
+  final String? replacedExerciseId;
+  final String? replacedExerciseName;
+
   const PlanExercise({
     required this.exerciseId,
     required this.exerciseName,
@@ -19,6 +27,8 @@ class PlanExercise {
     this.targetWeightsKg = '',
     this.restSeconds = 60,
     this.notes,
+    this.replacedExerciseId,
+    this.replacedExerciseName,
   });
 
   factory PlanExercise.fromMap(Map<String, dynamic> map) {
@@ -30,6 +40,8 @@ class PlanExercise {
       targetWeightsKg: map['targetWeightsKg'] as String? ?? '',
       restSeconds: (map['restSeconds'] as num?)?.toInt() ?? 60,
       notes: map['notes'] as String?,
+      replacedExerciseId: map['replacedExerciseId'] as String?,
+      replacedExerciseName: map['replacedExerciseName'] as String?,
     );
   }
 
@@ -42,7 +54,30 @@ class PlanExercise {
       'targetWeightsKg': targetWeightsKg,
       'restSeconds': restSeconds,
       'notes': notes,
+      'replacedExerciseId': replacedExerciseId,
+      'replacedExerciseName': replacedExerciseName,
     };
+  }
+
+  /// Usado por "Trocar exercício" no editor de plano: troca o exercício
+  /// mantendo séries/reps/peso/descanso/observações já preenchidos.
+  PlanExercise copyWith({
+    String? exerciseId,
+    String? exerciseName,
+    String? replacedExerciseId,
+    String? replacedExerciseName,
+  }) {
+    return PlanExercise(
+      exerciseId: exerciseId ?? this.exerciseId,
+      exerciseName: exerciseName ?? this.exerciseName,
+      targetSets: targetSets,
+      targetReps: targetReps,
+      targetWeightsKg: targetWeightsKg,
+      restSeconds: restSeconds,
+      notes: notes,
+      replacedExerciseId: replacedExerciseId ?? this.replacedExerciseId,
+      replacedExerciseName: replacedExerciseName ?? this.replacedExerciseName,
+    );
   }
 }
 

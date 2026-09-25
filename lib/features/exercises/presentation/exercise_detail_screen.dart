@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 
 import 'package:newfitness/shared/models/exercise.dart';
@@ -13,7 +14,8 @@ class ExerciseDetailScreen extends StatefulWidget {
 }
 
 class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
-  YoutubePlayerController? _controller;
+  YoutubePlayerController? _youtubeController;
+  bool _isOwnVideo = false;
 
   @override
   void initState() {
@@ -22,17 +24,22 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
       widget.exercise.videoUrl,
     );
     if (videoId != null) {
-      _controller = YoutubePlayerController.fromVideoId(
+      _youtubeController = YoutubePlayerController.fromVideoId(
         videoId: videoId,
         autoPlay: false,
         params: const YoutubePlayerParams(showFullscreenButton: true),
       );
+    } else if (widget.exercise.videoUrl.isNotEmpty) {
+      // Não é um link do YouTube reconhecível — trata como vídeo próprio do
+      // instrutor, enviado ao Firebase Storage (ver `StorageService.
+      // uploadExerciseVideo`), reproduzido com um player nativo.
+      _isOwnVideo = true;
     }
   }
 
   @override
   void dispose() {
-    _controller?.close();
+    _youtubeController?.close();
     super.dispose();
   }
 
@@ -100,12 +107,83 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
   }
 
   Widget _buildVideoArea() {
-    if (_controller == null) {
+    if (_youtubeController != null) {
+      return YoutubePlayer(controller: _youtubeController!);
+    }
+    if (_isOwnVideo) {
+      return _OwnVideoPlayer(url: widget.exercise.videoUrl);
+    }
+    return const Center(
+      child: Icon(Icons.videocam_off, color: Colors.grey, size: 40),
+    );
+  }
+}
+
+/// Reproduz o vídeo próprio de um instrutor (arquivo no Firebase Storage) —
+/// controles mínimos (play/pause + barra de progresso), sem as opções que só
+/// fazem sentido pra vídeo do YouTube.
+class _OwnVideoPlayer extends StatefulWidget {
+  const _OwnVideoPlayer({required this.url});
+
+  final String url;
+
+  @override
+  State<_OwnVideoPlayer> createState() => _OwnVideoPlayerState();
+}
+
+class _OwnVideoPlayerState extends State<_OwnVideoPlayer> {
+  late final VideoPlayerController _controller;
+  bool _ready = false;
+  bool _failed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.url))
+      ..initialize()
+          .then((_) {
+            if (mounted) setState(() => _ready = true);
+          })
+          .catchError((_) {
+            if (mounted) setState(() => _failed = true);
+          });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_failed) {
       return const Center(
-        child: Icon(Icons.videocam_off, color: Colors.grey, size: 40),
+        child: Icon(Icons.error_outline, color: Colors.grey, size: 40),
       );
     }
-    return YoutubePlayer(controller: _controller!);
+    if (!_ready) {
+      return const Center(child: CircularProgressIndicator(strokeWidth: 2));
+    }
+    return Stack(
+      alignment: Alignment.bottomCenter,
+      children: [
+        GestureDetector(
+          onTap: () => setState(
+            () => _controller.value.isPlaying
+                ? _controller.pause()
+                : _controller.play(),
+          ),
+          child: AspectRatio(
+            aspectRatio: _controller.value.aspectRatio,
+            child: VideoPlayer(_controller),
+          ),
+        ),
+        if (!_controller.value.isPlaying)
+          const Icon(Icons.play_circle_fill, color: Colors.white70, size: 56),
+        VideoProgressIndicator(_controller, allowScrubbing: true),
+      ],
+    );
   }
 }
 

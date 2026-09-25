@@ -5,10 +5,12 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:newfitness/app/routes/app_routes.dart';
+import 'package:newfitness/app/theme/theme_provider.dart';
 import 'package:newfitness/app/widgets/drawer_menu_button.dart';
 import 'package:newfitness/core/constants/admin_config.dart';
 import 'package:newfitness/core/di/injector.dart';
 import 'package:newfitness/features/auth/logic/auth_provider.dart';
+import 'package:newfitness/features/profile/presentation/manage_link_sheet.dart';
 import 'package:newfitness/features/workout/logic/workout_provider.dart';
 import 'package:newfitness/shared/models/user_profile.dart';
 import 'package:newfitness/shared/models/workout.dart';
@@ -33,9 +35,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   void _syncFromProfile(UserProfile? profile) {
     if (_initialized || profile == null) return;
-    _weightCtrl.text = profile.weightKg?.toString() ?? '';
-    _heightCtrl.text = profile.heightCm?.toString() ?? '';
-    _goalCtrl.text = profile.goalWeightKg?.toString() ?? '';
+    String fmt(double? v) =>
+        v == null ? '' : v.toString().replaceFirst(RegExp(r'\.0$'), '');
+    _weightCtrl.text = fmt(profile.weightKg);
+    _heightCtrl.text = fmt(profile.heightCm);
+    _goalCtrl.text = fmt(profile.goalWeightKg);
     _initialized = true;
   }
 
@@ -45,24 +49,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final authProvider = context.read<AuthProvider>();
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _linking = true);
-    final instructor = await _firestoreService.findInstructorByCode(code);
+    // Valida e grava o vínculo no servidor (Cloud Function) — o app nunca
+    // escreve `instructorId` diretamente, ver `firestore.rules`.
+    final instructorName = await authProvider.linkToInstructor(code);
     if (!mounted) return;
-    if (instructor == null) {
-      setState(() => _linking = false);
+    setState(() => _linking = false);
+    if (instructorName == null) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('Código de instrutor inválido')),
+        SnackBar(
+          content: Text(
+            authProvider.errorMessage ?? 'Código de instrutor inválido',
+          ),
+        ),
       );
       return;
     }
-    await _firestoreService.linkStudentToInstructor(
-      student: profile,
-      instructorId: instructor.uid,
-    );
-    if (!mounted) return;
-    await authProvider.refreshProfile();
-    setState(() => _linking = false);
     messenger.showSnackBar(
-      SnackBar(content: Text('Vinculado a ${instructor.name}!')),
+      SnackBar(content: Text('Vinculado a $instructorName!')),
     );
   }
 
@@ -108,14 +111,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       ),
     );
-  }
-
-  Future<void> _togglePrivate(UserProfile profile, bool value) async {
-    final authProvider = context.read<AuthProvider>();
-    await _firestoreService.updateUserProfile(
-      profile.copyWith(isPrivate: value),
-    );
-    if (mounted) await authProvider.refreshProfile();
   }
 
   void _inviteFriends() {
@@ -164,25 +159,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _save(UserProfile current) async {
     final authProvider = context.read<AuthProvider>();
     final messenger = ScaffoldMessenger.of(context);
+    // Aceita vírgula (teclado pt-BR). Antes "75,5" virava null e o valor
+    // era ignorado em silêncio, mesmo com a mensagem "Perfil atualizado".
+    double? parse(TextEditingController c) =>
+        double.tryParse(c.text.trim().replaceAll(',', '.'));
+    final invalid = [
+      _weightCtrl,
+      _heightCtrl,
+      _goalCtrl,
+    ].any((c) => c.text.trim().isNotEmpty && parse(c) == null);
+    if (invalid) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Use apenas números (ex.: 75,5).')),
+      );
+      return;
+    }
     setState(() => _saving = true);
     final updated = current.copyWith(
-      weightKg: double.tryParse(_weightCtrl.text),
-      heightCm: double.tryParse(_heightCtrl.text),
-      goalWeightKg: double.tryParse(_goalCtrl.text),
+      weightKg: parse(_weightCtrl),
+      heightCm: parse(_heightCtrl),
+      goalWeightKg: parse(_goalCtrl),
     );
-    await _firestoreService.updateUserProfile(updated);
-    if (mounted) {
+    try {
+      await _firestoreService.updateUserProfile(updated);
       await authProvider.refreshProfile();
-      setState(() => _saving = false);
       messenger.showSnackBar(
         const SnackBar(content: Text('Perfil atualizado')),
       );
+    } catch (_) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Não foi possível salvar o perfil.')),
+      );
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
+    final themeProvider = context.watch<ThemeProvider>();
     final profile = auth.profile;
     _syncFromProfile(profile);
 
@@ -233,6 +249,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 20),
                 if (profile.role == UserRole.instructor)
                   _InstructorCard(profile: profile)
+                // Nutricionista não se vincula a instrutor (a Function
+                // recusa) — antes via o cartão de vínculo de aluno.
+                else if (profile.role == UserRole.nutritionist)
+                  const SizedBox.shrink()
                 else if (profile.instructorId != null)
                   const _LinkedStudentCard()
                 else
@@ -332,10 +352,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       const Divider(height: 1),
                       SwitchListTile(
-                        secondary: const Icon(Icons.visibility_off_outlined),
-                        title: const Text('Tornar perfil privado'),
-                        value: profile.isPrivate,
-                        onChanged: (value) => _togglePrivate(profile, value),
+                        secondary: const Icon(Icons.dark_mode_outlined),
+                        title: const Text('Modo escuro'),
+                        value: themeProvider.isDarkMode,
+                        onChanged: themeProvider.setDarkMode,
                       ),
                     ],
                   ),
@@ -399,7 +419,10 @@ class _WeeklyProgressCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final workoutProvider = context.watch<WorkoutProvider>();
+    // `read` (não `watch`): o card só precisa do histórico salvo, e observar o
+    // provider recriava a consulta a cada série digitada no treino em
+    // andamento.
+    final workoutProvider = context.read<WorkoutProvider>();
 
     return Card(
       child: InkWell(
@@ -578,13 +601,18 @@ class _LinkedStudentCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       color: Colors.green.shade50,
-      child: const Padding(
-        padding: EdgeInsets.all(16),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
         child: Row(
           children: [
-            Icon(Icons.check_circle, color: Colors.green),
-            SizedBox(width: 8),
-            Expanded(child: Text('Você está vinculado a um instrutor.')),
+            const Icon(Icons.check_circle, color: Colors.green),
+            const SizedBox(width: 8),
+            const Expanded(child: Text('Você está vinculado a um instrutor.')),
+            TextButton(
+              onPressed: () =>
+                  showManageLinkSheet(context, LinkedProfessional.instructor),
+              child: const Text('Gerenciar'),
+            ),
           ],
         ),
       ),

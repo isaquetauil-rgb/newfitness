@@ -4,34 +4,91 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import 'package:newfitness/app/widgets/drawer_menu_button.dart';
+import 'package:newfitness/app/widgets/tab_switch_signal.dart';
 import 'package:newfitness/features/auth/logic/auth_provider.dart';
 import 'package:newfitness/features/workout/logic/workout_provider.dart';
 import 'package:newfitness/shared/models/workout.dart';
 
 import 'body_progress_screen.dart';
+import 'exercise_progress_list.dart';
 
-class ProgressScreen extends StatelessWidget {
+class ProgressScreen extends StatefulWidget {
   const ProgressScreen({super.key});
 
   @override
+  State<ProgressScreen> createState() => _ProgressScreenState();
+}
+
+class _ProgressScreenState extends State<ProgressScreen>
+    with SingleTickerProviderStateMixin {
+  late final TabController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TabController(length: 3, vsync: this);
+    TabSwitchSignal.progress.addListener(_onSignal);
+    _onSignal();
+  }
+
+  void _onSignal() {
+    final index = TabSwitchSignal.progress.value;
+    if (index != null) {
+      _controller.animateTo(index);
+      TabSwitchSignal.progress.value = null;
+    }
+  }
+
+  @override
+  void dispose() {
+    TabSwitchSignal.progress.removeListener(_onSignal);
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        appBar: AppBar(
-          leading: const DrawerMenuButton(),
-          title: const Text('Progresso'),
-          bottom: const TabBar(
-            tabs: [
-              Tab(text: 'Gráficos'),
-              Tab(text: 'Fotos'),
-            ],
-          ),
-        ),
-        body: const TabBarView(
-          children: [_WorkoutProgressTab(), BodyProgressScreen()],
+    return Scaffold(
+      appBar: AppBar(
+        leading: const DrawerMenuButton(),
+        title: const Text('Progresso'),
+        bottom: TabBar(
+          controller: _controller,
+          tabs: const [
+            Tab(text: 'Gráficos'),
+            Tab(text: 'Fotos'),
+            Tab(text: 'Por exercício'),
+          ],
         ),
       ),
+      body: TabBarView(
+        controller: _controller,
+        // "Fotos" fica no índice 1 de propósito — o menu lateral
+        // (`app_drawer.dart`) navega direto pra esse índice; a aba nova vai
+        // no fim pra não quebrar esse atalho.
+        children: [
+          const _WorkoutProgressTab(),
+          const BodyProgressScreen(),
+          _ExerciseProgressTab(uid: context.watch<AuthProvider>().user?.uid),
+        ],
+      ),
+    );
+  }
+}
+
+class _ExerciseProgressTab extends StatelessWidget {
+  const _ExerciseProgressTab({required this.uid});
+
+  final String? uid;
+
+  @override
+  Widget build(BuildContext context) {
+    if (uid == null) {
+      return const Center(child: Text('Faça login para ver seu progresso'));
+    }
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [ExerciseProgressList(uid: uid!)],
     );
   }
 }
@@ -49,6 +106,17 @@ class _WorkoutProgressTab extends StatelessWidget {
         : StreamBuilder<List<Workout>>(
             stream: workoutProvider.watchHistory(uid),
             builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(32),
+                    child: Text(
+                      'Não foi possível carregar seu histórico de treinos.',
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                );
+              }
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
               }

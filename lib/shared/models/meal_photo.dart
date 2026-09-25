@@ -23,6 +23,10 @@ class MealPhoto {
   final String imageUrl;
   final String? aiAnalysis;
 
+  /// Motivo de a análise da IA não ter saído (ex: limite do plano). Sem
+  /// isso o card ficava em "Analisando com IA..." para sempre.
+  final String? aiAnalysisError;
+
   const MealPhoto({
     required this.id,
     required this.userId,
@@ -30,6 +34,7 @@ class MealPhoto {
     required this.mealType,
     required this.imageUrl,
     this.aiAnalysis,
+    this.aiAnalysisError,
   });
 
   factory MealPhoto.fromMap(String id, Map<String, dynamic> map) {
@@ -45,6 +50,7 @@ class MealPhoto {
       ),
       imageUrl: map['imageUrl'] as String? ?? '',
       aiAnalysis: map['aiAnalysis'] as String?,
+      aiAnalysisError: map['aiAnalysisError'] as String?,
     );
   }
 
@@ -55,6 +61,7 @@ class MealPhoto {
       'mealType': mealType.name,
       'imageUrl': imageUrl,
       'aiAnalysis': aiAnalysis,
+      'aiAnalysisError': aiAnalysisError,
     };
   }
 }

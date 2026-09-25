@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:newfitness/core/error/app_exception.dart';
 import 'package:provider/provider.dart';
 
 import 'package:newfitness/features/admin/logic/admin_provider.dart';
@@ -79,28 +80,76 @@ class _UserTile extends StatefulWidget {
 class _UserTileState extends State<_UserTile> {
   bool _busy = false;
 
-  Future<void> _toggleRole() async {
-    setState(() => _busy = true);
+  Future<void> _setRole(UserRole role) async {
+    if (role == widget.user.role) return;
     final messenger = ScaffoldMessenger.of(context);
+    final leavingInstructor =
+        widget.user.role == UserRole.instructor && role != UserRole.instructor;
+    if (leavingInstructor) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text('Mudar ${widget.user.name} para ${_roleLabel(role)}?'),
+          content: const Text(
+            'Todos os alunos vinculados a este instrutor serão desvinculados '
+            'e ele perde o acesso aos dados deles. O histórico dos alunos '
+            'é preservado. Voltar a ser instrutor não restaura os vínculos.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Confirmar'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true || !mounted) return;
+    }
+    setState(() => _busy = true);
     try {
-      if (widget.user.role == UserRole.instructor) {
-        await widget.adminProvider.demoteToStudent(widget.user);
-      } else {
-        await widget.adminProvider.promoteToInstructor(widget.user);
-      }
-    } catch (e) {
+      final revoked = await widget.adminProvider.setRole(widget.user, role);
       messenger.showSnackBar(
-        const SnackBar(content: Text('Não foi possível alterar o papel.')),
+        SnackBar(
+          content: Text(
+            '${widget.user.name} agora é ${_roleLabel(role)}'
+            '${revoked > 0 ? ' · $revoked aluno(s) desvinculado(s)' : ''}.',
+          ),
+        ),
+      );
+    } catch (e) {
+      // Mensagem real da Function (ex: "O papel NÃO foi alterado — tente
+      // de novo"); a lista não muda, porque o papel não mudou.
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            e is AppException
+                ? e.message
+                : 'Não foi possível alterar o papel. Tente de novo.',
+          ),
+        ),
       );
     } finally {
       if (mounted) setState(() => _busy = false);
     }
   }
 
+  String _roleLabel(UserRole role) {
+    switch (role) {
+      case UserRole.instructor:
+        return 'Instrutor';
+      case UserRole.nutritionist:
+        return 'Nutricionista';
+      case UserRole.student:
+        return 'Aluno';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final isInstructor = widget.user.role == UserRole.instructor;
-
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
@@ -113,7 +162,7 @@ class _UserTileState extends State<_UserTile> {
         ),
         title: Text(widget.user.name),
         subtitle: Text(
-          '${widget.user.email} · ${isInstructor ? 'Instrutor' : 'Aluno'}',
+          '${widget.user.email} · ${_roleLabel(widget.user.role)}',
         ),
         trailing: _busy
             ? const SizedBox(
@@ -121,9 +170,20 @@ class _UserTileState extends State<_UserTile> {
                 width: 20,
                 child: CircularProgressIndicator(strokeWidth: 2),
               )
-            : TextButton(
-                onPressed: _toggleRole,
-                child: Text(isInstructor ? 'Rebaixar' : 'Promover'),
+            : PopupMenuButton<UserRole>(
+                onSelected: _setRole,
+                itemBuilder: (context) => UserRole.values
+                    .map(
+                      (role) => PopupMenuItem(
+                        value: role,
+                        child: Text(_roleLabel(role)),
+                      ),
+                    )
+                    .toList(),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 4),
+                  child: Icon(Icons.more_vert),
+                ),
               ),
       ),
     );

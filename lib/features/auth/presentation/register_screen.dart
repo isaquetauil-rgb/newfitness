@@ -17,6 +17,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   final _instructorCodeCtrl = TextEditingController();
+  final _nutritionistCodeCtrl = TextEditingController();
   UserRole _role = UserRole.student;
 
   @override
@@ -25,6 +26,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
     _instructorCodeCtrl.dispose();
+    _nutritionistCodeCtrl.dispose();
     super.dispose();
   }
 
@@ -37,6 +39,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       role: _role,
       instructorCode: _role == UserRole.student
           ? _instructorCodeCtrl.text
+          : null,
+      nutritionistCode: _role == UserRole.student
+          ? _nutritionistCodeCtrl.text
           : null,
     );
     if (ok && mounted) {
@@ -77,6 +82,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       value: UserRole.instructor,
                       label: Text('Instrutor'),
                       icon: Icon(Icons.sports_gymnastics),
+                    ),
+                    ButtonSegment(
+                      value: UserRole.nutritionist,
+                      label: Text('Nutricionista'),
+                      icon: Icon(Icons.restaurant_outlined),
                     ),
                   ],
                   selected: {_role},
@@ -135,8 +145,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     'vincular depois no seu perfil.',
                     style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                   ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _nutritionistCodeCtrl,
+                    textCapitalization: TextCapitalization.characters,
+                    decoration: const InputDecoration(
+                      labelText: 'Código da nutricionista (opcional)',
+                      hintText: 'ex: MARIA9K',
+                      prefixIcon: Icon(Icons.restaurant_outlined),
+                    ),
+                  ),
                 ],
-                if (_role == UserRole.instructor) ...[
+                if (_role == UserRole.instructor ||
+                    _role == UserRole.nutritionist) ...[
                   const SizedBox(height: 16),
                   Container(
                     padding: const EdgeInsets.all(12),

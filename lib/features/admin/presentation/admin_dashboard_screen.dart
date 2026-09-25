@@ -51,6 +51,27 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           FutureBuilder<AdminStats>(
             future: _statsFuture,
             builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      children: [
+                        const Text(
+                          'Não foi possível carregar as estatísticas.',
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 8),
+                        OutlinedButton.icon(
+                          onPressed: _reload,
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Tentar de novo'),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
               if (!snapshot.hasData) {
                 return const Padding(
                   padding: EdgeInsets.symmetric(vertical: 32),
@@ -73,12 +94,20 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     value: '${stats.totalInstructors}',
                   ),
                   _StatCard(
+                    label: 'Nutricionistas',
+                    value: '${stats.totalNutritionists}',
+                  ),
+                  _StatCard(
                     label: 'Exercícios',
                     value: '${stats.totalExercises}',
                   ),
                   _StatCard(
                     label: 'Treinos registrados',
                     value: '${stats.totalWorkoutsLogged}',
+                  ),
+                  _StatCard(
+                    label: 'Assinaturas ativas',
+                    value: '${stats.activeSubscriptions}',
                   ),
                 ],
               );
@@ -101,6 +130,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               subtitle: const Text('Adicionar, editar ou remover exercícios'),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => context.push(AppRoutes.adminExercises),
+            ),
+          ),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.category_outlined),
+              title: const Text('Taxonomia de exercícios'),
+              subtitle: const Text('Grupos musculares e equipamentos'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push(AppRoutes.adminTaxonomy),
             ),
           ),
         ],

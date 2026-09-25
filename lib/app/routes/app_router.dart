@@ -7,7 +7,9 @@ import 'package:newfitness/app/widgets/coming_soon_screen.dart';
 import 'package:newfitness/features/admin/presentation/admin_dashboard_screen.dart';
 import 'package:newfitness/features/admin/presentation/admin_exercise_form_screen.dart';
 import 'package:newfitness/features/admin/presentation/admin_exercises_screen.dart';
+import 'package:newfitness/features/admin/presentation/admin_taxonomy_screen.dart';
 import 'package:newfitness/features/admin/presentation/admin_users_screen.dart';
+import 'package:newfitness/features/agenda/presentation/agenda_screen.dart';
 import 'package:newfitness/features/ai/presentation/ai_hub_screen.dart';
 import 'package:newfitness/features/auth/logic/auth_provider.dart';
 import 'package:newfitness/features/auth/presentation/forgot_password_screen.dart';
@@ -15,13 +17,22 @@ import 'package:newfitness/features/auth/presentation/login_screen.dart';
 import 'package:newfitness/features/auth/presentation/register_screen.dart';
 import 'package:newfitness/features/exercises/presentation/exercise_detail_screen.dart';
 import 'package:newfitness/features/exercises/presentation/exercise_library_screen.dart';
+import 'package:newfitness/features/finance/presentation/finance_screen.dart';
 import 'package:newfitness/features/home/presentation/home_dashboard_screen.dart';
+import 'package:newfitness/features/instructor/presentation/custom_exercise_form_screen.dart';
+import 'package:newfitness/features/instructor/presentation/custom_exercises_screen.dart';
 import 'package:newfitness/features/instructor/presentation/instructor_dashboard_screen.dart';
 import 'package:newfitness/features/instructor/presentation/plan_editor_screen.dart';
+import 'package:newfitness/features/instructor/presentation/plan_templates_screen.dart';
 import 'package:newfitness/features/instructor/presentation/student_detail_screen.dart';
 import 'package:newfitness/features/notifications/presentation/reminders_screen.dart';
+import 'package:newfitness/features/nutrition/presentation/nutrition_plan_editor_screen.dart';
+import 'package:newfitness/features/nutrition/presentation/nutrition_screen.dart';
+import 'package:newfitness/features/nutrition/presentation/nutrition_student_detail_screen.dart';
+import 'package:newfitness/features/nutrition/presentation/nutritionist_dashboard_screen.dart';
 import 'package:newfitness/features/profile/presentation/profile_screen.dart';
 import 'package:newfitness/features/progress/presentation/body_progress_screen.dart';
+import 'package:newfitness/features/progress/presentation/physical_assessment_screen.dart';
 import 'package:newfitness/features/progress/presentation/progress_calendar_screen.dart';
 import 'package:newfitness/features/progress/presentation/progress_screen.dart';
 import 'package:newfitness/features/timeline/presentation/timeline_screen.dart';
@@ -92,32 +103,31 @@ GoRouter buildAppRouter(AuthProvider authProvider) {
       ),
       GoRoute(
         path: AppRoutes.physicalAssessment,
-        pageBuilder: (context, state) => _fadeThrough(
-          state,
-          const ComingSoonScreen(
-            title: 'Avaliação física',
-            message: 'Nenhuma avaliação física cadastrada.',
-            icon: Icons.monitor_weight_outlined,
-          ),
-        ),
+        pageBuilder: (context, state) {
+          final args = state.extra as PhysicalAssessmentArgs?;
+          return _fadeThrough(
+            state,
+            PhysicalAssessmentScreen(
+              studentUid: args?.studentUid,
+              studentName: args?.studentName,
+            ),
+          );
+        },
       ),
       GoRoute(
         path: AppRoutes.finance,
-        pageBuilder: (context, state) => _fadeThrough(
-          state,
-          const ComingSoonScreen(
-            title: 'Financeiro',
-            message: 'Nenhum registro encontrado.',
-            icon: Icons.payments_outlined,
-          ),
-        ),
+        pageBuilder: (context, state) =>
+            _fadeThrough(state, const FinanceScreen()),
       ),
       GoRoute(
         path: AppRoutes.agenda,
-        pageBuilder: (context, state) => _fadeThrough(
-          state,
-          const ComingSoonScreen(title: 'Agenda', icon: Icons.event_outlined),
-        ),
+        pageBuilder: (context, state) =>
+            _fadeThrough(state, const AgendaScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.nutrition,
+        pageBuilder: (context, state) =>
+            _fadeThrough(state, const NutritionScreen()),
       ),
       GoRoute(
         path: AppRoutes.myCards,
@@ -188,6 +198,8 @@ GoRouter buildAppRouter(AuthProvider authProvider) {
                 routes: [
                   GoRoute(
                     path: 'detail',
+                    redirect: (context, state) =>
+                        state.extra is Exercise ? null : AppRoutes.exercises,
                     pageBuilder: (context, state) => _fadeThrough(
                       state,
                       ExerciseDetailScreen(exercise: state.extra! as Exercise),
@@ -206,6 +218,8 @@ GoRouter buildAppRouter(AuthProvider authProvider) {
                 routes: [
                   GoRoute(
                     path: 'photo',
+                    redirect: (context, state) =>
+                        state.extra is BodyPhoto ? null : AppRoutes.progress,
                     pageBuilder: (context, state) => _fadeThrough(
                       state,
                       PhotoViewerScreen(photo: state.extra! as BodyPhoto),
@@ -241,7 +255,35 @@ GoRouter buildAppRouter(AuthProvider authProvider) {
                     _fadeThrough(state, const InstructorDashboardScreen()),
                 routes: [
                   GoRoute(
+                    path: 'templates',
+                    pageBuilder: (context, state) =>
+                        _fadeThrough(state, const PlanTemplatesScreen()),
+                  ),
+                  GoRoute(
+                    path: 'exercises',
+                    pageBuilder: (context, state) =>
+                        _fadeThrough(state, const CustomExercisesScreen()),
+                    routes: [
+                      GoRoute(
+                        path: 'edit',
+                        pageBuilder: (context, state) => _fadeThrough(
+                          state,
+                          CustomExerciseFormScreen(
+                            existing: state.extra as Exercise?,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  GoRoute(
                     path: 'student',
+                    // Sem `extra` (ex: recarregar a página no navegador ou
+                    // link direto) a tela não tem o aluno: volta para a
+                    // lista em vez de quebrar com tela vermelha.
+                    redirect: (context, state) =>
+                        state.extra is StudentDetailArgs
+                        ? null
+                        : AppRoutes.instructor,
                     pageBuilder: (context, state) {
                       final args = state.extra! as StudentDetailArgs;
                       return _fadeThrough(
@@ -256,6 +298,10 @@ GoRouter buildAppRouter(AuthProvider authProvider) {
                     routes: [
                       GoRoute(
                         path: 'plan',
+                        redirect: (context, state) =>
+                            state.extra is PlanEditorArgs
+                            ? null
+                            : AppRoutes.instructor,
                         pageBuilder: (context, state) => _fadeThrough(
                           state,
                           PlanEditorScreen(
@@ -297,6 +343,11 @@ GoRouter buildAppRouter(AuthProvider authProvider) {
                       ),
                     ],
                   ),
+                  GoRoute(
+                    path: 'taxonomy',
+                    pageBuilder: (context, state) =>
+                        _fadeThrough(state, const AdminTaxonomyScreen()),
+                  ),
                 ],
               ),
             ],
@@ -307,6 +358,46 @@ GoRouter buildAppRouter(AuthProvider authProvider) {
                 path: AppRoutes.profile,
                 pageBuilder: (context, state) =>
                     _fadeThrough(state, const ProfileScreen()),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.nutritionist,
+                pageBuilder: (context, state) =>
+                    _fadeThrough(state, const NutritionistDashboardScreen()),
+                routes: [
+                  GoRoute(
+                    path: 'student',
+                    redirect: (context, state) =>
+                        state.extra is NutritionStudentDetailArgs
+                        ? null
+                        : AppRoutes.nutritionist,
+                    pageBuilder: (context, state) {
+                      final args = state.extra! as NutritionStudentDetailArgs;
+                      return _fadeThrough(
+                        state,
+                        NutritionStudentDetailScreen(args: args),
+                      );
+                    },
+                    routes: [
+                      GoRoute(
+                        path: 'plan',
+                        redirect: (context, state) =>
+                            state.extra is NutritionPlanEditorArgs
+                            ? null
+                            : AppRoutes.nutritionist,
+                        pageBuilder: (context, state) => _fadeThrough(
+                          state,
+                          NutritionPlanEditorScreen(
+                            args: state.extra! as NutritionPlanEditorArgs,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ],
           ),
@@ -343,4 +434,16 @@ class StudentDetailArgs {
   final String uid;
   final String name;
   final String? notes;
+}
+
+/// Argumentos opcionais para `/physical-assessment` — quando o instrutor abre
+/// a avaliação física de um aluno específico (sem eles, a tela mostra a
+/// avaliação do próprio usuário logado).
+class PhysicalAssessmentArgs {
+  const PhysicalAssessmentArgs({
+    required this.studentUid,
+    required this.studentName,
+  });
+  final String studentUid;
+  final String studentName;
 }

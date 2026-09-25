@@ -5,11 +5,18 @@ import 'package:provider/provider.dart';
 import 'package:newfitness/app/routes/app_routes.dart';
 import 'package:newfitness/app/widgets/drawer_menu_button.dart';
 import 'package:newfitness/features/auth/logic/auth_provider.dart';
+import 'package:newfitness/features/exercises/logic/exercise_pool.dart';
+import 'package:newfitness/features/exercises/logic/exercise_provider.dart';
+import 'package:newfitness/features/exercises/presentation/exercise_alternatives_sheet.dart';
+import 'package:newfitness/features/instructor/logic/custom_exercise_provider.dart';
+import 'package:newfitness/features/workout/logic/prescription_format.dart';
 import 'package:newfitness/features/workout/logic/training_plan_provider.dart';
 import 'package:newfitness/features/workout/logic/workout_provider.dart';
 import 'package:newfitness/shared/models/exercise.dart';
 import 'package:newfitness/shared/models/logged_exercise.dart';
+import 'package:newfitness/shared/models/sample_exercises.dart';
 import 'package:newfitness/shared/models/training_plan.dart';
+import 'package:newfitness/shared/models/user_profile.dart';
 
 import 'rest_timer_sheet.dart';
 
@@ -48,14 +55,35 @@ class WorkoutScreen extends StatelessWidget {
               onPressed: workout.isSaving
                   ? null
                   : () async {
-                      final ok = await context
+                      final messenger = ScaffoldMessenger.of(context);
+                      if (workout.activeWorkout!.exercises.isEmpty) {
+                        messenger.showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Adicione ao menos um exercício antes de '
+                              'finalizar.',
+                            ),
+                          ),
+                        );
+                        return;
+                      }
+                      final result = await context
                           .read<WorkoutProvider>()
                           .finishWorkout();
-                      if (context.mounted && ok) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Treino salvo! 💪')),
-                        );
-                      }
+                      messenger.showSnackBar(
+                        SnackBar(
+                          content: Text(switch (result) {
+                            WorkoutFinishResult.saved => 'Treino salvo! 💪',
+                            WorkoutFinishResult.endedWithoutSets =>
+                              'Nenhuma série registrada — o treino foi '
+                                  'encerrado sem entrar no histórico.',
+                            WorkoutFinishResult.failed =>
+                              'Não foi possível salvar o treino. '
+                                  'Verifique a conexão e tente de novo — '
+                                  'nada foi perdido.',
+                          }),
+                        ),
+                      );
                     },
               icon: workout.isSaving
                   ? const SizedBox(
@@ -225,19 +253,71 @@ class _StartWorkoutBody extends StatelessWidget {
   }
 }
 
-class _ActiveWorkoutBody extends StatelessWidget {
+class _ActiveWorkoutBody extends StatefulWidget {
   const _ActiveWorkoutBody();
 
   @override
+  State<_ActiveWorkoutBody> createState() => _ActiveWorkoutBodyState();
+}
+
+class _ActiveWorkoutBodyState extends State<_ActiveWorkoutBody> {
+  // Biblioteca privada do instrutor (a própria, se instrutor; a do
+  // instrutor vinculado, se aluno) — só para saber se um exercício é
+  // unilateral e mostrar "(cada lado)" na prescrição.
+  Stream<List<Exercise>>? _customStream;
+  String? _customStreamUid;
+
+  Stream<List<Exercise>> _customFor(String uid) {
+    if (_customStream == null || _customStreamUid != uid) {
+      _customStreamUid = uid;
+      _customStream = context.read<CustomExerciseProvider>().watchExercises(
+        uid,
+      );
+    }
+    return _customStream!;
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final profile = context.watch<AuthProvider>().profile;
+    final customLibraryUid = profile == null
+        ? null
+        : profile.role == UserRole.instructor
+        ? profile.uid
+        : profile.instructorId;
+    if (customLibraryUid == null) return _buildList(context, const []);
+    return StreamBuilder<List<Exercise>>(
+      stream: _customFor(customLibraryUid),
+      builder: (context, snapshot) =>
+          _buildList(context, snapshot.data ?? const []),
+    );
+  }
+
+  Widget _buildList(BuildContext context, List<Exercise> custom) {
     final provider = context.watch<WorkoutProvider>();
     final exercises = provider.activeWorkout!.exercises;
+    final global = context.watch<ExerciseProvider>().exercises;
+    final unilateralIds = {
+      for (final e in [
+        ...custom,
+        ...(global.isNotEmpty ? global : sampleExercises),
+      ])
+        if (e.isUnilateral) e.id,
+    };
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
       children: [
         for (int i = 0; i < exercises.length; i++)
-          _ExerciseCard(exerciseIndex: i, exercise: exercises[i]),
+          // A chave amarra cada card (e os campos de texto dentro dele) ao
+          // exercício, não à posição — sem ela, remover um exercício fazia
+          // os cards seguintes exibirem os valores digitados no anterior.
+          _ExerciseCard(
+            key: ObjectKey(exercises[i]),
+            exerciseIndex: i,
+            exercise: exercises[i],
+            isUnilateral: unilateralIds.contains(exercises[i].exerciseId),
+          ),
         const SizedBox(height: 8),
         OutlinedButton.icon(
           onPressed: () async {
@@ -260,7 +340,41 @@ class _ExerciseCard extends StatelessWidget {
   final int exerciseIndex;
   final LoggedExercise exercise;
 
-  const _ExerciseCard({required this.exerciseIndex, required this.exercise});
+  /// O exercício REALIZADO é unilateral (mostra "(cada lado)" na
+  /// prescrição; o modelo da série não muda).
+  final bool isUnilateral;
+
+  const _ExerciseCard({
+    super.key,
+    required this.exerciseIndex,
+    required this.exercise,
+    this.isUnilateral = false,
+  });
+
+  Future<void> _swapExercise(BuildContext context) async {
+    final provider = context.read<WorkoutProvider>();
+    final pool = await loadExercisePool(context);
+    if (!context.mounted) return;
+    final current = pool.firstWhere(
+      (e) => e.id == exercise.exerciseId,
+      orElse: () => Exercise(
+        id: exercise.exerciseId,
+        name: exercise.exerciseName,
+        muscleGroup: '',
+        equipment: '',
+        description: '',
+        videoUrl: '',
+      ),
+    );
+    final chosen = await showExerciseAlternativesSheet(
+      context,
+      current: current,
+      pool: pool,
+    );
+    if (chosen != null && context.mounted) {
+      provider.substituteExercise(exerciseIndex, chosen);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -285,11 +399,36 @@ class _ExerciseCard extends StatelessWidget {
                   ),
                 ),
                 IconButton(
+                  icon: const Icon(Icons.swap_horiz, size: 20),
+                  tooltip: 'Trocar exercício',
+                  onPressed: () => _swapExercise(context),
+                ),
+                IconButton(
                   icon: const Icon(Icons.close, size: 20),
                   onPressed: () => provider.removeExercise(exerciseIndex),
                 ),
               ],
             ),
+            if (exercise.replacedExerciseName != null)
+              Text(
+                'No lugar de ${exercise.replacedExerciseName}',
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              ),
+            if (exercise.prescription != null) ...[
+              const SizedBox(height: 8),
+              _PrescriptionBlock(
+                exercise: exercise,
+                isUnilateral: isUnilateral,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Realizado',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: Colors.grey.shade700,
+                ),
+              ),
+            ],
             const SizedBox(height: 8),
             Row(
               children: const [
@@ -312,6 +451,7 @@ class _ExerciseCard extends StatelessWidget {
             ),
             for (int s = 0; s < exercise.sets.length; s++)
               _SetRow(
+                key: ObjectKey(exercise.sets[s]),
                 exerciseIndex: exerciseIndex,
                 setIndex: s,
                 setNumber: s + 1,
@@ -328,12 +468,72 @@ class _ExerciseCard extends StatelessWidget {
   }
 }
 
+/// Meta do plano para este exercício — só apresentação do que o instrutor
+/// prescreveu. Não preenche os campos de execução e não compara com o
+/// realizado.
+class _PrescriptionBlock extends StatelessWidget {
+  const _PrescriptionBlock({
+    required this.exercise,
+    required this.isUnilateral,
+  });
+
+  final LoggedExercise exercise;
+  final bool isUnilateral;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = exercise.prescription!;
+    final load = prescriptionLoad(p);
+    final notes = p.notes?.trim();
+    final title = exercise.prescriptionMatchesExercise
+        ? 'Prescrito'
+        : 'Prescrito para ${p.exerciseName}';
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+
+    return Container(
+      key: const ValueKey('prescription-block'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
+          const SizedBox(height: 4),
+          Text(prescriptionSetsReps(p, unilateral: isUnilateral)),
+          if (load != null) Text(load),
+          Row(
+            children: [
+              Expanded(child: Text(prescriptionRest(p))),
+              TextButton.icon(
+                onPressed: () =>
+                    showRestTimerSheet(context, initialSeconds: p.restSeconds),
+                icon: const Icon(Icons.timer_outlined, size: 18),
+                label: const Text('Descansar'),
+              ),
+            ],
+          ),
+          if (notes != null && notes.isNotEmpty)
+            Text(
+              notes,
+              style: TextStyle(fontStyle: FontStyle.italic, color: muted),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 class _SetRow extends StatelessWidget {
   final int exerciseIndex;
   final int setIndex;
   final int setNumber;
 
   const _SetRow({
+    super.key,
     required this.exerciseIndex,
     required this.setIndex,
     required this.setNumber,
@@ -355,11 +555,17 @@ class _SetRow extends StatelessWidget {
           SizedBox(width: 32, child: Text('$setNumber')),
           Expanded(
             child: _NumberField(
-              initialValue: set.weightKg == 0 ? '' : set.weightKg.toString(),
+              initialValue: set.weightKg == 0
+                  ? ''
+                  : set.weightKg
+                        .toString()
+                        .replaceFirst(RegExp(r'\.0$'), '')
+                        .replaceAll('.', ','),
               onChanged: (v) => provider.updateSet(
                 exerciseIndex,
                 setIndex,
-                weightKg: double.tryParse(v) ?? 0,
+                // aceita vírgula (teclado pt-BR): "22,5" → 22.5
+                weightKg: double.tryParse(v.trim().replaceAll(',', '.')) ?? 0,
               ),
             ),
           ),
@@ -370,7 +576,7 @@ class _SetRow extends StatelessWidget {
               onChanged: (v) => provider.updateSet(
                 exerciseIndex,
                 setIndex,
-                reps: int.tryParse(v) ?? 0,
+                reps: int.tryParse(v.trim()) ?? 0,
               ),
             ),
           ),

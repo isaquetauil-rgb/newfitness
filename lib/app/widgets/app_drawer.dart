@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import 'package:newfitness/app/routes/app_routes.dart';
+import 'package:newfitness/app/theme/app_theme.dart';
+import 'package:newfitness/app/widgets/tab_switch_signal.dart';
 import 'package:newfitness/features/auth/logic/auth_provider.dart';
 import 'package:newfitness/shared/models/user_profile.dart';
 
@@ -21,6 +23,16 @@ class AppDrawer extends StatelessWidget {
     navigationShell.goBranch(index);
   }
 
+  void _goBranchTab(
+    BuildContext context,
+    int index,
+    ValueNotifier<int?> tabSignal,
+    int tabIndex,
+  ) {
+    tabSignal.value = tabIndex;
+    _goBranch(context, index);
+  }
+
   void _pushRoute(BuildContext context, String route) {
     Navigator.pop(context);
     context.push(route);
@@ -31,6 +43,7 @@ class AppDrawer extends StatelessWidget {
     final auth = context.watch<AuthProvider>();
     final profile = auth.profile;
     final isInstructor = profile?.role == UserRole.instructor;
+    final isNutritionist = profile?.role == UserRole.nutritionist;
     final isAdmin = auth.isAdmin;
 
     return Drawer(
@@ -50,6 +63,7 @@ class AppDrawer extends StatelessWidget {
                   _DrawerTile(
                     icon: Icons.fitness_center,
                     label: 'Treino',
+                    color: AppTheme.trainingAccent,
                     onTap: () => _goBranch(context, 1),
                   ),
                   _DrawerTile(
@@ -60,7 +74,15 @@ class AppDrawer extends StatelessWidget {
                   _DrawerTile(
                     icon: Icons.show_chart,
                     label: 'Progresso',
+                    color: AppTheme.progressAccent,
                     onTap: () => _goBranch(context, 3),
+                  ),
+                  _DrawerTile(
+                    icon: Icons.photo_camera_outlined,
+                    label: 'Evoluções',
+                    color: AppTheme.progressAccent,
+                    onTap: () =>
+                        _goBranchTab(context, 3, TabSwitchSignal.progress, 1),
                   ),
                   _DrawerTile(
                     icon: Icons.notifications_outlined,
@@ -72,11 +94,26 @@ class AppDrawer extends StatelessWidget {
                     label: 'IA',
                     onTap: () => _goBranch(context, 5),
                   ),
+                  _DrawerTile(
+                    icon: Icons.restaurant_outlined,
+                    label: 'Refeições',
+                    color: AppTheme.progressAccent,
+                    onTap: () =>
+                        _goBranchTab(context, 5, TabSwitchSignal.ai, 1),
+                  ),
                   if (isInstructor)
                     _DrawerTile(
                       icon: Icons.groups_outlined,
                       label: 'Alunos',
+                      color: AppTheme.trainingAccent,
                       onTap: () => _goBranch(context, 6),
+                    ),
+                  if (isNutritionist)
+                    _DrawerTile(
+                      icon: Icons.groups_outlined,
+                      label: 'Meus alunos (nutrição)',
+                      color: AppTheme.progressAccent,
+                      onTap: () => _goBranch(context, 9),
                     ),
                   if (isAdmin)
                     _DrawerTile(
@@ -97,7 +134,8 @@ class AppDrawer extends StatelessWidget {
                   ),
                   _DrawerTile(
                     icon: Icons.monitor_weight_outlined,
-                    label: 'Avaliação física',
+                    label: 'Evolução física',
+                    color: AppTheme.progressAccent,
                     onTap: () =>
                         _pushRoute(context, AppRoutes.physicalAssessment),
                   ),
@@ -105,6 +143,12 @@ class AppDrawer extends StatelessWidget {
                     icon: Icons.payments_outlined,
                     label: 'Financeiro',
                     onTap: () => _pushRoute(context, AppRoutes.finance),
+                  ),
+                  _DrawerTile(
+                    icon: Icons.restaurant_menu_outlined,
+                    label: 'Nutrição',
+                    color: AppTheme.progressAccent,
+                    onTap: () => _pushRoute(context, AppRoutes.nutrition),
                   ),
                   const Divider(),
                   _DrawerTile(
@@ -178,14 +222,23 @@ class _DrawerTile extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.onTap,
+    this.color,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onTap;
 
+  /// Acento de módulo (ver [AppTheme.trainingAccent]/[AppTheme.progressAccent])
+  /// — quando nulo, usa a cor padrão do tema (itens sem módulo próprio).
+  final Color? color;
+
   @override
   Widget build(BuildContext context) {
-    return ListTile(leading: Icon(icon), title: Text(label), onTap: onTap);
+    return ListTile(
+      leading: Icon(icon, color: color),
+      title: Text(label),
+      onTap: onTap,
+    );
   }
 }

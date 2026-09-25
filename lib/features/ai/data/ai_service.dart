@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:newfitness/core/network/functions_client.dart';
+import 'package:newfitness/shared/models/exercise_suggestion.dart';
 
 /// Encapsula as chamadas às Cloud Functions de IA. A chave de API nunca
 /// fica no app — ela mora só no backend (veja functions/README.md).
@@ -20,6 +21,19 @@ class AiService {
     List<Map<String, String>> history = const [],
   }) async {
     final data = await _client.call('chatWithAI', {
+      'message': message,
+      'history': history,
+    });
+    return data['reply'] as String? ?? '';
+  }
+
+  /// Chat de nutrição — mesma forma de `chat`, mas conversa isolada que a
+  /// nutricionista vinculada também acompanha (ver `NutritionChatProvider`).
+  Future<String> askNutrition({
+    required String message,
+    List<Map<String, String>> history = const [],
+  }) async {
+    final data = await _client.call('askNutritionAI', {
       'message': message,
       'history': history,
     });
@@ -46,15 +60,15 @@ class AiService {
     return data['analysis'] as String? ?? '';
   }
 
-  /// Pede à IA uma sugestão de treino para apoiar o instrutor — geral (sem
-  /// [studentName]) ou contextualizada a um aluno específico.
-  Future<String> suggestTrainingPlan({
+  /// Pede à IA de 3 a 4 sugestões de exercício para apoiar o instrutor —
+  /// geral (sem [studentName]) ou contextualizada a um aluno específico.
+  Future<TrainingSuggestionResult> suggestTrainingPlan({
     required String prompt,
     String? studentName,
   }) async {
     final payload = <String, dynamic>{'prompt': prompt};
     if (studentName != null) payload['studentName'] = studentName;
     final data = await _client.call('suggestTrainingPlan', payload);
-    return data['suggestion'] as String? ?? '';
+    return TrainingSuggestionResult.fromMap(data);
   }
 }

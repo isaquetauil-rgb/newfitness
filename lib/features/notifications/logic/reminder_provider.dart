@@ -37,22 +37,33 @@ class ReminderProvider extends ChangeNotifier {
     if (_uid == uid) return;
     _uid = uid;
     _sub?.cancel();
-    _sub = _firestoreService.watchReminders(uid).listen((list) async {
-      _reminders = list;
-      notifyListeners();
-      // Reagenda todas as notificações para refletir o estado atual
-      // (cobre alterações feitas em outro dispositivo, por exemplo).
-      for (final r in list) {
-        await _notificationService.scheduleReminder(r);
-      }
-    });
+    _sub = _firestoreService.watchReminders(uid).listen(
+      (list) async {
+        _reminders = list;
+        notifyListeners();
+        // Reagenda todas as notificações para refletir o estado atual
+        // (cobre alterações feitas em outro dispositivo, por exemplo).
+        for (final r in list) {
+          await _notificationService.scheduleReminder(r);
+        }
+      },
+      // Ex: permissão negada no logout — sem isso o erro ficava sem dono.
+      onError: (Object _) {},
+    );
   }
 
-  void clear() {
-    _sub?.cancel();
+  /// Chamado ao sair da conta (ver `app.dart`): para de ouvir, esquece a
+  /// lista e cancela as notificações agendadas neste aparelho. Antes nada
+  /// chamava isto: ao entrar de novo com a MESMA conta, [listenTo] via o
+  /// mesmo uid e não reassinava (a lista parava de atualizar), e ao entrar
+  /// com OUTRA conta os lembretes da anterior continuavam tocando.
+  Future<void> clear() async {
+    await _sub?.cancel();
     _sub = null;
     _uid = null;
     _reminders = [];
+    notifyListeners();
+    await _notificationService.cancelAll();
   }
 
   Future<bool> requestNotificationPermission() {

@@ -29,6 +29,16 @@ class InstructorDashboardScreen extends StatelessWidget {
         title: const Text('Meus alunos'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.copy_all_outlined),
+            tooltip: 'Modelos de treino',
+            onPressed: () => context.push(AppRoutes.instructorTemplates),
+          ),
+          IconButton(
+            icon: const Icon(Icons.video_library_outlined),
+            tooltip: 'Meus exercícios',
+            onPressed: () => context.push(AppRoutes.instructorExercises),
+          ),
+          IconButton(
             icon: const Icon(Icons.smart_toy_outlined),
             tooltip: 'Assistente de IA',
             onPressed: () => showAiSuggestionSheet(context),
@@ -46,6 +56,20 @@ class InstructorDashboardScreen extends StatelessWidget {
               stream: firestoreService.watchStudents(profile.uid),
               builder: (context, snapshot) {
                 final students = snapshot.data ?? [];
+
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(32),
+                      child: Text(
+                        'Não foi possível carregar seus alunos. Verifique a '
+                        'conexão e tente novamente.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.grey.shade600),
+                      ),
+                    ),
+                  );
+                }
 
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());

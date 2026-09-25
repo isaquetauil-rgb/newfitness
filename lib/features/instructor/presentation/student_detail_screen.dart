@@ -3,11 +3,14 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import 'package:newfitness/app/routes/app_router.dart';
 import 'package:newfitness/app/routes/app_routes.dart';
 import 'package:newfitness/core/di/injector.dart';
 import 'package:newfitness/features/auth/logic/auth_provider.dart';
 import 'package:newfitness/features/instructor/presentation/ai_suggestion_sheet.dart';
 import 'package:newfitness/features/instructor/presentation/plan_editor_screen.dart';
+import 'package:newfitness/features/progress/presentation/exercise_progress_list.dart';
+import 'package:newfitness/features/progress/presentation/physical_assessment_screen.dart';
 import 'package:newfitness/features/workout/logic/training_plan_provider.dart';
 import 'package:newfitness/shared/models/training_plan.dart';
 import 'package:newfitness/shared/models/workout.dart';
@@ -42,6 +45,15 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
   );
   bool _savingNotes = false;
 
+  // Streams criados uma vez só: recriá-los a cada build reabria a consulta
+  // no Firestore e fazia a lista piscar com o spinner.
+  late final _plansStream = context.read<TrainingPlanProvider>().watchPlans(
+    widget.studentUid,
+  );
+  late final _workoutsStream = _firestoreService.watchWorkouts(
+    widget.studentUid,
+  );
+
   @override
   void dispose() {
     _notesCtrl.dispose();
@@ -51,27 +63,42 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
   Future<void> _saveNotes(String instructorUid) async {
     setState(() => _savingNotes = true);
     final messenger = ScaffoldMessenger.of(context);
-    await _firestoreService.updateStudentNote(
-      instructorUid,
-      widget.studentUid,
-      _notesCtrl.text.trim(),
-    );
+    var ok = true;
+    try {
+      await _firestoreService.updateStudentNote(
+        instructorUid,
+        widget.studentUid,
+        _notesCtrl.text.trim(),
+      );
+    } catch (_) {
+      ok = false;
+    }
     if (!mounted) return;
     setState(() => _savingNotes = false);
-    messenger.showSnackBar(const SnackBar(content: Text('Nota salva')));
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(ok ? 'Nota salva' : 'Não foi possível salvar a nota.'),
+      ),
+    );
   }
 
   void _openAiSheet(String instructorUid) {
     showAiSuggestionSheet(
       context,
       studentName: widget.studentName,
+      studentUid: widget.studentUid,
+      instructorUid: instructorUid,
       initialContext: _notesCtrl.text,
       onCreatePlan: (suggestion) =>
           _openPlanEditor(instructorUid, prefill: suggestion),
     );
   }
 
-  void _openPlanEditor(String instructorUid, {String? prefill}) {
+  void _openPlanEditor(
+    String instructorUid, {
+    String? prefill,
+    TrainingPlan? existing,
+  }) {
     context.push(
       AppRoutes.instructorPlanEditor,
       extra: PlanEditorArgs(
@@ -79,8 +106,44 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
         studentName: widget.studentName,
         instructorUid: instructorUid,
         prefillInstructions: prefill,
+        existingPlan: existing,
       ),
     );
+  }
+
+  Future<void> _confirmDeletePlan(
+    TrainingPlanProvider planProvider,
+    TrainingPlan plan,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Apagar plano?'),
+        content: Text(
+          '"${plan.title}" deixará de aparecer para o aluno. Esta ação não '
+          'pode ser desfeita.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Apagar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await planProvider.deletePlan(widget.studentUid, plan.id);
+    } catch (_) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Não foi possível apagar o plano.')),
+      );
+    }
   }
 
   @override
@@ -124,6 +187,17 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
             icon: const Icon(Icons.smart_toy_outlined),
             label: const Text('Pedir sugestão de treino com IA'),
           ),
+          const SizedBox(height: 8),
+          EvolutionOverviewCard(
+            studentUid: widget.studentUid,
+            onOpen: () => context.push(
+              AppRoutes.physicalAssessment,
+              extra: PhysicalAssessmentArgs(
+                studentUid: widget.studentUid,
+                studentName: widget.studentName,
+              ),
+            ),
+          ),
           const SizedBox(height: 28),
           Row(
             children: [
@@ -141,7 +215,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
           ),
           const SizedBox(height: 4),
           StreamBuilder<List<TrainingPlan>>(
-            stream: planProvider.watchPlans(widget.studentUid),
+            stream: _plansStream,
             builder: (context, snapshot) {
               final plans = snapshot.data ?? [];
               if (plans.isEmpty) {
@@ -160,13 +234,17 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
                       margin: const EdgeInsets.only(bottom: 8),
                       child: ListTile(
                         title: Text(plan.title),
-                        subtitle: Text('${plan.workouts.length} sub-treino(s)'),
+                        subtitle: Text(
+                          '${plan.workouts.length} sub-treino(s) · '
+                          'toque para editar',
+                        ),
+                        onTap: () =>
+                            _openPlanEditor(instructorUid, existing: plan),
                         trailing: IconButton(
+                          tooltip: 'Apagar plano',
                           icon: const Icon(Icons.delete_outline, size: 20),
-                          onPressed: () => planProvider.deletePlan(
-                            widget.studentUid,
-                            plan.id,
-                          ),
+                          onPressed: () =>
+                              _confirmDeletePlan(planProvider, plan),
                         ),
                       ),
                     ),
@@ -181,7 +259,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
           ),
           const SizedBox(height: 4),
           StreamBuilder<List<Workout>>(
-            stream: _firestoreService.watchWorkouts(widget.studentUid),
+            stream: _workoutsStream,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Padding(
@@ -251,6 +329,13 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
               );
             },
           ),
+          const SizedBox(height: 28),
+          const Text(
+            'Evolução por exercício',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 4),
+          ExerciseProgressList(uid: widget.studentUid),
         ],
       ),
     );

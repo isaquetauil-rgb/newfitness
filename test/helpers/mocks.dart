@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mocktail/mocktail.dart';
 
+import 'package:newfitness/core/network/functions_client.dart';
 import 'package:newfitness/features/ai/data/ai_service.dart';
 import 'package:newfitness/features/auth/data/auth_service.dart';
 import 'package:newfitness/features/notifications/data/notification_service.dart';
@@ -19,6 +20,8 @@ class MockStorageService extends Mock implements StorageService {}
 class MockNotificationService extends Mock implements NotificationService {}
 
 class MockAiService extends Mock implements AiService {}
+
+class MockFunctionsClient extends Mock implements FunctionsClient {}
 
 class MockUser extends Mock implements User {}
 

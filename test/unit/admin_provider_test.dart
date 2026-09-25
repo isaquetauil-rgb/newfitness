@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import 'package:newfitness/core/error/app_exception.dart';
+
 import 'package:newfitness/features/admin/logic/admin_provider.dart';
 import 'package:newfitness/shared/models/exercise.dart';
 import 'package:newfitness/shared/models/user_profile.dart';
@@ -34,69 +36,67 @@ void main() {
     await controller.close();
   });
 
-  test(
-    'promoteToInstructor gera código de convite quando o usuário não tem um',
-    () async {
+  group('troca de papel pela Cloud Function setUserRole', () {
+    late MockFunctionsClient functionsClient;
+
+    setUp(() {
+      functionsClient = MockFunctionsClient();
+      provider = AdminProvider(
+        firestoreService: firestoreService,
+        functionsClient: functionsClient,
+      );
+    });
+
+    test('promoteToInstructor chama a Function com uid e papel', () async {
       const user = UserProfile(uid: 'u1', name: 'Ana', email: 'ana@x.com');
-      when(() => firestoreService.generateUniqueInviteCode())
-          .thenAnswer((_) async => 'ABC123');
-      when(() => firestoreService.updateUserProfile(any()))
-          .thenAnswer((_) async {});
+      when(() => functionsClient.call('setUserRole', any()))
+          .thenAnswer((_) async => {'ok': true, 'revokedStudents': 0});
 
       await provider.promoteToInstructor(user);
 
-      final saved =
-          verify(() => firestoreService.updateUserProfile(captureAny()))
-                  .captured
-                  .single
-              as UserProfile;
-      expect(saved.role, UserRole.instructor);
-      expect(saved.inviteCode, 'ABC123');
-    },
-  );
+      verify(
+        () => functionsClient.call('setUserRole', {
+          'uid': 'u1',
+          'role': 'instructor',
+        }),
+      ).called(1);
+    });
 
-  test(
-    'promoteToInstructor reaproveita o código de convite já existente',
-    () async {
+    test('demoteToStudent chama a Function e nunca grava direto', () async {
       const user = UserProfile(
         uid: 'u1',
         name: 'Ana',
         email: 'ana@x.com',
-        inviteCode: 'JÁEXISTE',
+        role: UserRole.instructor,
       );
-      when(() => firestoreService.updateUserProfile(any()))
-          .thenAnswer((_) async {});
+      when(() => functionsClient.call('setUserRole', any()))
+          .thenAnswer((_) async => {'ok': true, 'revokedStudents': 3});
 
-      await provider.promoteToInstructor(user);
+      final revoked = await provider.setRole(user, UserRole.student);
 
-      verifyNever(() => firestoreService.generateUniqueInviteCode());
-      final saved =
-          verify(() => firestoreService.updateUserProfile(captureAny()))
-                  .captured
-                  .single
-              as UserProfile;
-      expect(saved.inviteCode, 'JÁEXISTE');
-    },
-  );
+      expect(revoked, 3);
+      verify(
+        () => functionsClient.call('setUserRole', {
+          'uid': 'u1',
+          'role': 'student',
+        }),
+      ).called(1);
+      verifyNever(() => firestoreService.updateUserProfile(any()));
+    });
 
-  test('demoteToStudent muda o papel para aluno', () async {
-    const user = UserProfile(
-      uid: 'u1',
-      name: 'Ana',
-      email: 'ana@x.com',
-      role: UserRole.instructor,
-    );
-    when(() => firestoreService.updateUserProfile(any()))
-        .thenAnswer((_) async {});
+    test('erro da Function é propagado (papel não mudou)', () async {
+      when(() => functionsClient.call('setUserRole', any())).thenThrow(
+        const UnknownException('O papel NÃO foi alterado — tente de novo.'),
+      );
 
-    await provider.demoteToStudent(user);
-
-    final saved =
-        verify(() => firestoreService.updateUserProfile(captureAny()))
-                .captured
-                .single
-            as UserProfile;
-    expect(saved.role, UserRole.student);
+      await expectLater(
+        provider.setRole(
+          const UserProfile(uid: 'u1', name: 'Ana', email: 'a@x.com'),
+          UserRole.student,
+        ),
+        throwsA(isA<UnknownException>()),
+      );
+    });
   });
 
   test('saveExercise e deleteExercise delegam ao FirestoreService', () async {
@@ -119,22 +119,65 @@ void main() {
     verify(() => firestoreService.deleteExercise('e1')).called(1);
   });
 
-  test('loadStats agrega as contagens do FirestoreService', () async {
-    when(() => firestoreService.countUsers()).thenAnswer((_) async => 10);
-    when(() => firestoreService.countUsersByRole('student'))
-        .thenAnswer((_) async => 8);
-    when(() => firestoreService.countUsersByRole('instructor'))
-        .thenAnswer((_) async => 2);
-    when(() => firestoreService.countExercises()).thenAnswer((_) async => 20);
-    when(() => firestoreService.countWorkoutsLogged())
-        .thenAnswer((_) async => 137);
+  test(
+    'loadStats lê as estatísticas da Cloud Function getAdminStats',
+    () async {
+      final functionsClient = MockFunctionsClient();
+      provider = AdminProvider(
+        firestoreService: firestoreService,
+        functionsClient: functionsClient,
+      );
+      when(() => functionsClient.call('getAdminStats', any())).thenAnswer(
+        (_) async => {
+          'totalUsers': 10,
+          'totalStudents': 8,
+          'totalInstructors': 2,
+          'totalNutritionists': 1,
+          'totalExercises': 20,
+          'totalWorkoutsLogged': 137,
+          'activeSubscriptions': 5,
+        },
+      );
 
-    final stats = await provider.loadStats();
+      final stats = await provider.loadStats();
 
-    expect(stats.totalUsers, 10);
-    expect(stats.totalStudents, 8);
-    expect(stats.totalInstructors, 2);
-    expect(stats.totalExercises, 20);
-    expect(stats.totalWorkoutsLogged, 137);
+      expect(stats.totalUsers, 10);
+      expect(stats.totalStudents, 8);
+      expect(stats.totalInstructors, 2);
+      expect(stats.totalNutritionists, 1);
+      expect(stats.totalExercises, 20);
+      expect(stats.totalWorkoutsLogged, 137);
+      expect(stats.activeSubscriptions, 5);
+    },
+  );
+
+  test(
+    'loadStats propaga o erro (painel mostra erro, não fica carregando)',
+    () async {
+      final functionsClient = MockFunctionsClient();
+      provider = AdminProvider(
+        firestoreService: firestoreService,
+        functionsClient: functionsClient,
+      );
+      when(() => functionsClient.call('getAdminStats', any()))
+          .thenThrow(Exception('permission-denied'));
+
+      await expectLater(provider.loadStats(), throwsException);
+    },
+  );
+
+  test('loadStats não espera para sempre (timeout)', () async {
+    final functionsClient = MockFunctionsClient();
+    provider = AdminProvider(
+      firestoreService: firestoreService,
+      functionsClient: functionsClient,
+    );
+    when(() => functionsClient.call('getAdminStats', any()))
+        .thenAnswer((_) => Completer<Map<String, dynamic>>().future);
+
+    await expectLater(
+      provider.loadStats(timeout: const Duration(milliseconds: 20)),
+      throwsA(isA<TimeoutException>()),
+    );
   });
 }

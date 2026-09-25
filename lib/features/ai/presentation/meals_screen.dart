@@ -109,7 +109,14 @@ class MealsScreen extends StatelessWidget {
     final picked = await picker.pickImage(source: source, imageQuality: 85);
     if (picked == null || !context.mounted) return;
 
-    await context.read<MealPhotoProvider>().addPhoto(uid, picked, mealType);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await context.read<MealPhotoProvider>().addPhoto(uid, picked, mealType);
+    } catch (_) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Não foi possível enviar a foto.')),
+      );
+    }
   }
 }
 
@@ -158,7 +165,15 @@ class _MealCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 6),
-                  if (meal.aiAnalysis == null)
+                  if (meal.aiAnalysis == null && meal.aiAnalysisError != null)
+                    Text(
+                      'Sem análise da IA: ${meal.aiAnalysisError}',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey.shade600,
+                      ),
+                    )
+                  else if (meal.aiAnalysis == null)
                     Row(
                       children: [
                         const SizedBox(

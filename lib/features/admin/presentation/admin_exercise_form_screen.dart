@@ -4,13 +4,20 @@ import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 
 import 'package:newfitness/features/admin/logic/admin_provider.dart';
+import 'package:newfitness/features/exercises/logic/exercise_provider.dart';
+import 'package:newfitness/features/exercises/logic/exercise_taxonomy_provider.dart';
+import 'package:newfitness/features/exercises/presentation/exercise_form_controller.dart';
+import 'package:newfitness/features/exercises/presentation/exercise_form_fields.dart';
 import 'package:newfitness/shared/models/exercise.dart';
 
 const _uuid = Uuid();
 
-/// Formulário de criar/editar um exercício da biblioteca. Passe um
+/// Formulário de criar/editar um exercício da biblioteca global. Passe um
 /// [existing] (via `extra` na rota) para editar; deixe null para criar um
-/// novo.
+/// novo. Os campos compartilhados com o formulário do instrutor
+/// (`CustomExerciseFormScreen`) vivem em `ExerciseFormFields` — aqui só o
+/// vídeo (link do YouTube, sem upload próprio) e o destino do salvamento
+/// (`AdminProvider`, biblioteca global) são específicos.
 class AdminExerciseFormScreen extends StatefulWidget {
   const AdminExerciseFormScreen({super.key, this.existing});
 
@@ -22,64 +29,50 @@ class AdminExerciseFormScreen extends StatefulWidget {
 }
 
 class _AdminExerciseFormScreenState extends State<AdminExerciseFormScreen> {
-  late final _nameCtrl = TextEditingController(
-    text: widget.existing?.name ?? '',
-  );
-  late final _muscleGroupCtrl = TextEditingController(
-    text: widget.existing?.muscleGroup ?? '',
-  );
-  late final _equipmentCtrl = TextEditingController(
-    text: widget.existing?.equipment ?? '',
-  );
-  late final _descriptionCtrl = TextEditingController(
-    text: widget.existing?.description ?? '',
-  );
+  late final _form = ExerciseFormController(widget.existing);
   late final _videoUrlCtrl = TextEditingController(
     text: widget.existing?.videoUrl ?? '',
-  );
-  late final _instructionsCtrl = TextEditingController(
-    text: widget.existing?.instructions.join('\n') ?? '',
   );
   bool _saving = false;
 
   @override
   void dispose() {
-    _nameCtrl.dispose();
-    _muscleGroupCtrl.dispose();
-    _equipmentCtrl.dispose();
-    _descriptionCtrl.dispose();
+    _form.dispose();
     _videoUrlCtrl.dispose();
-    _instructionsCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _save() async {
-    if (_nameCtrl.text.trim().isEmpty) {
+    if (!_form.isValid) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Dê um nome ao exercício.')));
       return;
     }
     setState(() => _saving = true);
-    final exercise = Exercise(
+    final exercise = _form.buildExercise(
       id: widget.existing?.id ?? _uuid.v4(),
-      name: _nameCtrl.text.trim(),
-      muscleGroup: _muscleGroupCtrl.text.trim(),
-      equipment: _equipmentCtrl.text.trim(),
-      description: _descriptionCtrl.text.trim(),
       videoUrl: _videoUrlCtrl.text.trim(),
-      instructions: _instructionsCtrl.text
-          .split('\n')
-          .map((s) => s.trim())
-          .where((s) => s.isNotEmpty)
-          .toList(),
     );
-    await context.read<AdminProvider>().saveExercise(exercise);
-    if (mounted) context.pop();
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await context.read<AdminProvider>().saveExercise(exercise);
+      messenger.showSnackBar(const SnackBar(content: Text('Exercício salvo')));
+      if (mounted) context.pop();
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Não foi possível salvar o exercício.')),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final allExercises = context.watch<ExerciseProvider>().exercises;
+    final taxonomy = context.watch<ExerciseTaxonomyProvider>();
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -89,36 +82,11 @@ class _AdminExerciseFormScreenState extends State<AdminExerciseFormScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          TextField(
-            controller: _nameCtrl,
-            decoration: const InputDecoration(labelText: 'Nome'),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _muscleGroupCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Grupo muscular',
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: TextField(
-                  controller: _equipmentCtrl,
-                  decoration: const InputDecoration(labelText: 'Equipamento'),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _descriptionCtrl,
-            minLines: 2,
-            maxLines: 4,
-            decoration: const InputDecoration(labelText: 'Descrição'),
+          ExerciseFormFields(
+            controller: _form,
+            allExercises: allExercises,
+            muscleGroupOptions: [for (final g in taxonomy.muscleGroups) g.name],
+            equipmentOptions: [for (final e in taxonomy.equipment) e.name],
           ),
           const SizedBox(height: 12),
           TextField(
@@ -126,15 +94,6 @@ class _AdminExerciseFormScreenState extends State<AdminExerciseFormScreen> {
             decoration: const InputDecoration(
               labelText: 'URL do vídeo (YouTube)',
               hintText: 'https://www.youtube.com/watch?v=...',
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _instructionsCtrl,
-            minLines: 3,
-            maxLines: 8,
-            decoration: const InputDecoration(
-              labelText: 'Como executar (uma instrução por linha)',
             ),
           ),
           const SizedBox(height: 24),
