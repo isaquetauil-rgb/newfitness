@@ -295,10 +295,21 @@ funciona normalmente sem depender da IA.
 
 ## Painel de administração
 
-O e-mail do dono do app está fixo em `lib/core/constants/admin_config.dart`
-(`ownerEmail`) e replicado em `firestore.rules` (função `isAdmin()`) e em
-`functions/src/admin.ts` (`ADMIN_EMAIL`, usado por `getAdminStats`) — são
-os três lugares que precisam mudar juntos se um dia você trocar de conta.
+O e-mail do dono do app está fixo em **quatro** lugares, que precisam ter
+exatamente o mesmo valor (e mudar juntos se um dia você trocar de conta):
+
+1. `firestore.rules` — função `isAdmin()`;
+2. `functions/src/admin.ts` — constante `ADMIN_EMAIL` (única nas Functions,
+   usada por `setUserRole`, `getAdminStats` e `reviewProfessionalRequest`);
+3. `lib/core/constants/admin_config.dart` — `ownerEmail` (só controla o que
+   a UI mostra);
+4. as constantes `ADMIN_EMAIL` dos testes do emulador em `firestore-tests/`.
+
+Além do e-mail certo, a conta do dono precisa estar com o **e-mail
+verificado** no Firebase Authentication: as regras e as Functions exigem
+`email_verified == true` no token, e o app só mostra a aba/painel de admin
+com o e-mail verificado. Com o e-mail não verificado, a conta é tratada
+como um usuário comum.
 Trocar o papel de um usuário (aluno/instrutor/nutricionista) é feito SÓ
 pela Cloud Function `setUserRole` (`functions/src/admin.ts`) — as regras
 não deixam nenhum cliente, nem o admin, gravar `role` direto. Ao tirar
@@ -313,7 +324,10 @@ era um jeito de escolher o papel de novo). Para virar **personal** ou
 **nutricionista**, o aluno abre Perfil → "Sou profissional" e envia o
 registro: número do **CREF** + UF, ou número do **CRN** + região (1 a 11).
 Isso cria `professional_requests/{uid}` como pendente (nome e e-mail vêm
-do perfil e da conta — não podem ser editados no pedido).
+do perfil e da conta — não podem ser editados no pedido). O pedido só é
+aceito com o **e-mail da conta verificado**: sem isso, a tela mostra um
+aviso com "Enviar e-mail de verificação" e "Já verifiquei" (recarrega a
+conta e o token) e só libera o formulário depois da verificação.
 
 O admin vê os pendentes em Painel admin → "Pedidos de profissional",
 confere o registro no site do conselho e decide pela Cloud Function
