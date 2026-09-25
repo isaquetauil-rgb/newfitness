@@ -59,7 +59,7 @@ void main() {
       expect(rules, contains('match /invite_codes/{code}'));
     });
 
-    test('admin continua com bypass total em create/update/delete', () {
+    test('isAdmin() (e-mail do dono verificado) segue nas regras de users e subcoleções', () {
       // A regra de `users/{userId}` deve ter pelo menos 3 ocorrências de
       // `isAdmin()` (create, update, delete) além da usada em `read`.
       final usersBlockStart = rules.indexOf('match /users/{userId} {');

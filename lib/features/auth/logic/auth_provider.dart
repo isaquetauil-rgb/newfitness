@@ -64,10 +64,16 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoggedIn => _user != null;
   String? get errorMessage => _errorMessage;
 
-  /// Único usuário com acesso ao painel de administração — a barreira de
-  /// segurança real fica nas regras do Firestore (`request.auth.token.email`);
-  /// isso só controla o que a UI mostra.
-  bool get isAdmin => _user?.email?.toLowerCase() == ownerEmail.toLowerCase();
+  /// true se a conta logada já confirmou o e-mail (link de verificação).
+  bool get isEmailVerified => _user?.emailVerified ?? false;
+
+  /// Único usuário com acesso ao painel de administração: e-mail do dono E
+  /// e-mail verificado — o mesmo critério das regras do Firestore e das
+  /// Functions (`email` + `email_verified` do token), que são a barreira de
+  /// segurança real; isso só controla o que a UI mostra.
+  bool get isAdmin =>
+      _user?.email?.toLowerCase() == ownerEmail.toLowerCase() &&
+      isEmailVerified;
 
   /// true enquanto o perfil do usuário logado ainda está sendo buscado no
   /// Firestore — a UI pode usar isso para mostrar um spinner só nesse
@@ -300,6 +306,20 @@ class AuthProvider extends ChangeNotifier {
 
   Future<bool> resetPassword(String email) {
     return _run(() => _authService.sendPasswordResetEmail(email));
+  }
+
+  /// Envia o e-mail de verificação para a conta logada.
+  Future<bool> sendEmailVerification() {
+    return _run(() => _authService.sendEmailVerification());
+  }
+
+  /// "Já verifiquei": recarrega a conta e o token para [isEmailVerified]
+  /// (e as regras do Firestore) enxergarem a verificação sem sair da conta.
+  Future<bool> reloadUser() {
+    return _run(() async {
+      final fresh = await _authService.reloadCurrentUser();
+      if (fresh != null) _user = fresh;
+    });
   }
 
   Future<bool> _run(Future<void> Function() action) async {

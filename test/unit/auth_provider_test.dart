@@ -275,6 +275,7 @@ void main() {
     final owner = MockUser();
     when(() => owner.uid).thenReturn('owner-uid');
     when(() => owner.email).thenReturn('isaquetrabalho005@gmail.com');
+    when(() => owner.emailVerified).thenReturn(true);
     when(() => firestoreService.getUserProfile('owner-uid'))
         .thenAnswer((_) async => null);
     when(() => firestoreService.createUserProfile(any()))
@@ -285,6 +286,23 @@ void main() {
     await Future<void>.delayed(Duration.zero);
 
     expect(provider.isAdmin, isTrue);
+  });
+
+  test('isAdmin é false para o e-mail do dono ainda não verificado', () async {
+    final owner = MockUser();
+    when(() => owner.uid).thenReturn('owner-uid');
+    when(() => owner.email).thenReturn('isaquetrabalho005@gmail.com');
+    when(() => owner.emailVerified).thenReturn(false);
+    when(() => firestoreService.getUserProfile('owner-uid'))
+        .thenAnswer((_) async => null);
+    when(() => firestoreService.createUserProfile(any()))
+        .thenAnswer((_) async {});
+
+    final provider = buildProvider();
+    authStateController.add(owner);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(provider.isAdmin, isFalse);
   });
 
   test('isAdmin é false para qualquer outro usuário', () async {

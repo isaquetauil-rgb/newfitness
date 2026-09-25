@@ -48,10 +48,12 @@ void main() {
   Future<AuthProvider> loggedIn(
     WidgetTester tester, {
     UserRole role = UserRole.student,
+    bool emailVerified = true,
   }) async {
     final user = MockUser();
     when(() => user.uid).thenReturn('u1');
     when(() => user.email).thenReturn('ana@x.com');
+    when(() => user.emailVerified).thenReturn(emailVerified);
     when(() => firestoreService.getUserProfile('u1')).thenAnswer(
       (_) async =>
           UserProfile(uid: 'u1', name: 'Ana', email: 'ana@x.com', role: role),
@@ -234,6 +236,70 @@ void main() {
       await tester.tap(find.text('Fazer novo pedido'));
       await tester.pump();
       verify(() => firestoreService.deleteProfessionalRequest('u1')).called(1);
+    });
+
+    testWidgets(
+      'sem pedido e e-mail não verificado: avisa, envia a verificação e '
+      'não libera o formulário',
+      (tester) async {
+        when(() => authService.sendEmailVerification())
+            .thenAnswer((_) async {});
+        final auth = await loggedIn(tester, emailVerified: false);
+        when(() => authService.reloadCurrentUser())
+            .thenAnswer((_) async => auth.user);
+        await pumpRequestScreen(tester, auth);
+        mine.add(null);
+        await tester.pump();
+
+        expect(
+          find.byKey(const ValueKey('verify-email-warning')),
+          findsOneWidget,
+        );
+        expect(find.text('Enviar pedido'), findsNothing);
+
+        await tester.tap(find.text('Enviar e-mail de verificação'));
+        await tester.pump();
+        verify(() => authService.sendEmailVerification()).called(1);
+        expect(
+          find.text('E-mail de verificação enviado para ana@x.com.'),
+          findsOneWidget,
+        );
+
+        // "Já verifiquei" sem ter verificado: continua bloqueado.
+        await tester.tap(find.text('Já verifiquei'));
+        await tester.pump();
+        verify(() => authService.reloadCurrentUser()).called(1);
+        expect(find.text('Enviar pedido'), findsNothing);
+        expect(
+          find.text(
+            'Seu e-mail ainda não foi verificado. Abra o link que enviamos.',
+          ),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets('"Já verifiquei" com e-mail verificado libera o formulário', (
+      tester,
+    ) async {
+      final auth = await loggedIn(tester, emailVerified: false);
+      final verified = MockUser();
+      when(() => verified.uid).thenReturn('u1');
+      when(() => verified.email).thenReturn('ana@x.com');
+      when(() => verified.emailVerified).thenReturn(true);
+      when(() => authService.reloadCurrentUser())
+          .thenAnswer((_) async => verified);
+      await pumpRequestScreen(tester, auth);
+      mine.add(null);
+      await tester.pump();
+      expect(find.text('Enviar pedido'), findsNothing);
+
+      await tester.tap(find.text('Já verifiquei'));
+      await tester.pump();
+
+      expect(auth.isEmailVerified, isTrue);
+      expect(find.byKey(const ValueKey('verify-email-warning')), findsNothing);
+      expect(find.text('Enviar pedido'), findsOneWidget);
     });
 
     testWidgets('já profissional: não mostra formulário', (tester) async {

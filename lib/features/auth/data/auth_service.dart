@@ -40,6 +40,23 @@ class AuthService {
     return _auth.sendPasswordResetEmail(email: email.trim());
   }
 
+  /// Envia o e-mail de verificação para a conta logada.
+  Future<void> sendEmailVerification() async {
+    await _auth.currentUser?.sendEmailVerification();
+  }
+
+  /// Recarrega a conta logada (para ler o `emailVerified` atualizado depois
+  /// que a pessoa clicou no link) e força um token novo — as regras e as
+  /// Functions leem `email_verified` do token, não da conta.
+  Future<User?> reloadCurrentUser() async {
+    final user = _auth.currentUser;
+    if (user == null) return null;
+    await user.reload();
+    final fresh = _auth.currentUser;
+    await fresh?.getIdToken(true);
+    return fresh;
+  }
+
   /// Converte os códigos de erro do Firebase em mensagens legíveis em PT-BR.
   String friendlyError(Object error) {
     if (error is FirebaseAuthException) {
