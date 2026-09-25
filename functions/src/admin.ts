@@ -111,7 +111,40 @@ export const setUserRole = onCall(async (request) => {
     throw new HttpsError("invalid-argument", "Usuário ou papel inválido.");
   }
 
-  const db = admin.firestore();
+  const revokedStudents = await applyUserRole(admin.firestore(), uid, role as Role);
+  return { ok: true, role, revokedStudents };
+});
+
+/**
+ * Núcleo de toda mudança de papel — usado por `setUserRole` (promoção/
+ * rebaixamento direto pelo admin) e por `reviewProfessionalRequest`
+ * (aprovação de pedido). Ver o comentário de `setUserRole` para a ordem
+ * trava → revogação em lotes → papel.
+ *
+ * A gravação FINAL do papel roda numa transação. [options.finalize] roda
+ * dentro dela, antes da gravação do papel, recebendo o perfil lido na
+ * transação — é onde a aprovação confere o pedido e grava o status, para
+ * papel e pedido mudarem juntos (tudo ou nada). O `finalize` deve fazer
+ * todas as leituras antes de qualquer gravação (regra das transações).
+ *
+ * Com [options.allowRevocation] = false, recusa qualquer mudança que
+ * exigiria encerrar vínculos de instrutor (a aprovação de pedido nunca deve
+ * rebaixar ninguém).
+ *
+ * Devolve quantos alunos foram desvinculados.
+ */
+export async function applyUserRole(
+  db: admin.firestore.Firestore,
+  uid: string,
+  role: Role,
+  options: {
+    allowRevocation?: boolean;
+    finalize?: (
+      tx: admin.firestore.Transaction,
+      userSnap: admin.firestore.DocumentSnapshot
+    ) => Promise<void>;
+  } = {}
+): Promise<number> {
   const userRef = db.collection("users").doc(uid);
   const snap = await userRef.get();
   if (!snap.exists) {
@@ -121,6 +154,12 @@ export const setUserRole = onCall(async (request) => {
 
   let revokedStudents = 0;
   if (currentRole === "instructor" && role !== "instructor") {
+    if (options.allowRevocation === false) {
+      throw new HttpsError(
+        "failed-precondition",
+        "Esta operação não pode tirar alguém do papel de instrutor."
+      );
+    }
     await userRef.update({ pendingRoleChange: role });
     try {
       revokedStudents = await revokeInstructorLinks(db, uid);
@@ -134,9 +173,139 @@ export const setUserRole = onCall(async (request) => {
     }
   }
 
-  await userRef.update({
-    role,
-    pendingRoleChange: admin.firestore.FieldValue.delete(),
+  await db.runTransaction(async (tx) => {
+    const userSnap = await tx.get(userRef);
+    if (options.finalize) await options.finalize(tx, userSnap);
+    tx.update(userRef, {
+      role,
+      pendingRoleChange: admin.firestore.FieldValue.delete(),
+    });
   });
-  return { ok: true, role, revokedStudents };
+  return revokedStudents;
+}
+
+const PROFESSIONAL_REQUESTS = "professional_requests";
+const PROFESSIONAL_KINDS = ["instructor", "nutritionist"] as const;
+type ProfessionalKind = (typeof PROFESSIONAL_KINDS)[number];
+
+/**
+ * O admin aprova ou recusa o pedido de um usuário para virar personal
+ * (`instructor`) ou nutricionista (`nutritionist`) — o admin confere o
+ * CREF/CRN manualmente no site do conselho antes de decidir.
+ *
+ * Recebe `{ uid, decision: "approve" | "reject", reason? }`; `reason` é
+ * obrigatório (1 a 500 caracteres) na recusa.
+ *
+ * Aprovar: o papel (em `users`) e o status do pedido (`approved`,
+ * `reviewedAt`, `reviewedBy`) são gravados na MESMA transação, via
+ * `applyUserRole` — nunca fica papel mudado com pedido pendente, nem o
+ * contrário. Só aprova quem hoje é aluno (ou já tem exatamente o papel
+ * pedido, caso em que só marca o pedido); quem já é o OUTRO tipo de
+ * profissional é recusado — isso é troca de papel, feita no painel.
+ *
+ * Recusar: grava `rejected` + motivo; o papel não muda.
+ *
+ * Nos dois casos uma cópia vai para `professional_requests/{uid}/history`
+ * (o documento principal pode ser apagado pelo dono para pedir de novo).
+ *
+ * Idempotente: repetir a mesma decisão devolve ok sem refazer nada; uma
+ * decisão contrária à já tomada é recusada (`failed-precondition`).
+ */
+export const reviewProfessionalRequest = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "É preciso estar logado.");
+  }
+  if (!isAdminToken(request.auth.token)) {
+    throw new HttpsError("permission-denied", "Acesso restrito ao administrador.");
+  }
+  const reviewerUid = request.auth.uid;
+  const uid = request.data?.uid as unknown;
+  const decision = request.data?.decision as unknown;
+  const rawReason = request.data?.reason as unknown;
+  if (typeof uid !== "string" || !uid.trim()) {
+    throw new HttpsError("invalid-argument", "Usuário inválido.");
+  }
+  if (decision !== "approve" && decision !== "reject") {
+    throw new HttpsError("invalid-argument", "Decisão inválida.");
+  }
+  const reason = typeof rawReason === "string" ? rawReason.trim() : "";
+  if (decision === "reject" && (reason.length < 1 || reason.length > 500)) {
+    throw new HttpsError(
+      "invalid-argument",
+      "Informe o motivo da recusa (1 a 500 caracteres)."
+    );
+  }
+
+  const db = admin.firestore();
+  const requestRef = db.collection(PROFESSIONAL_REQUESTS).doc(uid);
+  const snap = await requestRef.get();
+  if (!snap.exists) {
+    throw new HttpsError("not-found", "Pedido não encontrado.");
+  }
+  const target = decision === "approve" ? "approved" : "rejected";
+  const currentStatus = snap.data()?.status as string | undefined;
+  if (currentStatus !== "pending") {
+    if (currentStatus === target) return { ok: true, status: target, unchanged: true };
+    throw new HttpsError(
+      "failed-precondition",
+      "Este pedido já foi decidido de outra forma."
+    );
+  }
+
+  const reviewedAt = admin.firestore.FieldValue.serverTimestamp();
+  const historyRef = requestRef.collection("history").doc();
+
+  /** Lê o pedido dentro da transação e confirma que continua pendente. */
+  async function readPending(tx: admin.firestore.Transaction) {
+    const fresh = await tx.get(requestRef);
+    const data = fresh.data();
+    if (!data) throw new HttpsError("not-found", "Pedido não encontrado.");
+    if (data.status !== "pending") {
+      throw new HttpsError(
+        "failed-precondition",
+        "Este pedido já foi decidido — atualize a lista."
+      );
+    }
+    return data;
+  }
+
+  if (decision === "reject") {
+    await db.runTransaction(async (tx) => {
+      const data = await readPending(tx);
+      const decided = {
+        status: "rejected",
+        rejectionReason: reason,
+        reviewedAt,
+        reviewedBy: reviewerUid,
+      };
+      tx.update(requestRef, decided);
+      tx.set(historyRef, { ...data, ...decided });
+    });
+    return { ok: true, status: "rejected" };
+  }
+
+  const kind = snap.data()?.kind as string;
+  if (!PROFESSIONAL_KINDS.includes(kind as ProfessionalKind)) {
+    throw new HttpsError("failed-precondition", "Tipo de pedido inválido.");
+  }
+
+  await applyUserRole(db, uid, kind as ProfessionalKind, {
+    allowRevocation: false,
+    finalize: async (tx, userSnap) => {
+      // Leituras primeiro (pedido); depois as gravações.
+      const data = await readPending(tx);
+      const role = (userSnap.data()?.role as string | undefined) ?? "student";
+      if (role !== "student" && role !== kind) {
+        throw new HttpsError(
+          "failed-precondition",
+          "Este usuário já é outro tipo de profissional — use a troca de " +
+            "papel no painel."
+        );
+      }
+      const decided = { status: "approved", reviewedAt, reviewedBy: reviewerUid };
+      tx.update(requestRef, decided);
+      tx.set(historyRef, { ...data, ...decided });
+    },
+  });
+  return { ok: true, status: "approved" };
 });

@@ -43,16 +43,18 @@ service cloud.firestore {
       // `ensureInviteCode` (reserva única em `invite_codes`). Se o cliente
       // pudesse escolher o código, alguém poderia copiar o de um instrutor
       // e passar a receber os vínculos dos alunos dele.
-      allow create: if request.auth != null && (
-        isAdmin() || (
-          request.auth.uid == userId &&
-          request.resource.data.get('role', 'student') in ['student', 'instructor', 'nutritionist'] &&
-          request.resource.data.get('instructorId', null) == null &&
-          request.resource.data.get('nutritionistId', null) == null &&
-          request.resource.data.get('inviteCode', null) == null &&
-          request.resource.data.get('pendingRoleChange', null) == null
-        )
-      );
+      //
+      // O perfil nasce SEMPRE como aluno — virar personal/nutricionista só
+      // pelo pedido aprovado pelo admin (`professional_requests` +
+      // `reviewProfessionalRequest`) ou pela promoção administrativa
+      // (`setUserRole`). Nem o admin cria perfil pelo cliente.
+      allow create: if request.auth != null &&
+        request.auth.uid == userId &&
+        request.resource.data.get('role', 'student') == 'student' &&
+        request.resource.data.get('instructorId', null) == null &&
+        request.resource.data.get('nutritionistId', null) == null &&
+        request.resource.data.get('inviteCode', null) == null &&
+        request.resource.data.get('pendingRoleChange', null) == null;
       // `role` e `pendingRoleChange` (trava de rebaixamento em andamento)
       // só mudam pela Cloud Function `setUserRole` — NEM o admin grava
       // `role` pelo cliente. Mudar só o papel de um instrutor deixava os
@@ -68,8 +70,11 @@ service cloud.firestore {
           request.resource.data.get('inviteCode', null) == resource.data.get('inviteCode', null)
         )
       );
-      allow delete: if request.auth != null &&
-        (request.auth.uid == userId || isAdmin());
+      // Nenhum cliente apaga um perfil (nem o admin): apagar e recriar o
+      // documento era um jeito de escolher o papel de novo (autopromoção) e
+      // deixava vínculos/agenda pela metade. Exclusão de conta, quando
+      // existir, será uma Cloud Function.
+      allow delete: if false;
 
       match /workouts/{workoutId} {
         allow read: if request.auth != null && (
@@ -319,6 +324,70 @@ service cloud.firestore {
         );
         allow write: if request.auth != null &&
           get(/databases/$(database)/documents/users/$(userId)).data.instructorId == request.auth.uid;
+      }
+    }
+    // Pedido para virar personal (CREF) ou nutricionista (CRN) — um por
+    // usuário (id = uid). O aluno só CRIA como "pending" com os próprios
+    // dados; status, revisão e motivo da recusa só a Cloud Function
+    // `reviewProfessionalRequest` (Admin SDK) grava. Leitura: dono e admin.
+    match /professional_requests/{requestUid} {
+      function requesterProfile() {
+        return get(/databases/$(database)/documents/users/$(requestUid)).data;
+      }
+      function validRegion(d) {
+        return (d.kind == 'instructor' && d.registrationRegion in [
+            'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT',
+            'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO',
+            'RR', 'SC', 'SP', 'SE', 'TO'
+          ]) ||
+          (d.kind == 'nutritionist' && d.registrationRegion in [
+            '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11'
+          ]);
+      }
+      function validRequest(d) {
+        return d.keys().hasOnly([
+            'uid', 'kind', 'registrationNumber', 'registrationRegion',
+            'name', 'email', 'status', 'createdAt'
+          ]) &&
+          d.keys().hasAll([
+            'uid', 'kind', 'registrationNumber', 'registrationRegion',
+            'name', 'email', 'status', 'createdAt'
+          ]) &&
+          d.uid == requestUid &&
+          d.kind in ['instructor', 'nutritionist'] &&
+          d.registrationNumber is string &&
+          // 4 a 30 caracteres, sem espaço nas pontas (já vem com trim).
+          d.registrationNumber.matches('[A-Za-z0-9./-][A-Za-z0-9./ -]{2,28}[A-Za-z0-9./-]') &&
+          d.registrationRegion is string &&
+          validRegion(d) &&
+          d.status == 'pending' &&
+          d.createdAt == request.time &&
+          // name/email não podem ser forjados: vêm do token e do perfil.
+          d.email == request.auth.token.email &&
+          d.name == requesterProfile().name;
+      }
+
+      allow read: if request.auth != null &&
+        (request.auth.uid == requestUid || isAdmin());
+      allow create: if request.auth != null &&
+        request.auth.uid == requestUid &&
+        requesterProfile().get('role', 'student') == 'student' &&
+        validRequest(request.resource.data);
+      allow update: if false;
+      // O dono pode desistir (pendente), apagar um recusado para pedir de
+      // novo, ou apagar um aprovado antigo se hoje é aluno (ex-profissional
+      // pedindo de novo). O histórico fica em `history`.
+      allow delete: if request.auth != null &&
+        request.auth.uid == requestUid && (
+          resource.data.status in ['pending', 'rejected'] ||
+          (resource.data.status == 'approved' &&
+            requesterProfile().get('role', 'student') == 'student')
+        );
+
+      match /history/{entryId} {
+        allow read: if request.auth != null &&
+          (request.auth.uid == requestUid || isAdmin());
+        allow write: if false;
       }
     }
     match /invite_codes/{code} {

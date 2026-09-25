@@ -13,7 +13,11 @@ export {
   linkToProfessional,
   unlinkFromProfessional,
 } from "./linking";
-export { getAdminStats, setUserRole } from "./admin";
+export {
+  getAdminStats,
+  reviewProfessionalRequest,
+  setUserRole,
+} from "./admin";
 
 const SYSTEM_PROMPT =
   "Você é o assistente de fitness do app NewFitness. Responda sempre em " +
