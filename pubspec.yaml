@@ -68,6 +68,10 @@ dependencies:
   animations: ^2.2.0
   youtube_player_iframe: ^6.0.2
 
+  # Reprodução de vídeo próprio do exercício (upload do instrutor) — vídeo do
+  # YouTube continua usando youtube_player_iframe acima.
+  video_player: ^2.9.5
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

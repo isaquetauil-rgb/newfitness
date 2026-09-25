@@ -27,7 +27,9 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>Usamos a câmera para tirar fotos de progresso corporal e de refeições.</string>
+	<string>Usamos a câmera para tirar fotos de progresso corporal e de refeições, e para gravar vídeos de exercícios.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Usamos o microfone para gravar o áudio dos vídeos de exercícios.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Usamos a galeria para escolher fotos de progresso corporal e de refeições.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>

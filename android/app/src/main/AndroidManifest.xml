@@ -1,4 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Declarada explicitamente para o build de release (os manifests de
+         debug/profile já têm; no release ela só chegava via merge dos
+         plugins do Firebase). -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="newfitness"
         android:name="${applicationName}"

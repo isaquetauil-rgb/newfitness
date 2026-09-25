@@ -53,3 +53,8 @@ app.*.map.json
 android/app/google-services.json
 ios/Runner/GoogleService-Info.plist
 macos/Runner/GoogleService-Info.plist
+
+# Logs gerados pelos emuladores do Firebase (testes de regras)
+firestore-debug.log
+storage-debug.log
+firebase-debug.log
