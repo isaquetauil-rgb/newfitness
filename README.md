@@ -238,8 +238,8 @@ flutter run
 ## O que já está implementado
 
 - ✅ Login, cadastro e **recuperação de senha** com Firebase Auth
-  (e-mail/senha), com escolha de **papel** (aluno ou instrutor) direto no
-  cadastro
+  (e-mail/senha). O cadastro é **sempre de aluno**; personal e
+  nutricionista pedem aprovação depois (ver "Aprovação de profissionais")
 - ✅ Aba **Início** com resumo do dia (treino em andamento, lembretes ativos)
   e atalhos para as outras abas
 - ✅ Navegação por `go_router` com transições animadas entre telas
@@ -255,8 +255,8 @@ flutter run
 - ✅ **Chat com IA** (aba "IA") — tira dúvidas de treino/dieta/suplementação
 - ✅ **Fotos de refeição** (café/almoço/janta/lanche) com **análise de IA**
   automática logo após o upload
-- ✅ **Área instrutor/aluno**: instrutor recebe um código único ao se
-  cadastrar; aluno informa esse código no próprio cadastro (ou depois, no
+- ✅ **Área instrutor/aluno**: instrutor recebe um código único quando é
+  aprovado; aluno informa esse código no próprio cadastro (ou depois, no
   perfil) para se vincular; instrutor vê a lista de alunos vinculados e o
   histórico de treinos de cada um
 - ✅ **Interface e Início diferentes para instrutor e aluno** — o instrutor
@@ -305,6 +305,32 @@ não deixam nenhum cliente, nem o admin, gravar `role` direto. Ao tirar
 alguém de instrutor, a Function encerra antes todos os vínculos de
 instrutor dessa pessoa (senão ela continuaria acessando os alunos antigos).
 
+### Aprovação de profissionais
+
+Qualquer pessoa se cadastra como **aluno** — as regras não deixam o cliente
+criar perfil com outro papel, nem apagar o próprio perfil (apagar e recriar
+era um jeito de escolher o papel de novo). Para virar **personal** ou
+**nutricionista**, o aluno abre Perfil → "Sou profissional" e envia o
+registro: número do **CREF** + UF, ou número do **CRN** + região (1 a 11).
+Isso cria `professional_requests/{uid}` como pendente (nome e e-mail vêm
+do perfil e da conta — não podem ser editados no pedido).
+
+O admin vê os pendentes em Painel admin → "Pedidos de profissional",
+confere o registro no site do conselho e decide pela Cloud Function
+`reviewProfessionalRequest` (`functions/src/admin.ts`):
+
+- **Aprovar**: o papel do usuário e o status do pedido mudam na mesma
+  transação (reaproveita `applyUserRole`, o mesmo núcleo de `setUserRole`).
+  O código de convite vem em seguida, pelo `ensureInviteCode`.
+- **Recusar**: motivo obrigatório (até 500 caracteres), que o aluno vê. Ele
+  pode pedir de novo na hora.
+
+Toda decisão fica registrada em `professional_requests/{uid}/history`.
+Repetir a mesma decisão não muda nada; uma decisão contrária é recusada.
+A promoção direta pelo painel de usuários (`setUserRole`) continua
+existindo como exceção administrativa. Profissionais que já existiam
+continuam aprovados, sem migração.
+
 Não existe fluxo de "virar admin" pelo app de propósito: é sempre a mesma
 conta, verificada tanto na UI (mostra/esconde a aba) quanto no servidor
 (regra do Firestore, que é a barreira de segurança real).
@@ -314,9 +340,13 @@ conta, verificada tanto na UI (mostra/esconde a aba) quanto no servidor
 Nada disto é aplicado automaticamente — rode manualmente, com uma conta que
 tenha acesso ao projeto `newfitnessappbr`.
 
-1. **Functions antes das regras** — o cadastro de instrutor/nutricionista
-   depende de `ensureInviteCode`:
+1. **Functions antes das regras** — o código de convite depende de
+   `ensureInviteCode` e a aprovação de profissionais de
+   `reviewProfessionalRequest`:
    `firebase deploy --only functions`
+   Publique também os índices (`firebase deploy --only firestore:indexes`)
+   e espere ficarem "Enabled" — a lista de pedidos pendentes do admin usa
+   um índice composto (`status` + `createdAt`).
 2. **Regras juntas** (as de Storage consultam o Firestore):
    `firebase deploy --only firestore:rules,storage`
    Na primeira vez, a CLI pede para conceder ao Storage a permissão de ler
