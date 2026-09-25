@@ -37,7 +37,7 @@ firebase emulators:start --only firestore,storage --project demo-newfitness-rule
 # espera aparecer "All emulators ready!" (Firestore 8080, Storage 9199)
 # Noutro terminal:
 cd firestore-tests
-npm test             # roda os 8 arquivos, um de cada vez
+npm test             # roda os 9 arquivos, um de cada vez
 ```
 
 Os arquivos rodam **em sequência** (`--test-concurrency=1`) de propósito:
@@ -107,6 +107,16 @@ do outro no meio do teste (falhas aleatórias).
   no treino: um treino com `prescription`/`source` é aceito pelas regras
   existentes de `workouts` (dono grava e lê, instrutor vinculado lê,
   não vinculados não).
+
+- **`professional-requests.test.js`** — aprovação de profissionais: o
+  cliente só cria perfil de aluno e ninguém apaga perfil (fecha a
+  autopromoção por apagar-e-recriar); pedido `professional_requests/{uid}`
+  validado (name/email não forjáveis, registro e região do CREF/CRN,
+  horário do servidor, só "pending"); só o admin decide pela Function
+  `reviewProfessionalRequest` (papel e status gravados juntos, recusa com
+  motivo obrigatório, histórico, idempotência, pedir de novo). Nas suítes
+  `invite-and-links` e `consistency`, profissionais passaram a ser criados
+  pelo Admin SDK (o cliente não cria mais perfil de profissional).
 
 ## Dados usados
 

@@ -80,18 +80,26 @@ async function rejectsWith(promise, code) {
   });
 }
 
-/** Cria o perfil pelo CLIENTE (como o app faz no cadastro), sem código. */
+/**
+ * Cria o perfil. Aluno: pelo CLIENTE (como o app faz no cadastro).
+ * Profissional: pelo Admin SDK — desde o fluxo de aprovação, o cliente só
+ * cria perfil de aluno; personal/nutricionista passam a existir por pedido
+ * aprovado ou promoção administrativa (ver professional-requests.test.js).
+ */
 async function signUpAs(uid, role, name = uid) {
-  await assertSucceeds(
-    setDoc(doc(client(uid), `users/${uid}`), {
-      name,
-      email: `${uid}@x.test`,
-      role,
-      instructorId: null,
-      nutritionistId: null,
-      inviteCode: null,
-    }),
-  );
+  const profile = {
+    name,
+    email: `${uid}@x.test`,
+    role,
+    instructorId: null,
+    nutritionistId: null,
+    inviteCode: null,
+  };
+  if (role === 'student') {
+    await assertSucceeds(setDoc(doc(client(uid), `users/${uid}`), profile));
+  } else {
+    await adminDb.doc(`users/${uid}`).set(profile);
+  }
 }
 
 async function issueCode(uid) {
