@@ -2,10 +2,43 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     match /users/{userId}/body_photos/{fileName} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      // Fotos corporais (dado sensível). Leitura: dono, instrutor vinculado
+      // ou nutricionista vinculada — vínculo lido do perfil do ALUNO, mesma
+      // checagem de `body_photos` em `firestore.rules`. Só o dono envia
+      // (apenas imagem, até 10 MB) e apaga. O app baixa via SDK a partir do
+      // caminho (sem URL de download pública), então esta regra vale em
+      // todo acesso.
+      allow read: if request.auth != null && (
+        request.auth.uid == userId ||
+        firestore.get(/databases/(default)/documents/users/$(userId)).data.get('instructorId', null) == request.auth.uid ||
+        firestore.get(/databases/(default)/documents/users/$(userId)).data.get('nutritionistId', null) == request.auth.uid
+      );
+      allow create, update: if request.auth != null &&
+        request.auth.uid == userId &&
+        request.resource.size < 10 * 1024 * 1024 &&
+        request.resource.contentType.matches('image/.*');
+      allow delete: if request.auth != null && request.auth.uid == userId;
     }
     match /users/{userId}/meal_photos/{fileName} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      // Leitura também liberada pra nutricionista vinculada ao ALUNO dono
+      // da pasta (mesma checagem de `meal_photos` em `firestore.rules`) —
+      // instrutor não entra aqui, fica isolado do domínio de nutrição.
+      // (Antes lia o perfil de quem pedia, ao contrário.)
+      allow read: if request.auth != null && (
+        request.auth.uid == userId ||
+        firestore.get(/databases/(default)/documents/users/$(userId)).data.get('nutritionistId', null) == request.auth.uid
+      );
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    match /users/{userId}/exercise_videos/{fileName} {
+      // Vídeo próprio de exercício, enviado pelo instrutor (userId). Leitura
+      // também liberada pros alunos vinculados a ele — mesma checagem de
+      // `instructorId` usada em `firestore.rules` pra `custom_exercises`.
+      allow read: if request.auth != null && (
+        request.auth.uid == userId ||
+        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.instructorId == userId
+      );
+      allow write: if request.auth != null && request.auth.uid == userId;
     }
   }
 }

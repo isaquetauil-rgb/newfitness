@@ -23,12 +23,29 @@ interface AnthropicMessage {
 }
 
 /**
+ * Ferramenta server-side da própria Anthropic — a busca acontece na
+ * infraestrutura dela (não fazemos nenhuma chamada extra a um provedor de
+ * busca), e o resultado já volta dentro da mesma resposta. `max_uses` limita
+ * quantas buscas a Claude pode fazer numa única pergunta, pra não deixar o
+ * custo (cada busca é cobrada à parte pela Anthropic) sem teto.
+ */
+export const WEB_SEARCH_TOOL = {
+  type: "web_search_20250305",
+  name: "web_search",
+  max_uses: 3,
+};
+
+/**
  * Chama a API de mensagens da Anthropic e retorna o texto da resposta.
+ * Quando `tools` inclui `WEB_SEARCH_TOOL`, a resposta pode intercalar
+ * blocos de busca com blocos de texto — só concatenamos os de texto, que já
+ * vêm redigidos pela Claude incorporando o que ela encontrou.
  */
 export async function callClaude(params: {
   system?: string;
   messages: AnthropicMessage[];
   maxTokens?: number;
+  tools?: Array<Record<string, unknown>>;
 }): Promise<string> {
   const apiKey = anthropicApiKey.value();
   if (!apiKey) {
@@ -49,6 +66,7 @@ export async function callClaude(params: {
       max_tokens: params.maxTokens ?? 1024,
       system: params.system,
       messages: params.messages,
+      ...(params.tools ? { tools: params.tools } : {}),
     }),
   });
 

@@ -8,17 +8,67 @@ service cloud.firestore {
         request.auth.token.email == 'isaquetrabalho005@gmail.com';
     }
 
+    // Collection group: permite ao instrutor ler os compromissos de TODOS os
+    // seus alunos de uma vez (agenda consolidada), sem duplicar documento
+    // por instrutor. A regra específica dentro de `users/{userId}` abaixo
+    // cobre a leitura/escrita do próprio aluno e a escrita do instrutor.
+    match /{path=**}/appointments/{appointmentId} {
+      allow read: if request.auth != null &&
+        resource.data.instructorUid == request.auth.uid;
+    }
+
     match /users/{userId} {
-      // O próprio usuário sempre pode ler/escrever seu perfil.
-      // Um instrutor também pode LER o perfil de um aluno vinculado a ele.
-      // O admin lê/escreve qualquer perfil (usado para promover/rebaixar
-      // aluno <-> instrutor no painel).
+      // O próprio usuário sempre pode ler seu perfil. Um instrutor/
+      // nutricionista vinculado também pode LER o perfil de um aluno
+      // vinculado a ele. O admin lê qualquer perfil.
       allow read: if request.auth != null && (
         request.auth.uid == userId ||
         resource.data.instructorId == request.auth.uid ||
+        resource.data.nutritionistId == request.auth.uid ||
         isAdmin()
       );
-      allow write: if request.auth != null &&
+
+      // `role`, `instructorId`, `nutritionistId` e `inviteCode` concedem
+      // acesso sobre OUTROS documentos (várias regras abaixo confiam neles
+      // via `get(.../users/$(userId)).data.instructorId == request.auth.uid`
+      // etc.) — por isso o próprio usuário NUNCA pode alterá-los
+      // diretamente, só criá-los vazios/como 'student'. Só o admin
+      // (promover/rebaixar no painel) ou a Cloud Function
+      // `linkToProfessional` (Admin SDK, valida um código de convite real e
+      // por isso ignora estas regras) podem mudá-los. Sem isso, um aluno
+      // poderia editar o próprio documento e se auto-vincular a um
+      // instrutor, ou se auto-promover, sem nenhuma autorização real.
+      //
+      // `inviteCode` nasce SEMPRE vazio: quem o gera é a Cloud Function
+      // `ensureInviteCode` (reserva única em `invite_codes`). Se o cliente
+      // pudesse escolher o código, alguém poderia copiar o de um instrutor
+      // e passar a receber os vínculos dos alunos dele.
+      allow create: if request.auth != null && (
+        isAdmin() || (
+          request.auth.uid == userId &&
+          request.resource.data.get('role', 'student') in ['student', 'instructor', 'nutritionist'] &&
+          request.resource.data.get('instructorId', null) == null &&
+          request.resource.data.get('nutritionistId', null) == null &&
+          request.resource.data.get('inviteCode', null) == null &&
+          request.resource.data.get('pendingRoleChange', null) == null
+        )
+      );
+      // `role` e `pendingRoleChange` (trava de rebaixamento em andamento)
+      // só mudam pela Cloud Function `setUserRole` — NEM o admin grava
+      // `role` pelo cliente. Mudar só o papel de um instrutor deixava os
+      // alunos com `instructorId` apontando para ele, e ele continuava com
+      // acesso; a Function encerra esses vínculos antes de trocar o papel.
+      allow update: if request.auth != null &&
+        request.resource.data.get('role', null) == resource.data.get('role', null) &&
+        request.resource.data.get('pendingRoleChange', null) == resource.data.get('pendingRoleChange', null) && (
+        isAdmin() || (
+          request.auth.uid == userId &&
+          request.resource.data.get('instructorId', null) == resource.data.get('instructorId', null) &&
+          request.resource.data.get('nutritionistId', null) == resource.data.get('nutritionistId', null) &&
+          request.resource.data.get('inviteCode', null) == resource.data.get('inviteCode', null)
+        )
+      );
+      allow delete: if request.auth != null &&
         (request.auth.uid == userId || isAdmin());
 
       match /workouts/{workoutId} {
@@ -29,22 +79,235 @@ service cloud.firestore {
         );
         allow write: if request.auth != null && request.auth.uid == userId;
       }
+      match /progress_records/{exerciseId} {
+        // Resumo de evolução derivado dos próprios treinos do aluno — mesmo
+        // padrão de leitura de `workouts` (dono, instrutor vinculado ou
+        // admin); só o dono escreve (FirestoreService.recordExerciseProgress,
+        // chamado ao finalizar um treino).
+        allow read: if request.auth != null && (
+          request.auth.uid == userId ||
+          get(/databases/$(database)/documents/users/$(userId)).data.instructorId == request.auth.uid ||
+          isAdmin()
+        );
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
       match /reminders/{reminderId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
+      // ---- Evolução física (dados sensíveis) ----
+      // Helpers do domínio de evolução: `userId` é sempre o ALUNO dono dos
+      // dados. O vínculo é lido do perfil do aluno, que o próprio aluno não
+      // consegue alterar (ver regra de `users/{userId}` acima).
+      function isSelf() {
+        return request.auth.uid == userId;
+      }
+      function studentProfile() {
+        return get(/databases/$(database)/documents/users/$(userId)).data;
+      }
+      function isLinkedInstructor() {
+        return studentProfile().get('instructorId', null) == request.auth.uid;
+      }
+      function isLinkedNutritionist() {
+        return studentProfile().get('nutritionistId', null) == request.auth.uid;
+      }
+      // Número opcional: ausente/nulo, ou número em (0, max).
+      function optNumber(d, key, max) {
+        return d.get(key, null) == null ||
+          (d.get(key, null) is number && d.get(key, 0) > 0 && d.get(key, 0) < max);
+      }
+      function optString(d, key, maxLen) {
+        return d.get(key, null) == null ||
+          (d.get(key, null) is string && d.get(key, '').size() <= maxLen);
+      }
+
       match /body_photos/{photoId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        // Leitura: dono, instrutor vinculado ou nutricionista vinculada.
+        // Só o dono registra/apaga as próprias fotos (o admin pode apagar o
+        // registro por moderação, mas não lê fotos corporais). O arquivo em
+        // si é protegido por `storage.rules` com a mesma checagem de vínculo.
+        allow read: if request.auth != null && (
+          isSelf() || isLinkedInstructor() || isLinkedNutritionist()
+        );
+        allow create: if request.auth != null && isSelf() &&
+          request.resource.data.keys().hasOnly([
+            'userId', 'date', 'position', 'storagePath', 'uploadedByUid',
+            'createdAt', 'note'
+          ]) &&
+          request.resource.data.userId == userId &&
+          request.resource.data.date is int &&
+          request.resource.data.uploadedByUid == request.auth.uid &&
+          request.resource.data.storagePath is string &&
+          request.resource.data.storagePath.matches('users/' + userId + '/body_photos/[^/]+') &&
+          optString(request.resource.data, 'position', 40) &&
+          optString(request.resource.data, 'note', 500);
+        allow update: if false;
+        allow delete: if request.auth != null && (isSelf() || isAdmin());
+      }
+      match /physical_assessments/{assessmentId} {
+        // Leitura: dono, instrutor vinculado, nutricionista vinculada ou
+        // admin. Criação: o aluno (origem 'self') ou o instrutor vinculado
+        // (origem 'instructor'), sempre carimbando a si mesmo como autor.
+        // Edição/exclusão: só o autor (enquanto ainda for o dono ou
+        // instrutor vinculado) — o aluno não mexe numa avaliação lançada
+        // pelo instrutor, e vice-versa. Autor, origem, dono e data de
+        // criação são imutáveis. O admin pode apagar (moderação).
+        function validAssessment(d) {
+          return d.keys().hasOnly([
+              'userId', 'date', 'weightKg', 'heightCm', 'bodyFatPercent',
+              'bodyFatMethod', 'muscleMassKg', 'measurementsCm', 'recordedBy',
+              'createdByUid', 'createdByName', 'createdAt', 'updatedAt', 'notes'
+            ]) &&
+            d.userId == userId &&
+            d.date is int &&
+            d.recordedBy in ['self', 'instructor'] &&
+            optNumber(d, 'weightKg', 500) &&
+            optNumber(d, 'heightCm', 300) &&
+            optNumber(d, 'bodyFatPercent', 100) &&
+            optNumber(d, 'muscleMassKg', 300) &&
+            optString(d, 'bodyFatMethod', 40) &&
+            optString(d, 'createdByName', 200) &&
+            optString(d, 'notes', 1000) &&
+            (d.get('measurementsCm', null) == null || d.measurementsCm is map);
+        }
+        // Avaliações antigas não têm `createdByUid`: o autor é inferido da
+        // origem (mesmo comportamento de antes desta regra).
+        function isAuthorOf(d) {
+          return (d.get('createdByUid', null) != null &&
+                  d.createdByUid == request.auth.uid) ||
+            (d.get('createdByUid', null) == null && (
+              (d.get('recordedBy', 'self') == 'self' && isSelf()) ||
+              (d.get('recordedBy', 'self') == 'instructor' && isLinkedInstructor())
+            ));
+        }
+
+        allow read: if request.auth != null && (
+          isSelf() || isLinkedInstructor() || isLinkedNutritionist() || isAdmin()
+        );
+        allow create: if request.auth != null &&
+          validAssessment(request.resource.data) &&
+          request.resource.data.createdByUid == request.auth.uid && (
+            (isSelf() && request.resource.data.recordedBy == 'self') ||
+            (isLinkedInstructor() && request.resource.data.recordedBy == 'instructor')
+          );
+        allow update: if request.auth != null &&
+          (isSelf() || isLinkedInstructor()) &&
+          isAuthorOf(resource.data) &&
+          validAssessment(request.resource.data) &&
+          request.resource.data.recordedBy == resource.data.get('recordedBy', 'self') &&
+          request.resource.data.get('createdByUid', null) == resource.data.get('createdByUid', null) &&
+          request.resource.data.get('createdAt', null) == resource.data.get('createdAt', null);
+        allow delete: if request.auth != null && (
+          isAdmin() ||
+          ((isSelf() || isLinkedInstructor()) && isAuthorOf(resource.data))
+        );
       }
       match /chat_messages/{messageId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
       match /meal_photos/{photoId} {
+        // Leitura: dono ou nutricionista vinculada (domínio dela) — nunca o
+        // instrutor, que fica isolado do lado de nutrição.
+        allow read: if request.auth != null && (
+          request.auth.uid == userId ||
+          get(/databases/$(database)/documents/users/$(userId)).data.nutritionistId == request.auth.uid
+        );
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
+      match /nutrition_chat/{messageId} {
+        // Conversa de nutrição do aluno `userId`. Cada participante só cria
+        // mensagens do PRÓPRIO papel:
+        //  - o aluno: só 'user' (sem `authorName`);
+        //  - a nutricionista vinculada ao aluno: só 'nutritionist';
+        //  - 'assistant' (resposta da IA): ninguém pelo cliente — só a
+        //    Cloud Function `askNutritionAI` (Admin SDK) grava.
+        // Mensagens são imutáveis (sem update/delete), então autor e papel
+        // nunca mudam depois de criados.
+        //
+        // O vínculo é lido do perfil do ALUNO (antes a regra lia o perfil
+        // de quem pedia, ao contrário — a nutricionista não conseguia ler
+        // nem responder a conversa).
+        allow read: if request.auth != null && (isSelf() || isLinkedNutritionist());
+        allow create: if request.auth != null &&
+          request.resource.data.keys().hasOnly(['role', 'content', 'createdAt', 'authorName']) &&
+          request.resource.data.content is string &&
+          request.resource.data.content.size() > 0 &&
+          request.resource.data.content.size() <= 4000 &&
+          request.resource.data.createdAt is int && (
+            (isSelf() &&
+              request.resource.data.role == 'user' &&
+              request.resource.data.get('authorName', null) == null) ||
+            (isLinkedNutritionist() &&
+              request.resource.data.role == 'nutritionist' &&
+              optString(request.resource.data, 'authorName', 200))
+          );
+        allow update, delete: if false;
+      }
+      match /nutrition_plans/{planId} {
+        // Mesmo padrão de `training_plans`, mas com a nutricionista no
+        // lugar do instrutor — isolado dele (instrutor não lê isto, e
+        // nutricionista não lê `training_plans`).
+        allow read: if request.auth != null && (
+          request.auth.uid == userId ||
+          get(/databases/$(database)/documents/users/$(userId)).data.nutritionistId == request.auth.uid
+        );
+        allow write: if request.auth != null &&
+          get(/databases/$(database)/documents/users/$(userId)).data.nutritionistId == request.auth.uid;
+      }
+      match /nutrition_students/{studentId} {
+        // Lista denormalizada de alunos da nutricionista (dona deste
+        // documento users/{userId}) — mesmo padrão de `students`.
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
       match /students/{studentId} {
         // Só o próprio instrutor (dono deste documento users/{userId}) mexe
         // na sua lista de alunos (inclui o campo `notes` sobre cada aluno).
         allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      match /finance/{document=**} {
+        // Só leitura pro dono ou instrutor vinculado (mesmo padrão de
+        // `workouts`) — quem grava é só a Cloud Function via Admin SDK
+        // (`functions/src/mercadopago.ts`), que ignora estas regras. Isso
+        // impede alguém de forjar "pagamento aprovado" direto no app.
+        allow read: if request.auth != null && (
+          request.auth.uid == userId ||
+          get(/databases/$(database)/documents/users/$(userId)).data.instructorId == request.auth.uid ||
+          isAdmin()
+        );
+        allow write: if false;
+      }
+      match /ai_usage/{month} {
+        // Contagem de uso mensal de IA (fotos de refeição/evolução) pro
+        // limite do plano Básico — só o dono lê, pra mostrar "X de Y usados"
+        // antes de tentar uma análise nova. Só a Cloud Function incrementa
+        // (`functions/src/index.ts`), mesmo motivo de `finance` acima.
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if false;
+      }
+      match /appointments/{appointmentId} {
+        // Aluno (dono do documento users/{userId}) só lê os próprios
+        // compromissos; só o instrutor vinculado cria/edita/apaga — mesmo
+        // padrão de `training_plans`. Leitura do instrutor entre todos os
+        // alunos é coberta pela regra de collection group acima.
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if request.auth != null &&
+          get(/databases/$(database)/documents/users/$(userId)).data.instructorId == request.auth.uid;
+      }
+      match /plan_templates/{templateId} {
+        // Só o próprio instrutor (dono deste documento users/{userId}) lê/
+        // escreve seus modelos de plano — mesmo padrão de `students`.
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      match /custom_exercises/{exerciseId} {
+        // Biblioteca privada de exercícios do instrutor (dono deste
+        // documento users/{userId}): ele lê/escreve; os próprios alunos
+        // vinculados a ele também LEEM (pra ver o exercício num plano
+        // recebido), mas nunca escrevem. Diferente de `plan_templates`
+        // (matéria-prima interna do instrutor, sem leitura de aluno).
+        allow read: if request.auth != null && (
+          request.auth.uid == userId ||
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.instructorId == userId
+        );
+        allow write: if request.auth != null && request.auth.uid == userId;
       }
       match /training_plans/{planId} {
         // O aluno (dono do documento) só lê os planos atribuídos a ele; só
@@ -57,6 +320,22 @@ service cloud.firestore {
         allow write: if request.auth != null &&
           get(/databases/$(database)/documents/users/$(userId)).data.instructorId == request.auth.uid;
       }
+    }
+    match /invite_codes/{code} {
+      // Reservas de código de convite (garantem unicidade) — só a Cloud
+      // Function `ensureInviteCode`/`linkToProfessional` (Admin SDK) lê e
+      // grava. Nenhum cliente, nem o admin pelo app.
+      allow read, write: if false;
+    }
+    match /muscle_groups/{groupId} {
+      // Taxonomia de referência (não é por usuário) — mesmo padrão de
+      // `exercises`: qualquer autenticado lê, só o admin cura.
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+    match /equipment/{equipmentId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
     }
     match /exercises/{exerciseId} {
       // Coleção compartilhada (não é por usuário) — só o admin escreve.
@@ -73,9 +352,16 @@ service cloud.firestore {
       // update que só mexe no campo `likeUids`.
       allow read: if request.auth != null;
       allow create, delete: if isAdmin();
+      // O curtir/descurtir só pode acrescentar ou tirar o PRÓPRIO uid —
+      // antes qualquer usuário podia reescrever a lista inteira (apagar ou
+      // inventar curtidas de outras pessoas).
       allow update: if isAdmin() || (
         request.auth != null &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likeUids'])
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likeUids']) &&
+        request.resource.data.likeUids is list &&
+        request.resource.data.likeUids.toSet().difference(resource.data.get('likeUids', []).toSet())
+          .union(resource.data.get('likeUids', []).toSet().difference(request.resource.data.likeUids.toSet()))
+          .hasOnly([request.auth.uid])
       );
     }
   }

@@ -7,6 +7,14 @@
         { "fieldPath": "role", "order": "ASCENDING" },
         { "fieldPath": "inviteCode", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "appointments",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "instructorUid", "order": "ASCENDING" },
+        { "fieldPath": "start", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []
