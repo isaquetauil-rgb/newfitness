@@ -3,19 +3,24 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { revokeInstructorLinks } from "./linking";
 
 /**
- * E-mail do dono do app — o MESMO de `isAdmin()` em `firestore.rules` e de
- * `ownerEmail` em `lib/core/constants/admin_config.dart`. Os três precisam
- * mudar juntos.
+ * E-mail do dono do app — única constante das Functions (use sempre esta).
+ * O MESMO valor está em `isAdmin()` de `firestore.rules`, em `ownerEmail`
+ * de `lib/core/constants/admin_config.dart` e nas constantes `ADMIN_EMAIL`
+ * dos testes do emulador (`firestore-tests/`). Todos precisam bater.
  */
 export const ADMIN_EMAIL = "isaquetrabalho005@gmail.com";
 
-/** Mesmo critério das regras: e-mail do token igual ao do dono. */
+/**
+ * Mesmo critério das regras: e-mail do token igual ao do dono E e-mail
+ * verificado (`email_verified === true`).
+ */
 export function isAdminToken(
-  token: { email?: string } | undefined
+  token: { email?: string; email_verified?: boolean } | undefined
 ): boolean {
   return (
     typeof token?.email === "string" &&
-    token.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()
+    token.email.toLowerCase() === ADMIN_EMAIL.toLowerCase() &&
+    token.email_verified === true
   );
 }
 

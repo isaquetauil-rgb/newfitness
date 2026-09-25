@@ -3,9 +3,15 @@ service cloud.firestore {
   match /databases/{database}/documents {
     // Único usuário com acesso irrestrito (painel de administração) — a
     // barreira de segurança real do app é isto, não a UI.
+    //
+    // Exige também o e-mail VERIFICADO: sem isso, bastaria um token com o
+    // e-mail certo (ex: se algum provedor permitir e-mail não verificado).
+    // O mesmo e-mail e o mesmo critério estão em `functions/src/admin.ts`
+    // (`isAdminToken`) e em `lib/core/constants/admin_config.dart`.
     function isAdmin() {
       return request.auth != null &&
-        request.auth.token.email == 'isaquetrabalho005@gmail.com';
+        request.auth.token.email == 'isaquetrabalho005@gmail.com' &&
+        request.auth.token.email_verified == true;
     }
 
     // Collection group: permite ao instrutor ler os compromissos de TODOS os
@@ -294,7 +300,19 @@ service cloud.firestore {
         // padrão de `training_plans`. Leitura do instrutor entre todos os
         // alunos é coberta pela regra de collection group acima.
         allow read: if request.auth != null && request.auth.uid == userId;
-        allow write: if request.auth != null &&
+        // O instrutor vinculado só grava compromissos em NOME PRÓPRIO
+        // (`instructorUid` = ele) e nunca troca o `instructorUid` de um
+        // existente — a leitura da agenda consolidada (collection group
+        // acima) é liberada por esse campo, então ele não pode apontar para
+        // outra pessoa.
+        allow create: if request.auth != null &&
+          get(/databases/$(database)/documents/users/$(userId)).data.instructorId == request.auth.uid &&
+          request.resource.data.instructorUid == request.auth.uid;
+        allow update: if request.auth != null &&
+          get(/databases/$(database)/documents/users/$(userId)).data.instructorId == request.auth.uid &&
+          request.resource.data.instructorUid == request.auth.uid &&
+          resource.data.get('instructorUid', null) == request.auth.uid;
+        allow delete: if request.auth != null &&
           get(/databases/$(database)/documents/users/$(userId)).data.instructorId == request.auth.uid;
       }
       match /plan_templates/{templateId} {
@@ -369,8 +387,10 @@ service cloud.firestore {
 
       allow read: if request.auth != null &&
         (request.auth.uid == requestUid || isAdmin());
+      // Só com e-mail verificado (o `email` do pedido vem do token).
       allow create: if request.auth != null &&
         request.auth.uid == requestUid &&
+        request.auth.token.email_verified == true &&
         requesterProfile().get('role', 'student') == 'student' &&
         validRequest(request.resource.data);
       allow update: if false;
