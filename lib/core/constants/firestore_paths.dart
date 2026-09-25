@@ -7,6 +7,9 @@ class FirestorePaths {
   FirestorePaths._();
 
   static const users = 'users';
+
+  /// Pedidos para virar personal/nutricionista — um por usuário (id = uid).
+  static const professionalRequests = 'professional_requests';
   static const exercises = 'exercises';
   static const muscleGroups = 'muscle_groups';
   static const equipment = 'equipment';

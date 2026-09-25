@@ -164,9 +164,11 @@ class AuthProvider extends ChangeNotifier {
     });
   }
 
-  /// [instructorCode] e [nutritionistCode] só são usados quando [role] é
-  /// [UserRole.student] — os dois vínculos são independentes (um aluno pode
-  /// ter os dois, um só, ou nenhum).
+  /// O cadastro é SEMPRE de aluno — personal/nutricionista pedem a
+  /// aprovação depois, no app (`professional_requests`), e as regras não
+  /// deixam o cliente criar perfil com outro papel. [instructorCode] e
+  /// [nutritionistCode] são opcionais e independentes (um aluno pode ter os
+  /// dois, um só, ou nenhum).
   ///
   /// A conta e o perfil são criados primeiro (sem vínculo nenhum —
   /// `firestore.rules` proíbe o cliente de já criar o documento com
@@ -179,7 +181,6 @@ class AuthProvider extends ChangeNotifier {
     String name,
     String email,
     String password, {
-    UserRole role = UserRole.student,
     String? instructorCode,
     String? nutritionistCode,
   }) async {
@@ -192,24 +193,15 @@ class AuthProvider extends ChangeNotifier {
       );
       if (user == null) return;
 
-      // O perfil nasce sem código de convite (as regras exigem isso); para
-      // instrutor/nutricionista o código vem em seguida da Cloud Function.
-      final newProfile = UserProfile(
-        uid: user.uid,
-        name: name,
-        email: email,
-        role: role,
-      );
+      final newProfile = UserProfile(uid: user.uid, name: name, email: email);
       await _firestoreService.createUserProfile(newProfile);
-      _profile = await _withInviteCode(newProfile);
+      _profile = newProfile;
 
-      if (role == UserRole.student) {
-        if (instructorCode != null && instructorCode.trim().isNotEmpty) {
-          await _tryLinkDuringSignUp(instructorCode, 'instructor');
-        }
-        if (nutritionistCode != null && nutritionistCode.trim().isNotEmpty) {
-          await _tryLinkDuringSignUp(nutritionistCode, 'nutritionist');
-        }
+      if (instructorCode != null && instructorCode.trim().isNotEmpty) {
+        await _tryLinkDuringSignUp(instructorCode, 'instructor');
+      }
+      if (nutritionistCode != null && nutritionistCode.trim().isNotEmpty) {
+        await _tryLinkDuringSignUp(nutritionistCode, 'nutritionist');
       }
     });
     _signingUp = false;

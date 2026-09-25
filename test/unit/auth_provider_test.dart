@@ -95,12 +95,12 @@ void main() {
   });
 
   test(
-    'cadastro como instrutor NÃO é sobrescrito por um perfil padrão de aluno '
+    'cadastro cria UM perfil de aluno e não é duplicado pelo perfil padrão '
     '(authStateChanges chega antes de o perfil ser gravado)',
     () async {
       final user = MockUser();
-      when(() => user.uid).thenReturn('i1');
-      when(() => user.email).thenReturn('prof@x.com');
+      when(() => user.uid).thenReturn('u1');
+      when(() => user.email).thenReturn('ana@x.com');
       when(() => user.displayName).thenReturn(null);
       final provider = buildProviderWithFunctions();
 
@@ -117,34 +117,26 @@ void main() {
         await Future<void>.delayed(Duration.zero);
         return user;
       });
-      when(() => firestoreService.getUserProfile('i1'))
+      when(() => firestoreService.getUserProfile('u1'))
           .thenAnswer((_) async => null);
-      // O código vem da Cloud Function — o app nunca o gera.
-      when(() => functionsClient.call('ensureInviteCode', any()))
-          .thenAnswer((_) async => {'code': 'ABCD2345'});
       when(() => firestoreService.createUserProfile(any()))
           .thenAnswer((_) async {});
 
-      final ok = await provider.signUp(
-        'Prof',
-        'prof@x.com',
-        '123456',
-        role: UserRole.instructor,
-      );
+      final ok = await provider.signUp('Ana', 'ana@x.com', '123456');
       await Future<void>.delayed(Duration.zero);
 
       expect(ok, isTrue);
       final created = verify(
         () => firestoreService.createUserProfile(captureAny()),
       ).captured.cast<UserProfile>();
-      // Só o perfil do cadastro foi gravado — nenhum perfil padrão de aluno.
+      // Só o perfil do cadastro foi gravado — nenhum perfil padrão extra.
       expect(created, hasLength(1));
-      expect(created.single.role, UserRole.instructor);
-      // O perfil é gravado SEM código (as regras exigem isso)...
+      // O cadastro é sempre de aluno (personal/nutricionista pedem
+      // aprovação depois) e não pede código de convite.
+      expect(created.single.role, UserRole.student);
       expect(created.single.inviteCode, isNull);
-      // ...e o código emitido pelo servidor chega ao perfil em memória.
-      expect(provider.profile?.role, UserRole.instructor);
-      expect(provider.profile?.inviteCode, 'ABCD2345');
+      expect(provider.profile?.role, UserRole.student);
+      verifyNever(() => functionsClient.call('ensureInviteCode', any()));
     },
   );
 

@@ -261,6 +261,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     linking: _linking,
                     onSubmit: () => _linkInstructor(profile),
                   ),
+                if (profile.role == UserRole.student) ...[
+                  const SizedBox(height: 12),
+                  Card(
+                    child: ListTile(
+                      leading: const Icon(Icons.verified_outlined),
+                      title: const Text('Sou profissional'),
+                      subtitle: const Text(
+                        'Personal (CREF) ou nutricionista (CRN)? Peça a '
+                        'aprovação.',
+                      ),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => context.push(AppRoutes.professionalRequest),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 24),
                 const Text(
                   'Peso atual (kg)',

@@ -19,6 +19,7 @@ import 'package:newfitness/features/instructor/logic/plan_template_provider.dart
 import 'package:newfitness/features/notifications/logic/reminder_provider.dart';
 import 'package:newfitness/features/nutrition/logic/nutrition_chat_provider.dart';
 import 'package:newfitness/features/nutrition/logic/nutrition_plan_provider.dart';
+import 'package:newfitness/features/professional/logic/professional_request_provider.dart';
 import 'package:newfitness/features/progress/logic/body_photo_provider.dart';
 import 'package:newfitness/features/progress/logic/physical_assessment_provider.dart';
 import 'package:newfitness/features/progress/logic/progress_record_provider.dart';
@@ -121,6 +122,7 @@ class _NewFitnessAppState extends State<NewFitnessApp> {
         ChangeNotifierProvider(create: (_) => AdminProvider()),
         ChangeNotifierProvider(create: (_) => AppointmentProvider()),
         ChangeNotifierProvider(create: (_) => TimelineProvider()),
+        ChangeNotifierProvider(create: (_) => ProfessionalRequestProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
       child: Consumer<ThemeProvider>(

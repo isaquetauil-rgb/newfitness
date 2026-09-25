@@ -7,6 +7,7 @@ import 'package:newfitness/app/widgets/coming_soon_screen.dart';
 import 'package:newfitness/features/admin/presentation/admin_dashboard_screen.dart';
 import 'package:newfitness/features/admin/presentation/admin_exercise_form_screen.dart';
 import 'package:newfitness/features/admin/presentation/admin_exercises_screen.dart';
+import 'package:newfitness/features/admin/presentation/admin_professional_requests_screen.dart';
 import 'package:newfitness/features/admin/presentation/admin_taxonomy_screen.dart';
 import 'package:newfitness/features/admin/presentation/admin_users_screen.dart';
 import 'package:newfitness/features/agenda/presentation/agenda_screen.dart';
@@ -30,6 +31,7 @@ import 'package:newfitness/features/nutrition/presentation/nutrition_plan_editor
 import 'package:newfitness/features/nutrition/presentation/nutrition_screen.dart';
 import 'package:newfitness/features/nutrition/presentation/nutrition_student_detail_screen.dart';
 import 'package:newfitness/features/nutrition/presentation/nutritionist_dashboard_screen.dart';
+import 'package:newfitness/features/professional/presentation/professional_request_screen.dart';
 import 'package:newfitness/features/profile/presentation/profile_screen.dart';
 import 'package:newfitness/features/progress/presentation/body_progress_screen.dart';
 import 'package:newfitness/features/progress/presentation/physical_assessment_screen.dart';
@@ -100,6 +102,11 @@ GoRouter buildAppRouter(AuthProvider authProvider) {
         path: AppRoutes.timeline,
         pageBuilder: (context, state) =>
             _fadeThrough(state, const TimelineScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.professionalRequest,
+        pageBuilder: (context, state) =>
+            _fadeThrough(state, const ProfessionalRequestScreen()),
       ),
       GoRoute(
         path: AppRoutes.physicalAssessment,
@@ -347,6 +354,13 @@ GoRouter buildAppRouter(AuthProvider authProvider) {
                     path: 'taxonomy',
                     pageBuilder: (context, state) =>
                         _fadeThrough(state, const AdminTaxonomyScreen()),
+                  ),
+                  GoRoute(
+                    path: 'professional-requests',
+                    pageBuilder: (context, state) => _fadeThrough(
+                      state,
+                      const AdminProfessionalRequestsScreen(),
+                    ),
                   ),
                 ],
               ),

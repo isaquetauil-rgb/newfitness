@@ -141,6 +141,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               onTap: () => context.push(AppRoutes.adminTaxonomy),
             ),
           ),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.verified_outlined),
+              title: const Text('Pedidos de profissional'),
+              subtitle: const Text(
+                'Aprovar ou recusar personal (CREF) e nutricionista (CRN)',
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push(AppRoutes.adminProfessionalRequests),
+            ),
+          ),
         ],
       ),
     );

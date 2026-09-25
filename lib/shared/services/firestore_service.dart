@@ -17,6 +17,7 @@ import '../models/muscle_group.dart';
 import '../models/nutrition_message.dart';
 import '../models/nutrition_plan.dart';
 import '../models/physical_assessment.dart';
+import '../models/professional_request.dart';
 import '../models/plan_template.dart';
 import '../models/reminder.dart';
 import '../models/subscription.dart';
@@ -135,6 +136,77 @@ class FirestoreService {
                 .map((d) => UserProfile.fromMap(d.id, d.data()))
                 .toList(),
           ),
+    );
+  }
+
+  // ---------- Pedido para virar profissional ----------
+
+  CollectionReference<Map<String, dynamic>> get _professionalRequestsRef =>
+      _db.collection(FirestorePaths.professionalRequests);
+
+  ProfessionalRequest _professionalRequestFromDoc(
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
+    final data = Map<String, dynamic>.from(doc.data()!);
+    for (final key in ['createdAt', 'reviewedAt']) {
+      final value = data[key];
+      data[key] = value is Timestamp ? value.toDate() : null;
+    }
+    return ProfessionalRequest.fromMap(doc.id, data);
+  }
+
+  /// Pedido do próprio usuário (`null` quando não há nenhum).
+  Stream<ProfessionalRequest?> watchProfessionalRequest(String uid) {
+    return _guardStream(
+      'watchProfessionalRequest',
+      _professionalRequestsRef
+          .doc(uid)
+          .snapshots()
+          .map((doc) => doc.exists ? _professionalRequestFromDoc(doc) : null),
+    );
+  }
+
+  /// Cria o pedido pendente. `createdAt` é o horário do SERVIDOR (as regras
+  /// exigem `createdAt == request.time`); status, revisão e motivo só a
+  /// Cloud Function grava.
+  Future<void> createProfessionalRequest({
+    required String uid,
+    required String kind,
+    required String registrationNumber,
+    required String registrationRegion,
+    required String name,
+    required String email,
+  }) {
+    return _guard('createProfessionalRequest', () {
+      return _professionalRequestsRef.doc(uid).set({
+        'uid': uid,
+        'kind': kind,
+        'registrationNumber': registrationNumber,
+        'registrationRegion': registrationRegion,
+        'name': name,
+        'email': email,
+        'status': 'pending',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    });
+  }
+
+  Future<void> deleteProfessionalRequest(String uid) {
+    return _guard(
+      'deleteProfessionalRequest',
+      () => _professionalRequestsRef.doc(uid).delete(),
+    );
+  }
+
+  /// Pedidos pendentes, do mais antigo para o mais novo — só o admin lê.
+  Stream<List<ProfessionalRequest>> watchPendingProfessionalRequests() {
+    return _guardStream(
+      'watchPendingProfessionalRequests',
+      _professionalRequestsRef
+          .where('status', isEqualTo: 'pending')
+          .orderBy('createdAt')
+          .snapshots()
+          .map((snap) => snap.docs.map(_professionalRequestFromDoc).toList()),
     );
   }
 

@@ -33,6 +33,7 @@ class AppRoutes {
   static const adminExercises = '/admin/exercises';
   static const adminExerciseForm = '/admin/exercises/edit';
   static const adminTaxonomy = '/admin/taxonomy';
+  static const adminProfessionalRequests = '/admin/professional-requests';
   static const profile = '/profile';
   static const progressCalendar = '/progress-calendar';
 
@@ -40,6 +41,7 @@ class AppRoutes {
   // termos backend real de agenda/pagamento/contrato.
   static const timeline = '/timeline';
   static const physicalAssessment = '/physical-assessment';
+  static const professionalRequest = '/professional-request';
   static const finance = '/finance';
   static const agenda = '/agenda';
   static const nutrition = '/nutrition';
