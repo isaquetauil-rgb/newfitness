@@ -2,7 +2,7 @@
   "name": "functions",
   "description": "Cloud Functions do NewFitness (chat com IA e análise de fotos)",
   "engines": {
-    "node": "20"
+    "node": "22"
   },
   "main": "lib/index.js",
   "scripts": {
