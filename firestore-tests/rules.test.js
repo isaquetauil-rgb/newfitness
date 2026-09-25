@@ -61,7 +61,7 @@ function asInstructor(uid) {
 }
 
 function asAdmin() {
-  return testEnv.authenticatedContext('admin-uid', { email: ADMIN_EMAIL }).firestore();
+  return testEnv.authenticatedContext('admin-uid', { email: ADMIN_EMAIL, email_verified: true }).firestore();
 }
 
 function asAnonymous() {

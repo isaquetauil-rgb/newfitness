@@ -71,14 +71,14 @@ const emailOf = (uid) => (uid === 'admin-uid' ? ADMIN_EMAIL : `${uid}@x.test`);
 // Uma instância por usuário por teste (várias para o mesmo uid dão erro).
 function db(uid) {
   if (!dbs.has(uid)) {
-    dbs.set(uid, testEnv.authenticatedContext(uid, { email: emailOf(uid) }).firestore());
+    dbs.set(uid, testEnv.authenticatedContext(uid, { email: emailOf(uid), email_verified: true }).firestore());
   }
   return dbs.get(uid);
 }
 const reqDoc = (uid, owner = uid) => doc(db(uid), `professional_requests/${owner}`);
 
 const callAs = (fn, uid, data = {}) =>
-  fn.run({ data, auth: { uid, token: { email: emailOf(uid) } } });
+  fn.run({ data, auth: { uid, token: { email: emailOf(uid), email_verified: true } } });
 const asAdmin = (fn, data) => callAs(fn, 'admin-uid', data);
 
 async function rejectsWith(promise, code) {

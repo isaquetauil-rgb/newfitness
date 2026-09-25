@@ -137,7 +137,7 @@ function jpeg() {
 
 function ctx(uid) {
   if (uid === 'admin') {
-    return testEnv.authenticatedContext('admin-uid', { email: ADMIN_EMAIL });
+    return testEnv.authenticatedContext('admin-uid', { email: ADMIN_EMAIL, email_verified: true });
   }
   if (uid === null) return testEnv.unauthenticatedContext();
   return testEnv.authenticatedContext(uid, { email: `${uid}@x.test` });

@@ -87,7 +87,7 @@ function ctx(uid, email = `${uid}@x.test`) {
 const client = (uid) => ctx(uid).firestore();
 
 const asAdmin = (data) =>
-  setUserRole.run({ data, auth: { uid: 'admin-uid', token: { email: ADMIN_EMAIL } } });
+  setUserRole.run({ data, auth: { uid: 'admin-uid', token: { email: ADMIN_EMAIL, email_verified: true } } });
 const callAs = (fn, uid, data = {}) => fn.run({ data, auth: { uid, token: { email: `${uid}@x.test` } } });
 
 async function rejectsWith(promise, code) {
@@ -311,7 +311,7 @@ describe('Rebaixamento de instrutor (setUserRole)', () => {
     await assertFails(updateDoc(doc(client('aluno1'), 'users/aluno1'), { role: 'instructor' }));
     await assertFails(updateDoc(doc(client('profA'), 'users/profA'), { role: 'student' }));
     await assertFails(updateDoc(doc(client('profA'), 'users/aluno1'), { role: 'instructor' }));
-    const adminClient = testEnv.authenticatedContext('admin-uid', { email: ADMIN_EMAIL }).firestore();
+    const adminClient = testEnv.authenticatedContext('admin-uid', { email: ADMIN_EMAIL, email_verified: true }).firestore();
     await assertFails(updateDoc(doc(adminClient, 'users/profA'), { role: 'student' }));
     await assertFails(updateDoc(doc(client('profA'), 'users/profA'), { pendingRoleChange: 'student' }));
     // admin continua lendo e editando outros campos

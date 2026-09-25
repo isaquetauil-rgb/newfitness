@@ -52,7 +52,7 @@ beforeEach(async () => {
 // "Firestore has already been started").
 const contexts = new Map();
 const db = (uid, email = `${uid}@x.test`) => {
-  if (!contexts.has(uid)) contexts.set(uid, testEnv.authenticatedContext(uid, { email }).firestore());
+  if (!contexts.has(uid)) contexts.set(uid, testEnv.authenticatedContext(uid, { email, email_verified: true }).firestore());
   return contexts.get(uid);
 };
 const ann = (uid, id = 'a1') => doc(db(uid), `announcements/${id}`);

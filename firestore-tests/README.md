@@ -118,6 +118,16 @@ do outro no meio do teste (falhas aleatórias).
   `invite-and-links` e `consistency`, profissionais passaram a ser criados
   pelo Admin SDK (o cliente não cria mais perfil de profissional).
 
+- **`verified-email-and-agenda.test.js`** — e-mail verificado e agenda:
+  o admin (regras e Functions `setUserRole`, `getAdminStats`,
+  `reviewProfessionalRequest`) só vale com o e-mail do dono **e**
+  `email_verified: true`; o pedido de profissional só é aceito com e-mail
+  verificado; o instrutor vinculado só cria/atualiza compromisso com
+  `instructorUid` igual ao próprio uid e não troca o `instructorUid` de um
+  existente (fluxo normal de criar/cancelar continua funcionando). Nas
+  demais suítes, os tokens de admin e dos pedidos passaram a incluir
+  `email_verified: true`.
+
 ## Dados usados
 
 100% fictícios (`student1`, `instructor1`, `ana@x.com` etc.), criados e

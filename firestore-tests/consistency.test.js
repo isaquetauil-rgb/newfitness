@@ -133,7 +133,7 @@ describe('1. Estatísticas do painel admin', () => {
   });
 
   test('A1. admin obtém as estatísticas com os números corretos', async () => {
-    const stats = await call(getAdminStats, 'admin-uid', {}, { email: ADMIN_EMAIL });
+    const stats = await call(getAdminStats, 'admin-uid', {}, { email: ADMIN_EMAIL, email_verified: true });
     assert.deepEqual(stats, {
       totalUsers: 4,
       totalStudents: 2,
@@ -153,7 +153,7 @@ describe('1. Estatísticas do painel admin', () => {
   });
 
   test('A3. as regras continuam fechadas para consultas de todos os treinos/assinaturas', async () => {
-    const adminClient = testEnv.authenticatedContext('admin-uid', { email: ADMIN_EMAIL }).firestore();
+    const adminClient = testEnv.authenticatedContext('admin-uid', { email: ADMIN_EMAIL, email_verified: true }).firestore();
     await assertFails(getDocs(collectionGroup(adminClient, 'workouts')));
     await assertFails(getDocs(collectionGroup(client('i1'), 'workouts')));
     await assertFails(getDocs(collectionGroup(client('s1'), 'finance')));
