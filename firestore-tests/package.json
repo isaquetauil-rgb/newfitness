@@ -1,0 +1,12 @@
+{
+  "name": "firestore-tests",
+  "private": true,
+  "description": "Testes comportamentais das Firestore Security Rules e da Cloud Function de vínculo aluno-instrutor/nutricionista, rodando contra o Firestore Emulator (nunca contra produção). Ver README.md nesta pasta para como rodar.",
+  "type": "commonjs",
+  "scripts": {
+    "test": "node --test --test-concurrency=1 rules.test.js linking-function.test.js evolution.test.js invite-and-links.test.js consistency.test.js audit.test.js demotion.test.js workout-prescription.test.js"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^3.0.4"
+  }
+}
