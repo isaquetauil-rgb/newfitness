@@ -14,6 +14,7 @@ import {
   withAiQuota,
 } from "./ai_guard";
 import { saveNutritionReply } from "./nutrition";
+import { loadMealImage, mealPhotoStoragePath, saveChatReply } from "./ai_store";
 
 /**
  * Functions de IA. Todas: login + e-mail verificado + papel permitido +
@@ -118,7 +119,9 @@ function userDoc(uid: string) {
 }
 
 /**
- * Chat de texto com a IA, para todos os papéis. Espera `{ message }`.
+ * Chat de texto com a IA, para todos os papéis. Espera `{ message }`. A
+ * resposta é gravada em `chat_messages` pelo servidor (o cliente só grava
+ * as próprias perguntas) e também volta para o app.
  */
 export const chatWithAI = onCall(
   { secrets: [anthropicApiKey], timeoutSeconds: 60 },
@@ -146,7 +149,7 @@ export const chatWithAI = onCall(
         maxTokens: 500,
       })
     );
-    return { reply };
+    return { reply: await saveChatReply(caller.uid, reply) };
   }
 );
 
@@ -194,63 +197,107 @@ export const askNutritionAI = onCall(
   }
 );
 
-const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
-
 /**
- * Analisa uma foto de refeição (base64) e devolve um comentário
- * nutricional simples — só aluno. Espera { imageBase64, mediaType,
- * mealType }.
+ * Analisa uma foto de refeição JÁ SALVA — só o aluno dono dela. Espera
+ * `{ photoId }`: o servidor lê `users/{uid}/meal_photos/{photoId}`, baixa a
+ * imagem do Storage, chama a IA e grava `aiAnalysis` (ou `aiAnalysisError`)
+ * no documento — o cliente não pode gravar esses campos (regras). Se a foto
+ * já tem análise, devolve a existente sem gastar cota.
+ *
+ * Versões antigas do app mandavam a imagem em base64 (sem `photoId`) e
+ * gravavam a análise elas mesmas: recebem `failed-precondition` sem
+ * nenhuma chamada à IA.
  */
 export const analyzeMealPhoto = onCall(
   { secrets: [anthropicApiKey], timeoutSeconds: 60 },
   async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "É preciso estar logado.");
+    }
+    const photoId = request.data?.photoId;
+    if (photoId === undefined || photoId === null) {
+      throw new HttpsError(
+        "failed-precondition",
+        "Atualize o app para ver a análise da IA."
+      );
+    }
+    if (typeof photoId !== "string" || !/^[A-Za-z0-9_-]{1,128}$/.test(photoId)) {
+      throw new HttpsError("invalid-argument", "Foto inválida.");
+    }
     const caller = await requireAiCaller(
       request,
       ["student"],
       "A análise de refeição é só para alunos."
     );
-    const imageBase64 = request.data?.imageBase64;
-    const mediaType = request.data?.mediaType ?? "image/jpeg";
-    const mealLabel = validateMealType(request.data?.mealType);
-    if (typeof imageBase64 !== "string" || imageBase64.length === 0) {
-      throw new HttpsError("invalid-argument", "Imagem não enviada.");
+
+    const ref = userDoc(caller.uid).collection("meal_photos").doc(photoId);
+    const photo = await ref.get();
+    if (!photo.exists) {
+      throw new HttpsError("not-found", "Foto não encontrada.");
     }
-    if (typeof mediaType !== "string" || !IMAGE_TYPES.includes(mediaType)) {
-      throw new HttpsError("invalid-argument", "Formato de imagem não suportado.");
-    }
-    if (Buffer.byteLength(imageBase64, "base64") > MAX_IMAGE_BYTES) {
-      throw new HttpsError("invalid-argument", "A foto passa de 5 MB.");
+    const existing = photo.get("aiAnalysis");
+    if (typeof existing === "string" && existing.trim().length > 0) {
+      return { analysis: existing };
     }
 
-    const analysis = await withAiQuota(caller, "mealPhoto", () =>
-      callClaude({
-        feature: "mealPhoto",
-        system: MEAL_PHOTO_SYSTEM_PROMPT,
-        messages: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "text",
-                text:
-                  `Esta é uma foto do meu ${mealLabel}. Descreva rapidamente ` +
-                  "o que você identifica no prato e dê um comentário " +
-                  "nutricional breve (2-3 frases), sem inventar valores " +
-                  "calóricos exatos — apenas uma estimativa qualitativa " +
-                  "(ex: refeição rica em proteína, pouca fibra, etc).",
-              },
-              {
-                type: "image",
-                source: { type: "base64", media_type: mediaType, data: imageBase64 },
-              },
-            ],
-          },
-        ],
-        maxTokens: 400,
-      })
-    );
-    return { analysis };
+    try {
+      const mealLabel = validateMealType(photo.get("mealType"));
+      const path = mealPhotoStoragePath(caller.uid, photo.get("imageUrl"));
+      if (!path) {
+        throw new HttpsError("invalid-argument", "Foto inválida.");
+      }
+
+      const analysis = await withAiQuota(caller, "mealPhoto", async () => {
+        const image = await loadMealImage(path);
+        return callClaude({
+          feature: "mealPhoto",
+          system: MEAL_PHOTO_SYSTEM_PROMPT,
+          messages: [
+            {
+              role: "user",
+              content: [
+                {
+                  type: "text",
+                  text:
+                    `Esta é uma foto do meu ${mealLabel}. Descreva rapidamente ` +
+                    "o que você identifica no prato e dê um comentário " +
+                    "nutricional breve (2-3 frases), sem inventar valores " +
+                    "calóricos exatos — apenas uma estimativa qualitativa " +
+                    "(ex: refeição rica em proteína, pouca fibra, etc).",
+                },
+                {
+                  type: "image",
+                  source: { type: "base64", media_type: image.mediaType, data: image.data },
+                },
+              ],
+            },
+          ],
+          maxTokens: 400,
+        });
+      });
+
+      const text = analysis.trim() || "Não consegui comentar esta foto.";
+      await ref.update({
+        aiAnalysis: text,
+        aiAnalysisError: admin.firestore.FieldValue.delete(),
+      });
+      return { analysis: text };
+    } catch (err) {
+      // Deixa registrado no card por que não houve análise (ex: limite do
+      // plano); a mensagem real também volta para o app.
+      const reason =
+        err instanceof HttpsError
+          ? err.message
+          : "Não foi possível analisar esta foto agora.";
+      try {
+        await ref.update({ aiAnalysisError: reason });
+      } catch (writeErr) {
+        console.error("Falha ao registrar o erro da análise", writeErr);
+      }
+      if (err instanceof HttpsError) throw err;
+      console.error("Falha na análise da foto de refeição", err);
+      throw new HttpsError("internal", reason);
+    }
   }
 );
 
