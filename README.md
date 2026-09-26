@@ -197,21 +197,24 @@ service cloud.firestore {
 > console/logs com um link para criar o índice composto necessário — é só
 > clicar no link, ele cria automaticamente.
 
-### 3.1 Regras do Storage (fotos de evolução do corpo e de refeições)
+### 3.1 Regras do Storage
 
-```
-rules_version = '2';
-service firebase.storage {
-  match /b/{bucket}/o {
-    match /users/{userId}/body_photos/{fileName} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-    match /users/{userId}/meal_photos/{fileName} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-  }
-}
-```
+As regras de verdade estão em `storage.rules` (publicadas com
+`firebase deploy --only storage`). Resumo dos limites de upload:
+
+| Pasta | Quem envia | Tipos aceitos | Tamanho máx. | Leitura |
+|---|---|---|---|---|
+| `users/{uid}/body_photos/` | só o dono | `image/*` | 10 MB | dono, instrutor e nutricionista vinculados — pelo SDK (caminho), sem URL pública |
+| `users/{uid}/meal_photos/` | só o dono | JPEG, PNG, WebP | 5 MB | dono e nutricionista vinculada — URL de download com token |
+| `users/{uid}/exercise_videos/` | só **instrutor** (papel lido do Firestore), na própria pasta | MP4, MOV (`quicktime`), WebM | 50 MB | o instrutor e os alunos vinculados — URL de download com token |
+
+O app confere tipo e tamanho **antes** de enviar (o vídeo, antes até de
+ser carregado na memória) e grava vídeos de no máximo **20 s** pela
+câmera — em 1080p isso fica abaixo de 50 MB. Vídeos da galeria maiores que
+o limite são recusados com uma mensagem clara; vídeos já enviados antes
+destes limites continuam como estão. No Firestore, `meal_photos` é
+imutável pelo cliente: o dono cria e apaga; só a Cloud Function grava a
+análise da IA.
 
 ### 4. Biblioteca de exercícios
 
@@ -350,6 +353,9 @@ variável de ambiente das Functions (ex: em `functions/.env`):
 | Nutrição (com busca na web, 1 por pergunta) | `claude-sonnet-5` | `AI_MODEL_NUTRITION` |
 | Sugestão de treino | `claude-sonnet-5` | `AI_MODEL_TRAINING` |
 
+A busca na web usa a ferramenta `web_search_20250305`, que continua válida
+(é a versão básica da ferramenta).
+
 Timeout: 45 s de espera pela IA (100 s na nutrição, com `timeoutSeconds`
 120 na Function). Estouro → "A IA demorou para responder. Tente de novo.";
 429/529 da Anthropic → "A IA está com muita procura agora...". As telas de
@@ -359,20 +365,22 @@ geral.
 
 ### Custo estimado por chamada
 
-Aproximado, para decidir limites — confira os preços atuais em
-https://www.anthropic.com/pricing (as contas abaixo usam Haiku 4.5 a US$ 1
-/ US$ 5 por milhão de tokens de entrada/saída, Sonnet 5 **assumido** a
-US$ 3 / US$ 15, e US$ 10 por mil buscas na web).
+Aproximado, para decidir limites. Preços (por milhão de tokens de
+entrada / saída): **Haiku 4.5 US$ 1 / US$ 5**; **Sonnet 5 US$ 2 /
+US$ 10**; busca na web **US$ 10 a cada 1.000 buscas**. Fonte:
+https://platform.claude.com/docs/en/about-claude/pricing (consultado em
+25/09/2026).
 
 | Função | Entrada típica | Saída (máx.) | Custo típico | Teto por chamada |
 |---|---|---|---|---|
 | Chat geral (Haiku) | 300–2.500 tokens (10 mensagens de histórico) | ~250 (500) | US$ 0,001–0,004 | ~US$ 0,01 |
 | Foto de refeição (Haiku) | ~1.800 (imagem até 1600 px + texto) | ~150 (400) | ~US$ 0,003 | ~US$ 0,004 |
-| Nutrição (Sonnet + 1 busca) | 3.000–12.000 (resultados da busca) | ~300 (500) | US$ 0,02–0,05 | ~US$ 0,07 |
-| Sugestão de treino (Sonnet) | 400–900 | ~400 (700) | ~US$ 0,008 | ~US$ 0,013 |
+| Nutrição (Sonnet 5 + 1 busca de US$ 0,01) | 3.000–12.000 (resultados da busca) | ~300 (500) | US$ 0,02–0,04 | ~US$ 0,05 |
+| Sugestão de treino (Sonnet 5) | 400–900 | ~400 (700) | ~US$ 0,005 | ~US$ 0,009 |
 
-Teto mensal aproximado por pessoa usando **toda** a cota: aluno Básico
-~US$ 2; aluno Premium ~US$ 10; instrutor ~US$ 10; nutricionista ~US$ 6.
+Teto mensal aproximado por pessoa usando **toda** a cota (30 dias): aluno
+Básico ~US$ 2; aluno Premium ~US$ 9; instrutor ~US$ 8,50; nutricionista
+~US$ 6.
 
 ## Painel de administração
 
