@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 
+import 'package:newfitness/core/error/app_exception.dart';
 import 'package:newfitness/features/auth/logic/auth_provider.dart';
 import 'package:newfitness/features/exercises/logic/exercise_provider.dart';
 import 'package:newfitness/features/exercises/logic/exercise_taxonomy_provider.dart';
@@ -11,6 +12,7 @@ import 'package:newfitness/features/exercises/presentation/exercise_form_control
 import 'package:newfitness/features/exercises/presentation/exercise_form_fields.dart';
 import 'package:newfitness/features/instructor/logic/custom_exercise_provider.dart';
 import 'package:newfitness/shared/models/exercise.dart';
+import 'package:newfitness/shared/services/upload_limits.dart';
 
 const _uuid = Uuid();
 
@@ -56,19 +58,30 @@ class _CustomExerciseFormScreenState extends State<CustomExerciseFormScreen> {
     final picker = ImagePicker();
     final file = await picker.pickVideo(
       source: source,
-      maxDuration: const Duration(minutes: 3),
+      // Vale para a gravação pela câmera; vídeos da galeria são barrados
+      // pelo tamanho logo abaixo.
+      maxDuration: UploadLimits.maxExerciseVideoDuration,
     );
     if (file == null || !mounted) return;
 
     final provider = context.read<CustomExerciseProvider>();
     final messenger = ScaffoldMessenger.of(context);
     try {
-      final bytes = await file.readAsBytes();
       // `file.name` (não `file.path`): no Web o path é uma URL `blob:http://
       // host:porta/uuid`, e a "extensão" tirada dele tinha `:` e `/` — o
       // arquivo ia para um caminho aninhado que as regras do Storage não
       // aceitam, e o upload falhava.
       final extension = videoExtensionOf(file.name);
+      // Tipo e tamanho conferidos ANTES de carregar o vídeo na memória.
+      final problem = UploadLimits.exerciseVideoProblem(
+        extension,
+        await file.length(),
+      );
+      if (problem != null) {
+        messenger.showSnackBar(SnackBar(content: Text(problem)));
+        return;
+      }
+      final bytes = await file.readAsBytes();
       final url = await provider.uploadVideo(
         instructorUid,
         bytes,
@@ -77,7 +90,11 @@ class _CustomExerciseFormScreenState extends State<CustomExerciseFormScreen> {
       if (mounted) setState(() => _uploadedVideoUrl = url);
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('Não foi possível enviar o vídeo: $e')),
+        SnackBar(
+          content: Text(
+            e is AppException ? e.message : 'Não foi possível enviar o vídeo.',
+          ),
+        ),
       );
     }
   }

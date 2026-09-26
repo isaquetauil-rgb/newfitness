@@ -3,6 +3,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import 'package:newfitness/core/error/app_exception.dart';
 import 'package:newfitness/features/ai/logic/meal_photo_provider.dart';
 import 'package:newfitness/features/auth/logic/auth_provider.dart';
 import 'package:newfitness/features/auth/presentation/email_verification_notice.dart';
@@ -146,9 +147,14 @@ class MealsScreen extends StatelessWidget {
       if (analysisError != null) {
         messenger.showSnackBar(SnackBar(content: Text(analysisError)));
       }
-    } catch (_) {
+    } catch (e) {
+      // Ex: recusada pelas regras do Storage (tipo ou tamanho).
       messenger.showSnackBar(
-        const SnackBar(content: Text('Não foi possível enviar a foto.')),
+        SnackBar(
+          content: Text(
+            e is AppException ? e.message : 'Não foi possível enviar a foto.',
+          ),
+        ),
       );
     }
   }

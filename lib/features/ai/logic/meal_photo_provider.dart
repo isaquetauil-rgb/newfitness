@@ -7,6 +7,7 @@ import 'package:newfitness/features/ai/data/ai_service.dart';
 import 'package:newfitness/shared/models/meal_photo.dart';
 import 'package:newfitness/shared/services/firestore_service.dart';
 import 'package:newfitness/shared/services/storage_service.dart';
+import 'package:newfitness/shared/services/upload_limits.dart';
 
 class MealPhotoProvider extends ChangeNotifier {
   final FirestoreService _firestoreService;
@@ -42,6 +43,9 @@ class MealPhotoProvider extends ChangeNotifier {
     _uploading = true;
     notifyListeners();
     try {
+      // Confere o tamanho antes de carregar a foto na memória.
+      final problem = UploadLimits.mealPhotoProblem(await file.length());
+      if (problem != null) throw ValidationException(problem);
       final bytes = await file.readAsBytes();
       final url = await _storageService.uploadMealPhoto(uid, bytes);
       final photo = MealPhoto(

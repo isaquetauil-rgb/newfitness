@@ -4,6 +4,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 
 import '../../core/error/app_exception.dart';
 import '../../core/logging/app_logger.dart';
+import 'upload_limits.dart';
 
 final _log = AppLogger.of('StorageService');
 
@@ -73,37 +74,46 @@ class StorageService {
   }
 
   /// Envia uma foto de refeição e retorna a URL pública de download.
-  Future<String> uploadMealPhoto(String uid, Uint8List bytes) {
-    return _upload('users/$uid/meal_photos', bytes);
+  /// JPEG até 5 MB (limite de `storage.rules`).
+  Future<String> uploadMealPhoto(String uid, Uint8List bytes) async {
+    final problem = UploadLimits.mealPhotoProblem(bytes.length);
+    if (problem != null) throw ValidationException(problem);
+    return _upload(
+      'users/$uid/meal_photos',
+      bytes,
+      rejectedMessage: UploadLimits.mealPhotoRejected,
+    );
   }
 
   /// Envia o vídeo próprio de um exercício gravado/selecionado pelo
   /// instrutor e retorna a URL pública de download — alternativa a colar um
   /// link do YouTube (ver `Exercise.videoUrl`, que aceita os dois formatos).
+  /// Só MP4, MOV ou WebM até 50 MB (limites de `storage.rules`).
   Future<String> uploadExerciseVideo(
     String instructorUid,
     Uint8List bytes, {
     String extension = 'mp4',
-  }) {
-    const mimeByExtension = {
-      'mov': 'video/quicktime',
-      'm4v': 'video/x-m4v',
-      '3gp': 'video/3gpp',
-      'mkv': 'video/x-matroska',
-    };
+  }) async {
+    final ext = extension.toLowerCase();
+    final problem = UploadLimits.exerciseVideoProblem(ext, bytes.length);
+    if (problem != null) throw ValidationException(problem);
     return _upload(
       'users/$instructorUid/exercise_videos',
       bytes,
-      extension: extension,
-      contentType: mimeByExtension[extension] ?? 'video/$extension',
+      extension: ext,
+      contentType: UploadLimits.exerciseVideoTypes[ext]!,
+      rejectedMessage: UploadLimits.videoRejected,
     );
   }
 
+  /// [rejectedMessage]: mostrada quando as regras do Storage recusam o
+  /// arquivo (código `unauthorized` — tipo, tamanho ou permissão).
   Future<String> _upload(
     String folder,
     Uint8List bytes, {
     String extension = 'jpg',
     String contentType = 'image/jpeg',
+    required String rejectedMessage,
   }) async {
     try {
       final fileName = '${DateTime.now().millisecondsSinceEpoch}.$extension';
@@ -114,6 +124,10 @@ class StorageService {
       );
       return await task.ref.getDownloadURL();
     } catch (e, st) {
+      if (e is FirebaseException && e.code == 'unauthorized') {
+        _log.warning('Upload recusado pelas regras em "$folder"', e, st);
+        throw ValidationException(rejectedMessage, cause: e, stackTrace: st);
+      }
       _log.warning('Falha ao enviar arquivo para "$folder"', e, st);
       throw NetworkException(
         'Não foi possível enviar o arquivo. Tente novamente.',
