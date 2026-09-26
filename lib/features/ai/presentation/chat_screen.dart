@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:newfitness/features/ai/logic/chat_provider.dart';
+import 'package:newfitness/features/ai/presentation/ai_disclaimer.dart';
 import 'package:newfitness/features/auth/logic/auth_provider.dart';
+import 'package:newfitness/features/auth/presentation/email_verification_notice.dart';
 import 'package:newfitness/shared/models/chat_message.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -23,11 +25,11 @@ class _ChatScreenState extends State<ChatScreen> {
     super.dispose();
   }
 
-  void _send(String uid, List<ChatMessage> history) {
+  void _send(String uid) {
     final text = _controller.text;
     if (text.trim().isEmpty) return;
     _controller.clear();
-    context.read<ChatProvider>().sendMessage(uid, text, history);
+    context.read<ChatProvider>().sendMessage(uid, text);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
@@ -41,7 +43,8 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final uid = context.watch<AuthProvider>().user?.uid;
+    final auth = context.watch<AuthProvider>();
+    final uid = auth.user?.uid;
     final chatProvider = context.watch<ChatProvider>();
 
     if (uid == null) {
@@ -88,49 +91,53 @@ class _ChatScreenState extends State<ChatScreen> {
               style: const TextStyle(color: Colors.red),
             ),
           ),
-        SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-            child: StreamBuilder<List<ChatMessage>>(
-              stream: chatProvider.watchMessages(uid),
-              builder: (context, snapshot) {
-                final history = snapshot.data ?? [];
-                return Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _controller,
-                        decoration: const InputDecoration(
-                          hintText: 'Escreva sua pergunta...',
-                        ),
-                        onSubmitted: (_) => _send(uid, history),
-                        minLines: 1,
-                        maxLines: 4,
+        const AiDisclaimer(),
+        if (!auth.isEmailVerified)
+          const SafeArea(
+            top: false,
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(12, 8, 12, 8),
+              child: EmailVerificationNotice(reason: 'Para usar a IA'),
+            ),
+          )
+        else
+          SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _controller,
+                      maxLength: maxAiMessageLength,
+                      decoration: const InputDecoration(
+                        hintText: 'Escreva sua pergunta...',
+                        counterText: '',
                       ),
+                      onSubmitted: (_) => _send(uid),
+                      minLines: 1,
+                      maxLines: 4,
                     ),
-                    const SizedBox(width: 8),
-                    IconButton.filled(
-                      onPressed: chatProvider.isSending
-                          ? null
-                          : () => _send(uid, history),
-                      icon: chatProvider.isSending
-                          ? const SizedBox(
-                              height: 16,
-                              width: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Icon(Icons.send),
-                    ),
-                  ],
-                );
-              },
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton.filled(
+                    onPressed: chatProvider.isSending ? null : () => _send(uid),
+                    icon: chatProvider.isSending
+                        ? const SizedBox(
+                            height: 16,
+                            width: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(Icons.send),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
       ],
     );
   }

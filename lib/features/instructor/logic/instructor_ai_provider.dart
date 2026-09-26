@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import 'package:newfitness/core/di/injector.dart';
+import 'package:newfitness/core/error/app_exception.dart';
 import 'package:newfitness/features/ai/data/ai_service.dart';
 import 'package:newfitness/shared/models/exercise_suggestion.dart';
 
@@ -28,7 +29,9 @@ class InstructorAiProvider extends ChangeNotifier {
   /// não perder a resposta.
   String? get rawText => _rawText;
 
-  Future<void> ask({required String prompt, String? studentName}) async {
+  /// [studentUid]: pedido contextualizado a um aluno vinculado — o servidor
+  /// confere o vínculo e lê o nome do aluno.
+  Future<void> ask({required String prompt, String? studentUid}) async {
     if (prompt.trim().isEmpty) return;
     _loading = true;
     _error = null;
@@ -36,13 +39,12 @@ class InstructorAiProvider extends ChangeNotifier {
     try {
       final result = await _aiService.suggestTrainingPlan(
         prompt: prompt.trim(),
-        studentName: studentName,
+        studentUid: studentUid,
       );
       _suggestions = result.suggestions;
       _rawText = result.rawText;
     } catch (e) {
-      _error =
-          'Não foi possível falar com a IA agora. Tente de novo em instantes.';
+      _error = e is AppException ? e.message : 'Não foi possível falar com a IA agora. Tente de novo em instantes.';
     } finally {
       _loading = false;
       notifyListeners();

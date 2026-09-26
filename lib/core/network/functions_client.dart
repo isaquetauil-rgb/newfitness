@@ -15,12 +15,22 @@ class FunctionsClient {
 
   final FirebaseFunctions _functions;
 
+  ///
+  /// [timeout] muda o tempo máximo de espera do app (padrão do SDK: 60 s) —
+  /// para Functions que podem demorar mais, como a de nutrição com busca.
   Future<Map<String, dynamic>> call(
     String name,
-    Map<String, dynamic> data,
-  ) async {
+    Map<String, dynamic> data, {
+    Duration? timeout,
+  }) async {
     try {
-      final result = await _functions.httpsCallable(name).call(data);
+      final callable = timeout == null
+          ? _functions.httpsCallable(name)
+          : _functions.httpsCallable(
+              name,
+              options: HttpsCallableOptions(timeout: timeout),
+            );
+      final result = await callable.call(data);
       final response = result.data;
       if (response is Map) {
         return Map<String, dynamic>.from(response);
@@ -61,10 +71,17 @@ class FunctionsClient {
           stackTrace: stack,
         );
       case 'resource-exhausted':
-        // Limite mensal de uso de IA do plano Básico atingido — a mensagem
-        // amigável já vem pronta de `assertAiUsageAllowed` no backend.
+        // Cota de IA atingida — a mensagem amigável (qual limite, quando
+        // renova) já vem pronta de `reserveAiQuota` no backend.
         return ValidationException(
           e.message ?? 'Limite de uso atingido.',
+          cause: e,
+          stackTrace: stack,
+        );
+      case 'failed-precondition':
+        // Ex: "Atualize o app para ver a análise da IA."
+        return ValidationException(
+          e.message ?? 'Não foi possível concluir agora.',
           cause: e,
           stackTrace: stack,
         );
@@ -76,8 +93,14 @@ class FunctionsClient {
         );
       case 'unavailable':
       case 'deadline-exceeded':
+        // As Functions de IA mandam frases prontas começando com "A IA"
+        // (demorou / muita procura); qualquer outra origem (sem rede, tempo
+        // do app esgotado) usa a mensagem genérica.
+        final serverMessage = e.message;
         return NetworkException(
-          'Sem conexão com o servidor. Tente novamente.',
+          serverMessage != null && serverMessage.startsWith('A IA')
+              ? serverMessage
+              : 'Sem conexão com o servidor. Tente novamente.',
           cause: e,
           stackTrace: stack,
         );

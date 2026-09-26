@@ -83,7 +83,7 @@ class _AiSuggestionSheetState extends State<AiSuggestionSheet> {
   Future<void> _ask() async {
     await context.read<InstructorAiProvider>().ask(
       prompt: _controller.text,
-      studentName: widget.studentName,
+      studentUid: widget.studentUid,
     );
   }
 

@@ -59,11 +59,10 @@ void main() {
     when(
       () => aiService.askNutrition(
         message: any(named: 'message'),
-        history: any(named: 'history'),
       ),
     ).thenAnswer((_) async => 'Coma mais fibras.');
 
-    await provider.ask('student1', 'O que comer no café?', []);
+    await provider.ask('student1', 'O que comer no café?');
 
     final captured = verify(
       () => firestoreService.addNutritionMessage('student1', captureAny()),
@@ -73,7 +72,6 @@ void main() {
     verify(
       () => aiService.askNutrition(
         message: 'O que comer no café?',
-        history: any(named: 'history'),
       ),
     ).called(1);
     expect(provider.isSending, isFalse);
@@ -86,11 +84,10 @@ void main() {
     when(
       () => aiService.askNutrition(
         message: any(named: 'message'),
-        history: any(named: 'history'),
       ),
     ).thenThrow(Exception('falha de rede'));
 
-    await provider.ask('student1', 'O que comer no café?', []);
+    await provider.ask('student1', 'O que comer no café?');
 
     expect(provider.error, isNotNull);
     expect(provider.isSending, isFalse);
@@ -125,14 +122,13 @@ void main() {
       when(() => firestoreService.addNutritionMessage('student1', any()))
           .thenThrow(Exception('permission-denied'));
 
-      await provider.ask('student1', 'Posso comer ovo?', []);
+      await provider.ask('student1', 'Posso comer ovo?');
 
       expect(provider.isSending, isFalse);
       expect(provider.error, isNotNull);
       verifyNever(
         () => aiService.askNutrition(
           message: any(named: 'message'),
-          history: any(named: 'history'),
         ),
       );
     },

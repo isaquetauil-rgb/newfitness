@@ -109,7 +109,8 @@ void main() {
   });
 
   group('Refeições: falha da análise não fica em "Analisando..."', () {
-    test('grava o motivo quando a IA recusa (ex: limite do plano)', () async {
+    test('IA recusa (ex: limite do plano): devolve a mensagem real; quem '
+        'grava o motivo é o servidor', () async {
       final firestoreService = MockFirestoreService();
       final storageService = MockStorageService();
       final aiService = MockAiService();
@@ -118,33 +119,22 @@ void main() {
       when(() => firestoreService.addMealPhoto(any()))
           .thenAnswer((_) async => 'm1');
       when(
-        () => aiService.analyzeMealPhoto(
-          imageBytes: any(named: 'imageBytes'),
-          mealType: any(named: 'mealType'),
-        ),
+        () => aiService.analyzeMealPhoto(photoId: any(named: 'photoId')),
       ).thenThrow(const ValidationException('Você atingiu o limite.'));
-      when(
-        () => firestoreService.markMealPhotoAnalysisFailed(any(), any(), any()),
-      ).thenAnswer((_) async {});
 
       final provider = MealPhotoProvider(
         firestoreService: firestoreService,
         storageService: storageService,
         aiService: aiService,
       );
-      await provider.addPhoto(
+      final message = await provider.addPhoto(
         'u1',
         XFile.fromData(Uint8List.fromList([1, 2, 3])),
         MealType.values.first,
       );
 
-      verify(
-        () => firestoreService.markMealPhotoAnalysisFailed(
-          'u1',
-          'm1',
-          'Você atingiu o limite.',
-        ),
-      ).called(1);
+      expect(message, 'Você atingiu o limite.');
+      verify(() => aiService.analyzeMealPhoto(photoId: 'm1')).called(1);
       expect(provider.isUploading, isFalse);
     });
 
@@ -171,7 +161,7 @@ void main() {
         aiService: aiService,
       );
 
-      await provider.sendMessage('u1', 'Oi', const []);
+      await provider.sendMessage('u1', 'Oi');
 
       expect(provider.isSending, isFalse);
       expect(provider.error, isNotNull);

@@ -1,6 +1,9 @@
 import 'package:flutter/foundation.dart';
 
 import 'package:newfitness/core/di/injector.dart';
+import 'package:newfitness/core/error/app_exception.dart';
+import 'package:newfitness/features/ai/logic/chat_provider.dart'
+    show maxAiMessageLength;
 import 'package:newfitness/features/ai/data/ai_service.dart';
 import 'package:newfitness/shared/models/nutrition_message.dart';
 import 'package:newfitness/shared/services/firestore_service.dart';
@@ -35,12 +38,16 @@ class NutritionChatProvider extends ChangeNotifier {
   /// regras não deixam nenhum cliente criar mensagens `assistant` (senão um
   /// aluno poderia forjar uma "resposta da IA" na conversa que a
   /// nutricionista acompanha). Ela aparece pelo stream de [watchMessages].
-  Future<void> ask(
-    String studentUid,
-    String text,
-    List<NutritionMessage> historySoFar,
-  ) async {
-    if (text.trim().isEmpty) return;
+  ///
+  /// O histórico enviado à IA é montado pelo servidor a partir da conversa.
+  Future<void> ask(String studentUid, String text) async {
+    final message = text.trim();
+    if (message.isEmpty) return;
+    if (message.length > maxAiMessageLength) {
+      _error = 'A pergunta pode ter no máximo $maxAiMessageLength caracteres.';
+      notifyListeners();
+      return;
+    }
     _sending = true;
     _error = null;
     notifyListeners();
@@ -49,25 +56,15 @@ class NutritionChatProvider extends ChangeNotifier {
       final userMessage = NutritionMessage(
         id: '',
         role: NutritionRole.user,
-        content: text.trim(),
+        content: message,
         createdAt: DateTime.now(),
       );
       await _firestoreService.addNutritionMessage(studentUid, userMessage);
-
-      final history = historySoFar
-          .where((m) => m.role != NutritionRole.nutritionist)
-          .map(
-            (m) => {
-              'role': m.role == NutritionRole.assistant ? 'assistant' : 'user',
-              'content': m.content,
-            },
-          )
-          .toList();
-
-      await _aiService.askNutrition(message: text.trim(), history: history);
+      await _aiService.askNutrition(message: message);
     } catch (e) {
-      _error =
-          'Não foi possível falar com a IA agora. Tente de novo em instantes.';
+      // Mensagem real do servidor quando existe (ex: limite mensal do
+      // plano, e-mail não verificado, IA demorou).
+      _error = e is AppException ? e.message : 'Não foi possível falar com a IA agora. Tente de novo em instantes.';
     } finally {
       _sending = false;
       notifyListeners();

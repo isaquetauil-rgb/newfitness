@@ -10,6 +10,7 @@ import 'package:newfitness/app/widgets/drawer_menu_button.dart';
 import 'package:newfitness/core/constants/admin_config.dart';
 import 'package:newfitness/core/di/injector.dart';
 import 'package:newfitness/features/auth/logic/auth_provider.dart';
+import 'package:newfitness/features/auth/presentation/email_verification_notice.dart';
 import 'package:newfitness/features/profile/presentation/manage_link_sheet.dart';
 import 'package:newfitness/features/workout/logic/workout_provider.dart';
 import 'package:newfitness/shared/models/user_profile.dart';
@@ -245,6 +246,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
+                // Qualquer papel: a IA (e, para alunos, o pedido de
+                // profissional) exige o e-mail verificado.
+                if (!auth.isEmailVerified) ...[
+                  const EmailVerificationNotice(
+                    reason:
+                        'Para usar a IA e os recursos que pedem e-mail '
+                        'confirmado',
+                  ),
+                  const SizedBox(height: 20),
+                ],
                 _WeeklyProgressCard(uid: profile.uid),
                 const SizedBox(height: 20),
                 if (profile.role == UserRole.instructor)

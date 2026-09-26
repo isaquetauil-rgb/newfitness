@@ -224,9 +224,8 @@ class _StudentFinanceView extends StatelessWidget {
   }
 }
 
-/// Mostra o plano de IA do aluno (definido pelo instrutor em
-/// `_StudentFinanceTile`) e quanto já foi usado este mês — pra não deixar o
-/// limite ser uma surpresa quando a análise for recusada.
+/// Mostra o plano de IA do aluno (definido pelo administrador) e quanto já
+/// foi usado de cada cota — pra não deixar o limite ser uma surpresa.
 class _AiPlanCard extends StatelessWidget {
   const _AiPlanCard({required this.planTier, required this.usage});
 
@@ -236,6 +235,8 @@ class _AiPlanCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isPremium = planTier == PlanTier.premium;
+    final limits = AiUsageLimits.forTier(planTier);
+    final muted = TextStyle(color: Colors.grey.shade600);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -257,23 +258,26 @@ class _AiPlanCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            if (isPremium)
-              Text(
-                'Fotos de refeição e de evolução com IA ilimitadas.',
-                style: TextStyle(color: Colors.grey.shade600),
-              )
-            else ...[
-              Text(
-                'Fotos de refeição com IA este mês: '
-                '${usage.mealPhotoCount}/${AiUsageLimits.basicMealPhotosPerMonth}',
-                style: TextStyle(color: Colors.grey.shade600),
-              ),
-              Text(
-                'Fotos de evolução com IA este mês: '
-                '${usage.bodyPhotoCount}/${AiUsageLimits.basicBodyPhotosPerMonth}',
-                style: TextStyle(color: Colors.grey.shade600),
-              ),
-            ],
+            Text(
+              'Chat com IA hoje: '
+              '${usage.chatTodayCount}/${limits.chatPerDay}',
+              style: muted,
+            ),
+            Text(
+              'Assistente de nutrição este mês: '
+              '${usage.nutritionCount}/${limits.nutritionPerMonth}',
+              style: muted,
+            ),
+            Text(
+              'Fotos de refeição com IA este mês: '
+              '${usage.mealPhotoCount}/${limits.mealPhotosPerMonth}',
+              style: muted,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'O plano é definido pelo administrador do app.',
+              style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+            ),
           ],
         ),
       ),
@@ -318,7 +322,6 @@ class _InstructorFinanceView extends StatelessWidget {
               studentUid: student['uid'] as String,
               studentName: student['name'] as String? ?? '',
               monthlyFeeCents: (student['monthlyFeeCents'] as num?)?.toInt(),
-              planTier: planTierFromString(student['planTier'] as String?),
             );
           },
         );
@@ -333,14 +336,12 @@ class _StudentFinanceTile extends StatefulWidget {
     required this.studentUid,
     required this.studentName,
     required this.monthlyFeeCents,
-    required this.planTier,
   });
 
   final String instructorUid;
   final String studentUid;
   final String studentName;
   final int? monthlyFeeCents;
-  final PlanTier planTier;
 
   @override
   State<_StudentFinanceTile> createState() => _StudentFinanceTileState();
@@ -371,20 +372,6 @@ class _StudentFinanceTileState extends State<_StudentFinanceTile> {
         .showSnackBar(const SnackBar(content: Text('Valor atualizado')));
   }
 
-  Future<void> _changeTier(PlanTier tier) async {
-    final messenger = ScaffoldMessenger.of(context);
-    try {
-      await context.read<FinanceProvider>().setStudentPlanTier(
-        widget.studentUid,
-        tier,
-      );
-    } catch (e) {
-      messenger.showSnackBar(
-        SnackBar(content: Text('Não foi possível mudar o plano: $e')),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<FinanceProvider>();
@@ -410,6 +397,17 @@ class _StudentFinanceTileState extends State<_StudentFinanceTile> {
                     final subscription = snapshot.data ?? const Subscription();
                     return Row(
                       children: [
+                        // Plano de IA do aluno: só leitura (quem define é o
+                        // administrador), lido de `finance/subscription`.
+                        Text(
+                          subscription.planTier == PlanTier.premium
+                              ? 'IA Premium · '
+                              : 'IA Básico · ',
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: 13,
+                          ),
+                        ),
                         Container(
                           width: 8,
                           height: 8,
@@ -443,30 +441,6 @@ class _StudentFinanceTileState extends State<_StudentFinanceTile> {
                 ),
                 const SizedBox(width: 8),
                 TextButton(onPressed: _saveFee, child: const Text('Salvar')),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Text(
-                  'Plano de IA:',
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-                ),
-                const SizedBox(width: 8),
-                SegmentedButton<PlanTier>(
-                  style: const ButtonStyle(
-                    visualDensity: VisualDensity.compact,
-                  ),
-                  segments: const [
-                    ButtonSegment(value: PlanTier.basic, label: Text('Básico')),
-                    ButtonSegment(
-                      value: PlanTier.premium,
-                      label: Text('Premium'),
-                    ),
-                  ],
-                  selected: {widget.planTier},
-                  onSelectionChanged: (s) => _changeTier(s.first),
-                ),
               ],
             ),
           ],

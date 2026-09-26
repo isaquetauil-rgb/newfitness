@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import 'package:newfitness/features/ai/logic/meal_photo_provider.dart';
 import 'package:newfitness/features/auth/logic/auth_provider.dart';
+import 'package:newfitness/features/auth/presentation/email_verification_notice.dart';
 import 'package:newfitness/shared/models/meal_photo.dart';
 
 class MealsScreen extends StatelessWidget {
@@ -12,7 +13,8 @@ class MealsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final uid = context.watch<AuthProvider>().user?.uid;
+    final auth = context.watch<AuthProvider>();
+    final uid = auth.user?.uid;
     final provider = context.watch<MealPhotoProvider>();
 
     if (uid == null) {
@@ -22,33 +24,49 @@ class MealsScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      body: StreamBuilder<List<MealPhoto>>(
-        stream: provider.watchPhotos(uid),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final meals = snapshot.data ?? [];
-
-          if (meals.isEmpty) {
-            return const Center(
-              child: Padding(
-                padding: EdgeInsets.all(32),
-                child: Text(
-                  'Nenhuma refeição registrada ainda.\nFotografe seu café, '
-                  'almoço ou janta e a IA comenta sobre a refeição.',
-                  textAlign: TextAlign.center,
-                ),
+      body: Column(
+        children: [
+          // A foto é salva mesmo assim; a análise da IA exige o e-mail
+          // verificado.
+          if (!auth.isEmailVerified)
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: EmailVerificationNotice(
+                reason: 'Para a IA analisar suas refeições',
               ),
-            );
-          }
+            ),
+          Expanded(
+            child: StreamBuilder<List<MealPhoto>>(
+              stream: provider.watchPhotos(uid),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                final meals = snapshot.data ?? [];
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: meals.length,
-            itemBuilder: (context, i) => _MealCard(meal: meals[i]),
-          );
-        },
+                if (meals.isEmpty) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(32),
+                      child: Text(
+                        'Nenhuma refeição registrada ainda.\nFotografe seu '
+                        'café, almoço ou janta e a IA comenta sobre a '
+                        'refeição.',
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: meals.length,
+                  itemBuilder: (context, i) => _MealCard(meal: meals[i]),
+                );
+              },
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: provider.isUploading ? null : () => _addMeal(context, uid),
@@ -106,12 +124,28 @@ class MealsScreen extends StatelessWidget {
     if (source == null || !context.mounted) return;
 
     final picker = ImagePicker();
-    final picked = await picker.pickImage(source: source, imageQuality: 85);
+    // 1600 px no maior lado: bem abaixo do limite de 5 MB da análise e do
+    // que a IA usa (ela reduz imagens maiores de qualquer forma).
+    final picked = await picker.pickImage(
+      source: source,
+      imageQuality: 85,
+      maxWidth: 1600,
+      maxHeight: 1600,
+    );
     if (picked == null || !context.mounted) return;
 
     final messenger = ScaffoldMessenger.of(context);
     try {
-      await context.read<MealPhotoProvider>().addPhoto(uid, picked, mealType);
+      final analysisError = await context.read<MealPhotoProvider>().addPhoto(
+        uid,
+        picked,
+        mealType,
+      );
+      // Foto salva; a análise não veio (ex: limite do plano) — mostra a
+      // mensagem real do servidor.
+      if (analysisError != null) {
+        messenger.showSnackBar(SnackBar(content: Text(analysisError)));
+      }
     } catch (_) {
       messenger.showSnackBar(
         const SnackBar(content: Text('Não foi possível enviar a foto.')),
@@ -125,8 +159,23 @@ class _MealCard extends StatelessWidget {
 
   const _MealCard({required this.meal});
 
+  /// Sem resultado depois disso, o card para de mostrar "Analisando..." e
+  /// oferece tentar de novo (ex: a conexão caiu antes de a IA responder).
+  static const _analysisGrace = Duration(minutes: 2);
+
+  Future<void> _retry(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final error = await context.read<MealPhotoProvider>().analyze(meal.id);
+    if (error != null) {
+      messenger.showSnackBar(SnackBar(content: Text(error)));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final stale =
+        meal.aiAnalysis == null &&
+        DateTime.now().difference(meal.date) > _analysisGrace;
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
@@ -165,15 +214,22 @@ class _MealCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 6),
-                  if (meal.aiAnalysis == null && meal.aiAnalysisError != null)
+                  if (meal.aiAnalysis == null &&
+                      (meal.aiAnalysisError != null || stale)) ...[
                     Text(
-                      'Sem análise da IA: ${meal.aiAnalysisError}',
+                      meal.aiAnalysisError != null
+                          ? 'Sem análise da IA: ${meal.aiAnalysisError}'
+                          : 'Sem análise da IA.',
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.grey.shade600,
                       ),
-                    )
-                  else if (meal.aiAnalysis == null)
+                    ),
+                    TextButton(
+                      onPressed: () => _retry(context),
+                      child: const Text('Analisar de novo'),
+                    ),
+                  ] else if (meal.aiAnalysis == null)
                     Row(
                       children: [
                         const SizedBox(

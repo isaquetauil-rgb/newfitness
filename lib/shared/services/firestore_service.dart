@@ -699,29 +699,6 @@ class FirestoreService {
     });
   }
 
-  Future<void> updateMealPhotoAnalysis(
-    String uid,
-    String photoId,
-    String analysis,
-  ) {
-    return _guard(
-      'updateMealPhotoAnalysis',
-      () => _mealPhotosRef(uid).doc(photoId).update({'aiAnalysis': analysis}),
-    );
-  }
-
-  Future<void> markMealPhotoAnalysisFailed(
-    String uid,
-    String photoId,
-    String reason,
-  ) {
-    return _guard(
-      'markMealPhotoAnalysisFailed',
-      () =>
-          _mealPhotosRef(uid).doc(photoId).update({'aiAnalysisError': reason}),
-    );
-  }
-
   Future<void> deleteMealPhoto(String uid, String photoId) {
     return _guard(
       'deleteMealPhoto',
@@ -972,18 +949,44 @@ class FirestoreService {
     );
   }
 
-  /// Uso de IA (fotos de refeição/evolução) do mês corrente — só leitura;
-  /// quem incrementa é a Cloud Function, depois de cada análise concluída
-  /// (ver `functions/src/index.ts`).
+  /// Uso de IA do aluno — junta o contador do MÊS (nutrição e fotos) e o
+  /// do DIA (chat), no fuso de São Paulo. Só leitura: quem incrementa é a
+  /// Cloud Function (`reserveAiQuota` em `functions/src/ai_guard.ts`).
   Stream<AiUsage> watchAiUsage(String uid) {
-    final month = DateTime.now().toIso8601String().substring(0, 7);
-    return _guardStream(
-      'watchAiUsage',
-      _db
-          .doc(FirestorePaths.aiUsageDoc(uid, month))
-          .snapshots()
-          .map((doc) => AiUsage.fromMap(doc.data())),
+    final now = DateTime.now();
+    final monthDoc = _db.doc(
+      FirestorePaths.aiUsageDoc(uid, aiUsageMonthKey(now)),
     );
+    final dayDoc = _db.doc(FirestorePaths.aiUsageDoc(uid, aiUsageDayKey(now)));
+
+    Map<String, dynamic>? month;
+    Map<String, dynamic>? day;
+    final subs = <StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>>[];
+    late final StreamController<AiUsage> controller;
+    void emit() => controller.add(AiUsage.fromDocs(month: month, day: day));
+    controller = StreamController<AiUsage>(
+      onListen: () {
+        subs
+          ..add(
+            monthDoc.snapshots().listen((d) {
+              month = d.data();
+              emit();
+            }, onError: controller.addError),
+          )
+          ..add(
+            dayDoc.snapshots().listen((d) {
+              day = d.data();
+              emit();
+            }, onError: controller.addError),
+          );
+      },
+      onCancel: () async {
+        for (final sub in subs) {
+          await sub.cancel();
+        }
+      },
+    );
+    return _guardStream('watchAiUsage', controller.stream);
   }
 
   /// Define o valor mensal (em centavos) que um instrutor cobra de um aluno

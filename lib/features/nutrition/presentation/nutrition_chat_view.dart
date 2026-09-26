@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'package:newfitness/features/ai/logic/chat_provider.dart'
+    show maxAiMessageLength;
+import 'package:newfitness/features/ai/presentation/ai_disclaimer.dart';
 import 'package:newfitness/features/auth/logic/auth_provider.dart';
+import 'package:newfitness/features/auth/presentation/email_verification_notice.dart';
 import 'package:newfitness/features/nutrition/logic/nutrition_chat_provider.dart';
 import 'package:newfitness/shared/models/nutrition_message.dart';
 
@@ -46,11 +50,11 @@ class _NutritionChatViewState extends State<NutritionChatView> {
     });
   }
 
-  void _ask(List<NutritionMessage> history) {
+  void _ask() {
     final text = _controller.text;
     if (text.trim().isEmpty) return;
     _controller.clear();
-    context.read<NutritionChatProvider>().ask(widget.studentUid, text, history);
+    context.read<NutritionChatProvider>().ask(widget.studentUid, text);
     _scrollToEnd();
   }
 
@@ -70,6 +74,11 @@ class _NutritionChatViewState extends State<NutritionChatView> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<NutritionChatProvider>();
+    // A nutricionista não chama a IA (só corrige); o aluno precisa do
+    // e-mail verificado para perguntar.
+    final needsVerification =
+        !widget.isNutritionistView &&
+        !context.watch<AuthProvider>().isEmailVerified;
 
     return Column(
       children: [
@@ -112,55 +121,60 @@ class _NutritionChatViewState extends State<NutritionChatView> {
               style: const TextStyle(color: Colors.red),
             ),
           ),
-        SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-            child: StreamBuilder<List<NutritionMessage>>(
-              stream: provider.watchMessages(widget.studentUid),
-              builder: (context, snapshot) {
-                final history = snapshot.data ?? [];
-                return Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _controller,
-                        decoration: InputDecoration(
-                          hintText: widget.isNutritionistView
-                              ? 'Corrigir ou validar...'
-                              : 'Escreva sua pergunta...',
-                        ),
-                        minLines: 1,
-                        maxLines: 4,
-                        onSubmitted: (_) => widget.isNutritionistView
-                            ? _correct()
-                            : _ask(history),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    IconButton.filled(
-                      onPressed: provider.isSending
+        if (!widget.isNutritionistView) const AiDisclaimer(),
+        if (needsVerification)
+          const SafeArea(
+            top: false,
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(12, 8, 12, 8),
+              child: EmailVerificationNotice(reason: 'Para usar a IA'),
+            ),
+          )
+        else
+          SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _controller,
+                      maxLength: widget.isNutritionistView
                           ? null
-                          : () => widget.isNutritionistView
-                                ? _correct()
-                                : _ask(history),
-                      icon: provider.isSending
-                          ? const SizedBox(
-                              height: 16,
-                              width: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Icon(Icons.send),
+                          : maxAiMessageLength,
+                      decoration: InputDecoration(
+                        hintText: widget.isNutritionistView
+                            ? 'Corrigir ou validar...'
+                            : 'Escreva sua pergunta...',
+                        counterText: '',
+                      ),
+                      minLines: 1,
+                      maxLines: 4,
+                      onSubmitted: (_) =>
+                          widget.isNutritionistView ? _correct() : _ask(),
                     ),
-                  ],
-                );
-              },
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton.filled(
+                    onPressed: provider.isSending
+                        ? null
+                        : () => widget.isNutritionistView ? _correct() : _ask(),
+                    icon: provider.isSending
+                        ? const SizedBox(
+                            height: 16,
+                            width: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(Icons.send),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
       ],
     );
   }

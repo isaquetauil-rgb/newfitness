@@ -18,12 +18,10 @@ SubscriptionStatus subscriptionStatusFromString(String? value) {
   }
 }
 
-/// Nível de uso de IA do aluno (fotos de refeição/evolução) — definido pelo
-/// instrutor (`FinanceProvider.setStudentPlanTier`, via a Cloud Function
-/// `setStudentPlanTier`) e aplicado como trava no backend em
-/// `functions/src/index.ts` (`assertAiUsageAllowed`). `basic` é o padrão
-/// quando o instrutor ainda não escolheu nada — evita uso ilimitado de IA
-/// sem custo antes de qualquer configuração.
+/// Plano de IA do aluno — definido SÓ pelo administrador (Cloud Function
+/// `setStudentPlanTier`) em `users/{uid}/finance/subscription.planTier`, a
+/// mesma fonte que a cota lê no backend (`reserveAiQuota` em
+/// `functions/src/ai_guard.ts`). Sem plano gravado = `basic`.
 enum PlanTier { basic, premium }
 
 PlanTier planTierFromString(String? value) {
@@ -66,32 +64,77 @@ class Subscription {
   }
 }
 
-/// Limites mensais de uso de IA do plano Básico (aluno) — o Premium não tem
-/// limite. Mesmos números usados no backend (`functions/src/index.ts`);
-/// duplicados aqui só para exibir "X de Y usados" na tela sem precisar de
-/// mais uma leitura ao servidor.
+/// Cotas de IA do ALUNO por plano — os mesmos números do backend
+/// (`QUOTAS` em `functions/src/ai_guard.ts`), repetidos aqui só para
+/// mostrar "X de Y" na tela; a trava de verdade é sempre no servidor.
 class AiUsageLimits {
-  AiUsageLimits._();
+  const AiUsageLimits._({
+    required this.chatPerDay,
+    required this.nutritionPerMonth,
+    required this.mealPhotosPerMonth,
+  });
 
-  static const basicMealPhotosPerMonth = 3;
-  static const basicBodyPhotosPerMonth = 1;
+  final int chatPerDay;
+  final int nutritionPerMonth;
+  final int mealPhotosPerMonth;
+
+  static const basic = AiUsageLimits._(
+    chatPerDay: 5,
+    nutritionPerMonth: 10,
+    mealPhotosPerMonth: 3,
+  );
+  static const premium = AiUsageLimits._(
+    chatPerDay: 20,
+    nutritionPerMonth: 60,
+    mealPhotosPerMonth: 60,
+  );
+
+  static AiUsageLimits forTier(PlanTier tier) =>
+      tier == PlanTier.premium ? premium : basic;
 }
 
-/// Contagem de uso de IA do mês corrente — `users/{uid}/ai_usage/{yyyy-MM}`.
-/// Incrementado só pela Cloud Function, depois de cada análise concluída com
-/// sucesso (ver `incrementAiUsage` em `functions/src/index.ts`); o cliente só
-/// lê, pra mostrar "X de Y usados" antes de tentar uma análise nova.
+/// Chaves dos contadores de IA no fuso de São Paulo (UTC−3, sem horário de
+/// verão) — as mesmas de `periodKey` no backend: `yyyy-MM` (mês, vira no
+/// dia 1º) e `yyyy-MM-dd` (dia, vira à meia-noite).
+String aiUsageMonthKey(DateTime now) => _saoPauloDate(now).substring(0, 7);
+String aiUsageDayKey(DateTime now) => _saoPauloDate(now);
+
+String _saoPauloDate(DateTime now) {
+  final sp = now.toUtc().subtract(const Duration(hours: 3));
+  String two(int v) => v.toString().padLeft(2, '0');
+  return '${sp.year}-${two(sp.month)}-${two(sp.day)}';
+}
+
+/// Uso de IA do aluno: `users/{uid}/ai_usage/{yyyy-MM}` (nutrição e fotos
+/// no mês) e `users/{uid}/ai_usage/{yyyy-MM-dd}` (chat no dia). Só a Cloud
+/// Function grava; o app só lê, para mostrar "X de Y".
 class AiUsage {
   final int mealPhotoCount;
+  final int nutritionCount;
+  final int chatTodayCount;
+
+  /// Contador legado das fotos de evolução com IA (função removida) — só
+  /// lido de documentos antigos, não aparece mais na tela.
   final int bodyPhotoCount;
 
-  const AiUsage({this.mealPhotoCount = 0, this.bodyPhotoCount = 0});
+  const AiUsage({
+    this.mealPhotoCount = 0,
+    this.nutritionCount = 0,
+    this.chatTodayCount = 0,
+    this.bodyPhotoCount = 0,
+  });
 
-  factory AiUsage.fromMap(Map<String, dynamic>? map) {
-    if (map == null) return const AiUsage();
+  factory AiUsage.fromDocs({
+    Map<String, dynamic>? month,
+    Map<String, dynamic>? day,
+  }) {
+    int count(Map<String, dynamic>? map, String key) =>
+        (map?[key] as num?)?.toInt() ?? 0;
     return AiUsage(
-      mealPhotoCount: (map['mealPhoto'] as num?)?.toInt() ?? 0,
-      bodyPhotoCount: (map['bodyPhoto'] as num?)?.toInt() ?? 0,
+      mealPhotoCount: count(month, 'mealPhoto'),
+      nutritionCount: count(month, 'nutrition'),
+      chatTodayCount: count(day, 'chat'),
+      bodyPhotoCount: count(month, 'bodyPhoto'),
     );
   }
 }

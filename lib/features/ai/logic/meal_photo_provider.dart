@@ -31,9 +31,14 @@ class MealPhotoProvider extends ChangeNotifier {
   /// [file] é um [XFile] (do `image_picker`) em vez de `dart:io.File` para
   /// funcionar também no Flutter Web.
   ///
-  /// Faz upload da foto, salva o registro e depois pede a análise da IA
-  /// (a análise chega um pouco depois, via update do documento).
-  Future<void> addPhoto(String uid, XFile file, MealType mealType) async {
+  /// Faz upload da foto, salva o registro e depois pede a análise da IA —
+  /// o SERVIDOR grava o resultado (ou o motivo da falha) no documento, e o
+  /// card atualiza pelo stream de [watchPhotos].
+  ///
+  /// Devolve `null` se a análise deu certo, ou a mensagem real do servidor
+  /// se não deu (ex: limite do plano) — a foto fica salva de qualquer jeito.
+  /// Lança erro só se o envio da foto em si falhar.
+  Future<String?> addPhoto(String uid, XFile file, MealType mealType) async {
     _uploading = true;
     notifyListeners();
     try {
@@ -49,30 +54,24 @@ class MealPhotoProvider extends ChangeNotifier {
       final id = await _firestoreService.addMealPhoto(photo);
       _uploading = false;
       notifyListeners();
-
-      // Análise da IA acontece em segundo plano; se falhar, a foto
-      // continua salva normalmente, só sem o comentário.
-      try {
-        final analysis = await _aiService.analyzeMealPhoto(
-          imageBytes: bytes,
-          mealType: mealType.label,
-        );
-        await _firestoreService.updateMealPhotoAnalysis(uid, id, analysis);
-      } catch (e) {
-        // A foto já está salva; só registra por que não houve análise
-        // (ex: limite do plano atingido), para o card não ficar em
-        // "Analisando..." para sempre.
-        final reason = e is AppException
-            ? e.message
-            : 'Não foi possível analisar esta foto agora.';
-        try {
-          await _firestoreService.markMealPhotoAnalysisFailed(uid, id, reason);
-        } catch (_) {}
-      }
+      return await analyze(id);
     } catch (e) {
       _uploading = false;
       notifyListeners();
       rethrow;
+    }
+  }
+
+  /// Pede (de novo) a análise de uma foto já salva. Devolve `null` se deu
+  /// certo, ou a mensagem para mostrar ao usuário.
+  Future<String?> analyze(String photoId) async {
+    try {
+      await _aiService.analyzeMealPhoto(photoId: photoId);
+      return null;
+    } catch (e) {
+      return e is AppException
+          ? e.message
+          : 'Não foi possível analisar esta foto agora.';
     }
   }
 

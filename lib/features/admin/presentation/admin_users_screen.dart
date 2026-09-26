@@ -3,10 +3,13 @@ import 'package:newfitness/core/error/app_exception.dart';
 import 'package:provider/provider.dart';
 
 import 'package:newfitness/features/admin/logic/admin_provider.dart';
+import 'package:newfitness/features/finance/logic/finance_provider.dart';
+import 'package:newfitness/shared/models/subscription.dart';
 import 'package:newfitness/shared/models/user_profile.dart';
 
-/// Lista de todos os usuários cadastrados, com busca e ação de
-/// promover/rebaixar papel (aluno <-> instrutor).
+/// Lista de todos os usuários cadastrados, com busca, ação de
+/// promover/rebaixar papel (aluno <-> instrutor) e, para alunos, o plano de
+/// IA (Básico/Premium — só o admin define).
 class AdminUsersScreen extends StatefulWidget {
   const AdminUsersScreen({super.key});
 
@@ -137,6 +140,33 @@ class _UserTileState extends State<_UserTile> {
     }
   }
 
+  Future<void> _setPlanTier(PlanTier tier) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final label = tier == PlanTier.premium ? 'Premium' : 'Básico';
+    setState(() => _busy = true);
+    try {
+      await context.read<FinanceProvider>().setStudentPlanTier(
+        widget.user.uid,
+        tier,
+      );
+      messenger.showSnackBar(
+        SnackBar(content: Text('Plano de IA de ${widget.user.name}: $label.')),
+      );
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            e is AppException
+                ? e.message
+                : 'Não foi possível alterar o plano. Tente de novo.',
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   String _roleLabel(UserRole role) {
     switch (role) {
       case UserRole.instructor:
@@ -170,16 +200,29 @@ class _UserTileState extends State<_UserTile> {
                 width: 20,
                 child: CircularProgressIndicator(strokeWidth: 2),
               )
-            : PopupMenuButton<UserRole>(
-                onSelected: _setRole,
-                itemBuilder: (context) => UserRole.values
-                    .map(
-                      (role) => PopupMenuItem(
-                        value: role,
-                        child: Text(_roleLabel(role)),
+            : PopupMenuButton<Object>(
+                onSelected: (value) {
+                  if (value is UserRole) _setRole(value);
+                  if (value is PlanTier) _setPlanTier(value);
+                },
+                itemBuilder: (context) => [
+                  for (final role in UserRole.values)
+                    PopupMenuItem<Object>(
+                      value: role,
+                      child: Text(_roleLabel(role)),
+                    ),
+                  if (widget.user.role == UserRole.student) ...[
+                    const PopupMenuDivider(),
+                    for (final tier in PlanTier.values)
+                      PopupMenuItem<Object>(
+                        value: tier,
+                        child: Text(
+                          'Plano de IA: '
+                          '${tier == PlanTier.premium ? 'Premium' : 'Básico'}',
+                        ),
                       ),
-                    )
-                    .toList(),
+                  ],
+                ],
                 child: const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 4),
                   child: Icon(Icons.more_vert),

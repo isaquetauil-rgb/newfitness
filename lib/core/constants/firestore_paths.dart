@@ -48,8 +48,9 @@ class FirestorePaths {
   static String financePayments(String uid) =>
       '${financeSubscriptionDoc(uid)}/payments';
 
-  /// Contagem de uso de IA do mês corrente — `month` no formato `yyyy-MM`,
-  /// mesmo formato usado pelo backend (`functions/src/index.ts`).
-  static String aiUsageDoc(String uid, String month) =>
-      '$users/$uid/ai_usage/$month';
+  /// Contagem de uso de IA de um período — `period` é `yyyy-MM` (mês) ou
+  /// `yyyy-MM-dd` (dia), no fuso de São Paulo, como no backend
+  /// (`periodKey` em `functions/src/ai_guard.ts`).
+  static String aiUsageDoc(String uid, String period) =>
+      '$users/$uid/ai_usage/$period';
 }

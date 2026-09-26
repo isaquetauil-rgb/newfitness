@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import 'package:newfitness/core/error/app_exception.dart';
 import 'package:newfitness/features/auth/logic/auth_provider.dart';
+import 'package:newfitness/features/auth/presentation/email_verification_notice.dart';
 import 'package:newfitness/features/professional/logic/professional_request_provider.dart';
 import 'package:newfitness/features/professional/logic/professional_request_validation.dart';
 import 'package:newfitness/shared/models/professional_request.dart';
@@ -79,7 +80,16 @@ class _ProfessionalRequestScreenState extends State<ProfessionalRequestScreen> {
                 }
                 if (request == null) {
                   // As regras só aceitam o pedido com e-mail verificado.
-                  if (!auth.isEmailVerified) return const _VerifyEmail();
+                  if (!auth.isEmailVerified) {
+                    return ListView(
+                      padding: const EdgeInsets.all(20),
+                      children: const [
+                        EmailVerificationNotice(
+                          reason: 'Para pedir a aprovação como profissional',
+                        ),
+                      ],
+                    );
+                  }
                   return _RequestForm(profile: profile);
                 }
                 return _RequestStatus(request: request, profile: profile);
@@ -111,107 +121,6 @@ class _Message extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-/// E-mail ainda não verificado: explica o motivo e oferece o envio do link
-/// e a reconfirmação ("Já verifiquei"), que recarrega a conta.
-class _VerifyEmail extends StatefulWidget {
-  const _VerifyEmail();
-
-  @override
-  State<_VerifyEmail> createState() => _VerifyEmailState();
-}
-
-class _VerifyEmailState extends State<_VerifyEmail> {
-  bool _busy = false;
-
-  Future<void> _send() async {
-    final auth = context.read<AuthProvider>();
-    final messenger = ScaffoldMessenger.of(context);
-    setState(() => _busy = true);
-    final ok = await auth.sendEmailVerification();
-    if (mounted) setState(() => _busy = false);
-    messenger
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(
-            ok
-                ? 'E-mail de verificação enviado para ${auth.user?.email ?? ''}.'
-                : auth.errorMessage ??
-                      'Não foi possível enviar o e-mail. Tente de novo.',
-          ),
-        ),
-      );
-  }
-
-  Future<void> _check() async {
-    final auth = context.read<AuthProvider>();
-    final messenger = ScaffoldMessenger.of(context);
-    setState(() => _busy = true);
-    final ok = await auth.reloadUser();
-    if (mounted) setState(() => _busy = false);
-    if (!ok) {
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(
-            content: Text(
-              auth.errorMessage ?? 'Não foi possível conferir. Tente de novo.',
-            ),
-          ),
-        );
-    } else if (!auth.isEmailVerified) {
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Seu e-mail ainda não foi verificado. Abra o link que enviamos.',
-            ),
-          ),
-        );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final email = context.watch<AuthProvider>().user?.email ?? '';
-    return ListView(
-      padding: const EdgeInsets.all(20),
-      children: [
-        const Row(
-          children: [
-            Icon(Icons.mark_email_unread_outlined, color: Colors.orange),
-            SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'Verifique seu e-mail',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Text(
-          'Para pedir a aprovação como profissional, confirme primeiro o '
-          'e-mail da sua conta ($email). Enviamos um link; depois de abrir, '
-          'toque em "Já verifiquei".',
-          key: const ValueKey('verify-email-warning'),
-        ),
-        const SizedBox(height: 20),
-        ElevatedButton(
-          onPressed: _busy ? null : _send,
-          child: const Text('Enviar e-mail de verificação'),
-        ),
-        const SizedBox(height: 8),
-        OutlinedButton(
-          onPressed: _busy ? null : _check,
-          child: const Text('Já verifiquei'),
-        ),
-      ],
     );
   }
 }

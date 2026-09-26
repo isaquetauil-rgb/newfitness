@@ -33,12 +33,12 @@ void main() {
   ];
 
   test(
-    'ask geral chama AiService sem studentName e guarda as sugestões',
+    'ask geral chama AiService sem studentUid e guarda as sugestões',
     () async {
       when(
         () => aiService.suggestTrainingPlan(
           prompt: any(named: 'prompt'),
-          studentName: any(named: 'studentName'),
+          studentUid: any(named: 'studentUid'),
         ),
       ).thenAnswer(
         (_) async =>
@@ -54,29 +54,29 @@ void main() {
       verify(
         () => aiService.suggestTrainingPlan(
           prompt: 'mais ideias de treino de braço',
-          studentName: null,
+          studentUid: null,
         ),
       ).called(1);
     },
   );
 
-  test('ask contextualizado por aluno passa o studentName adiante', () async {
+  test('ask contextualizado por aluno passa o studentUid adiante', () async {
     when(
       () => aiService.suggestTrainingPlan(
         prompt: any(named: 'prompt'),
-        studentName: any(named: 'studentName'),
+        studentUid: any(named: 'studentUid'),
       ),
     ).thenAnswer(
       (_) async =>
           const TrainingSuggestionResult(suggestions: sampleSuggestions),
     );
 
-    await provider.ask(prompt: 'dor nas costas', studentName: 'Dona Maria');
+    await provider.ask(prompt: 'dor nas costas', studentUid: 'aluno-1');
 
     verify(
       () => aiService.suggestTrainingPlan(
         prompt: 'dor nas costas',
-        studentName: 'Dona Maria',
+        studentUid: 'aluno-1',
       ),
     ).called(1);
   });
@@ -85,7 +85,7 @@ void main() {
     when(
       () => aiService.suggestTrainingPlan(
         prompt: any(named: 'prompt'),
-        studentName: any(named: 'studentName'),
+        studentUid: any(named: 'studentUid'),
       ),
     ).thenAnswer(
       (_) async => const TrainingSuggestionResult(
@@ -93,7 +93,7 @@ void main() {
       ),
     );
 
-    await provider.ask(prompt: 'dor nas costas', studentName: 'Dona Maria');
+    await provider.ask(prompt: 'dor nas costas', studentUid: 'aluno-1');
 
     expect(provider.suggestions, isEmpty);
     expect(provider.rawText, 'Foque em mobilidade e fortalecimento lombar.');
@@ -103,7 +103,7 @@ void main() {
     when(
       () => aiService.suggestTrainingPlan(
         prompt: any(named: 'prompt'),
-        studentName: any(named: 'studentName'),
+        studentUid: any(named: 'studentUid'),
       ),
     ).thenThrow(Exception('falha de rede'));
 
@@ -117,7 +117,7 @@ void main() {
     when(
       () => aiService.suggestTrainingPlan(
         prompt: any(named: 'prompt'),
-        studentName: any(named: 'studentName'),
+        studentUid: any(named: 'studentUid'),
       ),
     ).thenAnswer(
       (_) async =>

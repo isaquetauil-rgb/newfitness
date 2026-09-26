@@ -44,12 +44,9 @@ class FinanceProvider extends ChangeNotifier {
     return _firestoreService.watchAiUsage(uid);
   }
 
-  /// Define o plano (Básico/Premium) de uso de IA de um aluno — só o
-  /// instrutor vinculado pode chamar (validado na própria Cloud Function).
-  /// Ao contrário de `updateStudentFee` (grava direto no Firestore), aqui
-  /// passa por uma function porque o mesmo valor precisa ser espelhado em
-  /// dois lugares (`students/{uid}` do instrutor e `finance/subscription`
-  /// do aluno) de forma atômica.
+  /// Define o plano (Básico/Premium) de uso de IA de um aluno — SÓ o
+  /// administrador (validado na Cloud Function; usado no painel admin). O
+  /// plano fica em `finance/subscription` do aluno, que só o servidor grava.
   Future<void> setStudentPlanTier(String studentUid, PlanTier tier) {
     return _client.call('setStudentPlanTier', {
       'studentUid': studentUid,
