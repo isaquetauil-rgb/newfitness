@@ -392,7 +392,7 @@ describe('Gravação pelo servidor', () => {
     assert.equal(calls.length, 0);
   });
 
-  test('S4. regras de meal_photos: cliente cria sem análise, nunca grava aiAnalysis/aiAnalysisError', async () => {
+  test('S4. regras de meal_photos: cliente cria sem análise, não edita a foto e nunca grava aiAnalysis/aiAnalysisError', async () => {
     const db = testEnv.authenticatedContext('aluno', { email_verified: true }).firestore();
     const base = { userId: 'aluno', date: 1, mealType: 'lunch', imageUrl: 'x' };
     await assertSucceeds(setDoc(doc(db, 'users/aluno/meal_photos/novo'), { ...base, aiAnalysis: null, aiAnalysisError: null }));
@@ -401,7 +401,7 @@ describe('Gravação pelo servidor', () => {
     await assertFails(setDoc(doc(db, 'users/aluno/meal_photos/forjada2'), { ...base, aiAnalysisError: 'x' }));
     await assertFails(updateDoc(doc(db, 'users/aluno/meal_photos/novo'), { aiAnalysis: 'Refeição perfeita!' }));
     await assertFails(updateDoc(doc(db, 'users/aluno/meal_photos/novo'), { aiAnalysisError: 'x' }));
-    await assertSucceeds(updateDoc(doc(db, 'users/aluno/meal_photos/novo'), { mealType: 'dinner' }));
+    await assertFails(updateDoc(doc(db, 'users/aluno/meal_photos/novo'), { mealType: 'dinner' }));
     await assertSucceeds(deleteDoc(doc(db, 'users/aluno/meal_photos/novo')));
   });
 

@@ -37,7 +37,7 @@ firebase emulators:start --only firestore,storage --project demo-newfitness-rule
 # espera aparecer "All emulators ready!" (Firestore 8080, Storage 9199)
 # Noutro terminal:
 cd firestore-tests
-npm test             # roda os 11 arquivos, um de cada vez
+npm test             # roda os 12 arquivos, um de cada vez
 ```
 
 Os arquivos rodam **em sequência** (`--test-concurrency=1`) de propósito:
@@ -140,6 +140,14 @@ do outro no meio do teste (falhas aleatórias).
   ignorado); `aiAnalysis` e a resposta do chat gravados só pelo servidor
   (e as regras de `meal_photos`/`chat_messages`); `planTier` só pelo admin;
   modelo certo por função.
+
+- **`storage-limits.test.js`** — limites e permissões do Storage e
+  `meal_photos` imutável pelo cliente: o dono cria e apaga a foto de
+  refeição, mas não edita (nem `imageUrl`); upload de `meal_photos` só do
+  dono, JPEG/PNG/WebP até 5 MB; upload de `exercise_videos` só por
+  instrutor (papel lido do Firestore) na própria pasta, MP4/MOV/WebM até
+  50 MB. No `ai-functions.test.js` (S4), a edição da foto pelo dono passou a
+  ser negada.
 
 ## Dados usados
 
