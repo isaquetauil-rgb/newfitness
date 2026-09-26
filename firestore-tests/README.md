@@ -37,7 +37,7 @@ firebase emulators:start --only firestore,storage --project demo-newfitness-rule
 # espera aparecer "All emulators ready!" (Firestore 8080, Storage 9199)
 # Noutro terminal:
 cd firestore-tests
-npm test             # roda os 9 arquivos, um de cada vez
+npm test             # roda os 11 arquivos, um de cada vez
 ```
 
 Os arquivos rodam **em sequência** (`--test-concurrency=1`) de propósito:
@@ -127,6 +127,19 @@ do outro no meio do teste (falhas aleatórias).
   existente (fluxo normal de criar/cancelar continua funcionando). Nas
   demais suítes, os tokens de admin e dos pedidos passaram a incluir
   `email_verified: true`.
+
+- **`ai-functions.test.js`** — controle de custo e segurança da IA
+  (`functions/src/ai.ts`, `ai_guard.ts`, `ai_store.ts`), contra o Firestore
+  e o **Storage** Emulator. A Anthropic nunca é chamada: `setClaudeClient`
+  (`functions/src/anthropic.ts`) troca o cliente por um falso que registra
+  modelo, mensagens e ferramentas de cada pedido. Cobre: cotas por papel e
+  plano (dia/mês no fuso de São Paulo), corrida (10 chamadas paralelas com
+  cota 3 → exatamente 3 aprovadas), devolução da cota em falha, 429/529 e
+  timeout; e-mail verificado e papéis em todas as Functions; validação de
+  entrada; histórico montado pelo servidor (o `history` do cliente é
+  ignorado); `aiAnalysis` e a resposta do chat gravados só pelo servidor
+  (e as regras de `meal_photos`/`chat_messages`); `planTier` só pelo admin;
+  modelo certo por função.
 
 ## Dados usados
 
