@@ -253,8 +253,9 @@ flutter run
 - ✅ **Lembretes de água e suplementos**: notificações locais diárias
   recorrentes, configuráveis por horário
 - ✅ **Chat com IA** (aba "IA") — tira dúvidas de treino/dieta/suplementação
+  (orientação geral, com cota por plano — ver "Backend de IA")
 - ✅ **Fotos de refeição** (café/almoço/janta/lanche) com **análise de IA**
-  automática logo após o upload
+  feita e gravada pelo servidor logo após o upload
 - ✅ **Área instrutor/aluno**: instrutor recebe um código único quando é
   aprovado; aluno informa esse código no próprio cadastro (ou depois, no
   perfil) para se vincular; instrutor vê a lista de alunos vinculados e o
@@ -283,15 +284,95 @@ flutter run
 
 ## Backend de IA (Cloud Functions)
 
-O chat, as análises de foto e o assistente de IA do instrutor **não chamam
-a API de IA diretamente do app** — isso exporia a chave de API. Em vez
-disso, o app chama uma Cloud Function (`chatWithAI`, `analyzeMealPhoto`,
-`analyzeBodyPhoto`, `suggestTrainingPlan`) que guarda a chave em segredo.
-Veja `functions/README.md` para o passo a passo completo (instalar
-dependências, criar a chave da Anthropic, guardar como secret, fazer o
-deploy). **Sem seguir esses passos, essas quatro funções retornam erro** —
-o resto do app (incluindo criar planos manualmente e o aluno vê-los)
-funciona normalmente sem depender da IA.
+O chat, a análise de foto de refeição e o assistente do instrutor **não
+chamam a API de IA diretamente do app** — isso exporia a chave. O app chama
+Cloud Functions (`functions/src/ai.ts`) que guardam a chave em segredo.
+Veja `functions/README.md` para instalar, criar a chave da Anthropic,
+guardar como secret e fazer o deploy. **Sem isso, as funções de IA retornam
+erro** — o resto do app funciona normalmente.
+
+### Quem pode chamar
+
+Todas exigem login **e e-mail verificado** (`email_verified` no token). O
+papel vem do perfil no Firestore, nunca do app.
+
+| Function | Quem pode | O que faz |
+|---|---|---|
+| `chatWithAI` | todos os papéis | chat geral; a resposta é gravada em `chat_messages` pelo servidor |
+| `askNutritionAI` | só aluno | chat de nutrição (a nutricionista vê a conversa); resposta gravada pelo servidor |
+| `analyzeMealPhoto` | só o aluno dono da foto | recebe `{ photoId }`, lê a foto do Storage (JPEG/PNG/WebP, até 5 MB) e grava `aiAnalysis`/`aiAnalysisError` na foto |
+| `suggestTrainingPlan` | só instrutor | sugestões de exercício; com `studentUid`, só aluno vinculado a ele (o nome vem do perfil) |
+
+O cliente **não grava** respostas da IA: as regras só deixam criar
+mensagens `user` em `chat_messages` (1–2000 caracteres, campos fechados) e
+proíbem `aiAnalysis`/`aiAnalysisError` em `meal_photos`. O histórico enviado
+à IA é montado pelo servidor (últimas 10 mensagens do Firestore); o que o
+app mandar como histórico é ignorado. Perguntas e pedidos: de 1 a 2000
+caracteres. Versões antigas do app que mandavam a foto em base64 recebem
+"Atualize o app para ver a análise da IA" (a foto continua salva).
+
+### Cotas de uso
+
+Contadas por usuário em `users/{uid}/ai_usage/{período}`, no fuso de São
+Paulo — o dia vira à meia-noite (`yyyy-MM-dd`) e o mês no dia 1º
+(`yyyy-MM`). O uso é **reservado numa transação antes** de chamar a IA (10
+chamadas em paralelo com cota 3 → exatamente 3 passam) e **devolvido** se a
+chamada falhar. Com a cota esgotada, a Function responde
+`resource-exhausted` com a mensagem pronta, que o app mostra.
+
+| Papel/plano | Chat geral | Nutrição | Foto de refeição | Sugestão de treino |
+|---|---|---|---|---|
+| Aluno Básico | 5/dia | 10/mês | 3/mês | — |
+| Aluno Premium | 20/dia | 60/mês | 60/mês | — |
+| Instrutor | 20/dia | — | — | 10/dia |
+| Nutricionista | 20/dia | — | — | — |
+| Admin | 100/dia em cada função que o papel dele permite | | | |
+
+Os números ficam em `QUOTAS` (`functions/src/ai_guard.ts`) e são repetidos
+só para exibição em `AiUsageLimits` (`lib/shared/models/subscription.dart`).
+
+**Plano (Básico/Premium):** fonte única em
+`users/{uid}/finance/subscription.planTier`, gravado **só pelo admin**
+(Painel admin → Usuários → menu do aluno → "Plano de IA", Function
+`setStudentPlanTier`). Sem plano = Básico. O plano é do aluno: não muda ao
+vincular/desvincular de instrutor. O instrutor só vê o plano (não altera).
+
+### Modelos
+
+Um por função, em `DEFAULT_MODELS` (`functions/src/anthropic.ts`) — único
+lugar para trocar. Cada um pode ser sobrescrito sem mexer no código por uma
+variável de ambiente das Functions (ex: em `functions/.env`):
+
+| Função | Modelo padrão | Variável |
+|---|---|---|
+| Chat geral | `claude-haiku-4-5-20251001` | `AI_MODEL_CHAT` |
+| Foto de refeição | `claude-haiku-4-5-20251001` | `AI_MODEL_MEAL_PHOTO` |
+| Nutrição (com busca na web, 1 por pergunta) | `claude-sonnet-5` | `AI_MODEL_NUTRITION` |
+| Sugestão de treino | `claude-sonnet-5` | `AI_MODEL_TRAINING` |
+
+Timeout: 45 s de espera pela IA (100 s na nutrição, com `timeoutSeconds`
+120 na Function). Estouro → "A IA demorou para responder. Tente de novo.";
+429/529 da Anthropic → "A IA está com muita procura agora...". As telas de
+chat e nutrição mostram o aviso fixo "Orientação geral por IA. Não
+substitui um profissional.", e os prompts de sistema pedem só orientação
+geral.
+
+### Custo estimado por chamada
+
+Aproximado, para decidir limites — confira os preços atuais em
+https://www.anthropic.com/pricing (as contas abaixo usam Haiku 4.5 a US$ 1
+/ US$ 5 por milhão de tokens de entrada/saída, Sonnet 5 **assumido** a
+US$ 3 / US$ 15, e US$ 10 por mil buscas na web).
+
+| Função | Entrada típica | Saída (máx.) | Custo típico | Teto por chamada |
+|---|---|---|---|---|
+| Chat geral (Haiku) | 300–2.500 tokens (10 mensagens de histórico) | ~250 (500) | US$ 0,001–0,004 | ~US$ 0,01 |
+| Foto de refeição (Haiku) | ~1.800 (imagem até 1600 px + texto) | ~150 (400) | ~US$ 0,003 | ~US$ 0,004 |
+| Nutrição (Sonnet + 1 busca) | 3.000–12.000 (resultados da busca) | ~300 (500) | US$ 0,02–0,05 | ~US$ 0,07 |
+| Sugestão de treino (Sonnet) | 400–900 | ~400 (700) | ~US$ 0,008 | ~US$ 0,013 |
+
+Teto mensal aproximado por pessoa usando **toda** a cota: aluno Básico
+~US$ 2; aluno Premium ~US$ 10; instrutor ~US$ 10; nutricionista ~US$ 6.
 
 ## Painel de administração
 
@@ -385,7 +466,7 @@ tenha acesso ao projeto `newfitnessappbr`.
   alunos diretamente
 - Marcar exercícios do plano como concluídos e comparar com o prescrito
 - Editar/excluir um treino já salvo
-- Limite de uso diário do chat/análise de IA por usuário (controle de custo)
+- App Check nas Functions de IA (primeiro em modo de monitoramento)
 - Testes de integração com Firebase real/emulado (`firebase_auth_mocks`,
   `fake_cloud_firestore`) complementando os testes unitários existentes
 

@@ -1,20 +1,29 @@
 # Cloud Functions — NewFitness
 
-Backend mínimo para o chat com IA e a análise de fotos (refeição/corpo).
-Existe **só pra proteger a chave de API** — ela nunca fica no app Flutter,
-só aqui no servidor.
+Backend do NewFitness. As funções de IA existem para **proteger a chave
+de API** (ela nunca fica no app Flutter) e para controlar o custo.
 
-## Funções
+## Funções de IA (`src/ai.ts`)
 
-- `chatWithAI` — recebe uma mensagem de texto (+ histórico opcional) e
-  devolve a resposta da IA.
-- `analyzeMealPhoto` — recebe uma foto de refeição em base64 e devolve um
-  comentário nutricional breve.
-- `analyzeBodyPhoto` — recebe uma foto de evolução do corpo em base64 e
-  devolve um comentário observacional.
+- `chatWithAI` — `{ message }`; todos os papéis; grava a resposta em
+  `chat_messages`.
+- `askNutritionAI` — `{ message }`; só aluno; grava a resposta em
+  `nutrition_chat` (busca na web: 1 por pergunta).
+- `analyzeMealPhoto` — `{ photoId }`; só o aluno dono; lê a foto do Storage
+  e grava `aiAnalysis`/`aiAnalysisError` no documento.
+- `suggestTrainingPlan` — `{ prompt, studentUid? }`; só instrutor (aluno,
+  se enviado, precisa estar vinculado).
 
-Todas exigem usuário autenticado (Firebase Auth) — chamadas anônimas são
-rejeitadas.
+Todas exigem login **com e-mail verificado**, validam a entrada (1–2000
+caracteres) e reservam a cota numa transação antes de chamar a IA (ver
+`src/ai_guard.ts`). O histórico dos chats é montado pelo servidor (últimas
+10 mensagens). Modelos por função: `DEFAULT_MODELS` em `src/anthropic.ts`,
+sobrescrevíveis por `AI_MODEL_CHAT`, `AI_MODEL_MEAL_PHOTO`,
+`AI_MODEL_NUTRITION` e `AI_MODEL_TRAINING` (ex: em `functions/.env`).
+Limites, modelos e custos: seção "Backend de IA" do README principal.
+
+Nos testes (`firestore-tests/ai-functions.test.js`) a Anthropic nunca é
+chamada: `setClaudeClient` troca o cliente por um falso.
 
 ## Configuração
 
