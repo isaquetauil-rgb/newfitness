@@ -235,15 +235,15 @@ service cloud.firestore {
           request.auth.uid == userId ||
           get(/databases/$(database)/documents/users/$(userId)).data.nutritionistId == request.auth.uid
         );
-        // A análise da IA (`aiAnalysis`/`aiAnalysisError`) é gravada só pela
-        // Cloud Function `analyzeMealPhoto`: o dono cria a foto sem esses
-        // campos (ausentes ou null) e nunca os altera depois.
+        // O dono cria (sem `aiAnalysis`/`aiAnalysisError`, ausentes ou null)
+        // e apaga; NINGUÉM edita pelo cliente — a análise da IA é gravada só
+        // pela Cloud Function `analyzeMealPhoto` (Admin SDK), e o app não
+        // edita a foto depois de criada (nem `imageUrl`, que a Function usa
+        // para achar o arquivo).
         allow create: if request.auth != null && request.auth.uid == userId &&
           request.resource.data.get('aiAnalysis', null) == null &&
           request.resource.data.get('aiAnalysisError', null) == null;
-        allow update: if request.auth != null && request.auth.uid == userId &&
-          !request.resource.data.diff(resource.data).affectedKeys()
-            .hasAny(['aiAnalysis', 'aiAnalysisError']);
+        allow update: if false;
         allow delete: if request.auth != null && request.auth.uid == userId;
       }
       match /nutrition_chat/{messageId} {

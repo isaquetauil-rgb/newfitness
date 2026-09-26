@@ -28,7 +28,13 @@ service firebase.storage {
         request.auth.uid == userId ||
         firestore.get(/databases/(default)/documents/users/$(userId)).data.get('nutritionistId', null) == request.auth.uid
       );
-      allow write: if request.auth != null && request.auth.uid == userId;
+      // Só o dono envia: imagem JPEG/PNG/WebP de até 5 MB (o mesmo limite
+      // que a análise da IA aceita). O dono apaga.
+      allow create, update: if request.auth != null &&
+        request.auth.uid == userId &&
+        request.resource.size <= 5 * 1024 * 1024 &&
+        request.resource.contentType.matches('image/(jpeg|png|webp)');
+      allow delete: if request.auth != null && request.auth.uid == userId;
     }
     match /users/{userId}/exercise_videos/{fileName} {
       // Vídeo próprio de exercício, enviado pelo instrutor (userId). Leitura
@@ -38,7 +44,15 @@ service firebase.storage {
         request.auth.uid == userId ||
         firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.instructorId == userId
       );
-      allow write: if request.auth != null && request.auth.uid == userId;
+      // Só INSTRUTOR (papel lido do perfil no Firestore) envia, na própria
+      // pasta: MP4, MOV (quicktime) ou WebM de até 50 MB — o app limita a
+      // gravação a 20 s. O dono apaga. Vídeos já enviados não são afetados.
+      allow create, update: if request.auth != null &&
+        request.auth.uid == userId &&
+        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.get('role', 'student') == 'instructor' &&
+        request.resource.size <= 50 * 1024 * 1024 &&
+        request.resource.contentType.matches('video/(mp4|quicktime|webm)');
+      allow delete: if request.auth != null && request.auth.uid == userId;
     }
   }
 }
