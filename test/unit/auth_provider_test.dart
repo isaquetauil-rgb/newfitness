@@ -94,51 +94,48 @@ void main() {
     verify(() => firestoreService.createUserProfile(any())).called(1);
   });
 
-  test(
-    'cadastro cria UM perfil de aluno e não é duplicado pelo perfil padrão '
-    '(authStateChanges chega antes de o perfil ser gravado)',
-    () async {
-      final user = MockUser();
-      when(() => user.uid).thenReturn('u1');
-      when(() => user.email).thenReturn('ana@x.com');
-      when(() => user.displayName).thenReturn(null);
-      final provider = buildProviderWithFunctions();
+  test('cadastro cria UM perfil de aluno e não é duplicado pelo perfil padrão '
+      '(authStateChanges chega antes de o perfil ser gravado)', () async {
+    final user = MockUser();
+    when(() => user.uid).thenReturn('u1');
+    when(() => user.email).thenReturn('ana@x.com');
+    when(() => user.displayName).thenReturn(null);
+    final provider = buildProviderWithFunctions();
 
-      // Firebase Auth avisa o login no meio do signUp, quando o documento
-      // de perfil ainda não existe.
-      when(
-        () => authService.signUp(
-          email: any(named: 'email'),
-          password: any(named: 'password'),
-          name: any(named: 'name'),
-        ),
-      ).thenAnswer((_) async {
-        authStateController.add(user);
-        await Future<void>.delayed(Duration.zero);
-        return user;
-      });
-      when(() => firestoreService.getUserProfile('u1'))
-          .thenAnswer((_) async => null);
-      when(() => firestoreService.createUserProfile(any()))
-          .thenAnswer((_) async {});
-
-      final ok = await provider.signUp('Ana', 'ana@x.com', '123456');
+    // Firebase Auth avisa o login no meio do signUp, quando o documento
+    // de perfil ainda não existe.
+    when(
+      () => authService.signUp(
+        email: any(named: 'email'),
+        password: any(named: 'password'),
+        name: any(named: 'name'),
+      ),
+    ).thenAnswer((_) async {
+      authStateController.add(user);
       await Future<void>.delayed(Duration.zero);
+      return user;
+    });
+    when(() => firestoreService.getUserProfile('u1'))
+        .thenAnswer((_) async => null);
+    when(() => firestoreService.createUserProfile(any()))
+        .thenAnswer((_) async {});
 
-      expect(ok, isTrue);
-      final created = verify(
-        () => firestoreService.createUserProfile(captureAny()),
-      ).captured.cast<UserProfile>();
-      // Só o perfil do cadastro foi gravado — nenhum perfil padrão extra.
-      expect(created, hasLength(1));
-      // O cadastro é sempre de aluno (personal/nutricionista pedem
-      // aprovação depois) e não pede código de convite.
-      expect(created.single.role, UserRole.student);
-      expect(created.single.inviteCode, isNull);
-      expect(provider.profile?.role, UserRole.student);
-      verifyNever(() => functionsClient.call('ensureInviteCode', any()));
-    },
-  );
+    final ok = await provider.signUp('Ana', 'ana@x.com', '123456');
+    await Future<void>.delayed(Duration.zero);
+
+    expect(ok, isTrue);
+    final created = verify(
+      () => firestoreService.createUserProfile(captureAny()),
+    ).captured.cast<UserProfile>();
+    // Só o perfil do cadastro foi gravado — nenhum perfil padrão extra.
+    expect(created, hasLength(1));
+    // O cadastro é sempre de aluno (personal/nutricionista pedem
+    // aprovação depois) e não pede código de convite.
+    expect(created.single.role, UserRole.student);
+    expect(created.single.inviteCode, isNull);
+    expect(provider.profile?.role, UserRole.student);
+    verifyNever(() => functionsClient.call('ensureInviteCode', any()));
+  });
 
   test('instrutor com código antigo recebe o código confirmado pelo servidor '
       '(ex: o antigo tinha sido copiado por outra conta)', () async {

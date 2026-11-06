@@ -118,9 +118,8 @@ void main() {
           .thenAnswer((_) async => 'https://x/meal.jpg');
       when(() => firestoreService.addMealPhoto(any()))
           .thenAnswer((_) async => 'm1');
-      when(
-        () => aiService.analyzeMealPhoto(photoId: any(named: 'photoId')),
-      ).thenThrow(const ValidationException('Você atingiu o limite.'));
+      when(() => aiService.analyzeMealPhoto(photoId: any(named: 'photoId')))
+          .thenThrow(const ValidationException('Você atingiu o limite.'));
 
       final provider = MealPhotoProvider(
         firestoreService: firestoreService,

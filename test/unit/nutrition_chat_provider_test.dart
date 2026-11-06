@@ -56,11 +56,8 @@ void main() {
       '(assistant) é gravada pela Cloud Function, nunca pelo app', () async {
     when(() => firestoreService.addNutritionMessage('student1', any()))
         .thenAnswer((_) async {});
-    when(
-      () => aiService.askNutrition(
-        message: any(named: 'message'),
-      ),
-    ).thenAnswer((_) async => 'Coma mais fibras.');
+    when(() => aiService.askNutrition(message: any(named: 'message')))
+        .thenAnswer((_) async => 'Coma mais fibras.');
 
     await provider.ask('student1', 'O que comer no café?');
 
@@ -69,11 +66,8 @@ void main() {
     ).captured;
     expect(captured.length, 1);
     expect((captured.single as NutritionMessage).role, NutritionRole.user);
-    verify(
-      () => aiService.askNutrition(
-        message: 'O que comer no café?',
-      ),
-    ).called(1);
+    verify(() => aiService.askNutrition(message: 'O que comer no café?'))
+        .called(1);
     expect(provider.isSending, isFalse);
     expect(provider.error, isNull);
   });
@@ -81,11 +75,8 @@ void main() {
   test('ask define uma mensagem de erro amigável quando a IA falha', () async {
     when(() => firestoreService.addNutritionMessage('student1', any()))
         .thenAnswer((_) async {});
-    when(
-      () => aiService.askNutrition(
-        message: any(named: 'message'),
-      ),
-    ).thenThrow(Exception('falha de rede'));
+    when(() => aiService.askNutrition(message: any(named: 'message')))
+        .thenThrow(Exception('falha de rede'));
 
     await provider.ask('student1', 'O que comer no café?');
 
@@ -126,11 +117,7 @@ void main() {
 
       expect(provider.isSending, isFalse);
       expect(provider.error, isNotNull);
-      verifyNever(
-        () => aiService.askNutrition(
-          message: any(named: 'message'),
-        ),
-      );
+      verifyNever(() => aiService.askNutrition(message: any(named: 'message')));
     },
   );
 }
