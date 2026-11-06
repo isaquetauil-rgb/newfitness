@@ -4,7 +4,7 @@
          plugins do Firebase). -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <application
-        android:label="newfitness"
+        android:label="NewFitness"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

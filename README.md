@@ -238,6 +238,35 @@ os novos direto lá) — o app não sobrescreve documentos já existentes.
 flutter run
 ```
 
+#### Testar com o Firebase local
+
+Roda Auth, Firestore, Storage e Functions no computador, sem tocar no projeto
+real e sem precisar do plano Blaze. Use três terminais, a partir da raiz:
+
+```bash
+npm --prefix functions run build
+firebase emulators:start --only auth,firestore,storage,functions --project newfitnessappbr
+node firestore-tests/seed-local.js
+flutter run --dart-define=USE_LOCAL_FIREBASE=true
+```
+
+Os segredos falsos do emulador ficam em `functions/.secret.local` (fora do
+Git): copie os nomes de `defineSecret` em `functions/src`. O `seed-local.js`
+cria contas fictícias e mostra os dados de acesso. As chamadas reais à IA e ao
+Mercado Pago falham neste modo.
+
+### 6. Gerar o APK
+
+A chave de assinatura fica fora do Git, em `android/key.properties`
+(`storePassword`, `keyPassword`, `keyAlias`, `storeFile`). Guarde uma cópia da
+chave e da senha: sem elas, as próximas versões não instalam por cima da atual.
+
+```bash
+flutter build apk --release --split-per-abi
+```
+
+Celulares atuais usam o APK `arm64-v8a`.
+
 ## O que já está implementado
 
 - ✅ Login, cadastro e **recuperação de senha** com Firebase Auth

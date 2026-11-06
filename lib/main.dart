@@ -7,6 +7,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'app/app.dart';
 import 'core/di/injector.dart';
 import 'core/error/error_handler.dart';
+import 'core/firebase/local_emulators.dart';
 import 'core/logging/app_logger.dart';
 import 'firebase_options.dart';
 
@@ -21,6 +22,7 @@ void main() {
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
       );
+      if (useLocalFirebase) await connectToLocalFirebase();
       await initializeDateFormatting('pt_BR');
 
       setupInjector();
