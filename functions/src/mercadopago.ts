@@ -1,8 +1,18 @@
-import * as crypto from "crypto";
 import * as admin from "firebase-admin";
 import { defineSecret } from "firebase-functions/params";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { onRequest } from "firebase-functions/v2/https";
+import {
+  CHECKOUT_LOCK_MS,
+  CheckoutPlan,
+  MpPayment,
+  SubscriptionState,
+  isActiveStatus,
+  isValidSignature,
+  paymentUpdate,
+  planCheckout,
+  preapprovalUpdate,
+} from "./mercadopago_logic";
 
 // Segredos configurados via `firebase functions:secrets:set NOME` — nunca no
 // código-fonte (mesmo padrão de `anthropicApiKey` em `anthropic.ts`).
@@ -12,17 +22,104 @@ export const mercadoPagoWebhookSecret = defineSecret(
 );
 
 const MP_API = "https://api.mercadopago.com";
+const MP_TIMEOUT_MS = 15 * 1000;
 
 // TODO: trocar por uma URL https real (ex: o domínio do Firebase Hosting do
 // app, ou uma deep link) antes de ir pra produção — o Mercado Pago exige um
 // `back_url` válido pra redirecionar o aluno depois do checkout.
 const BACK_URL = "https://newfitnessappbr.web.app/pagamento-concluido";
 
+const ACTIVE_MESSAGE =
+  "Você já tem uma assinatura ativa. Para mudar a forma de pagamento, " +
+  "acesse sua conta do Mercado Pago.";
+const IN_PROGRESS_MESSAGE =
+  "Já estamos preparando seu pagamento. Aguarde um instante.";
+
+function mpFetch(path: string, init: RequestInit = {}): Promise<Response> {
+  return fetch(`${MP_API}${path}`, {
+    ...init,
+    signal: AbortSignal.timeout(MP_TIMEOUT_MS),
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${mercadoPagoAccessToken.value()}`,
+    },
+  });
+}
+
+/** Falha do Mercado Pago: detalhes no log, frase pronta para o aluno. */
+async function mpFailure(what: string, response: Response): Promise<HttpsError> {
+  console.error(`Mercado Pago: ${what} (${response.status})`, await response.text());
+  return new HttpsError(
+    "unavailable",
+    "Não foi possível falar com o Mercado Pago. Tente novamente."
+  );
+}
+
+/**
+ * Confere no Mercado Pago a assinatura pendente do aluno. Devolve a URL para
+ * retomar o mesmo checkout, ou `null` se é preciso criar outra — nesse caso
+ * a antiga já está cancelada e não pode mais cobrar.
+ */
+async function resolvePendingCheckout(
+  preapprovalId: string,
+  monthlyFeeCents: number,
+  subscriptionRef: admin.firestore.DocumentReference
+): Promise<string | null> {
+  const response = await mpFetch(`/preapproval/${preapprovalId}`);
+  if (!response.ok) throw await mpFailure("consulta da assinatura", response);
+
+  const preapproval = (await response.json()) as {
+    status: string;
+    init_point?: string;
+    auto_recurring?: { transaction_amount?: number };
+  };
+
+  // O aluno pagou e o aviso do webhook ainda não chegou.
+  if (isActiveStatus(preapproval.status)) {
+    await subscriptionRef.set(
+      { status: preapproval.status, updatedAt: Date.now() },
+      { merge: true }
+    );
+    throw new HttpsError("failed-precondition", ACTIVE_MESSAGE);
+  }
+  if (preapproval.status === "cancelled" || preapproval.status === "finished") {
+    return null;
+  }
+  // Status desconhecido: na dúvida, não cria outra que possa cobrar também.
+  if (preapproval.status !== "pending") {
+    console.error("Mercado Pago: status inesperado", preapproval.status);
+    throw new HttpsError(
+      "unavailable",
+      "Não foi possível falar com o Mercado Pago. Tente novamente."
+    );
+  }
+
+  const amount = preapproval.auto_recurring?.transaction_amount;
+  if (
+    preapproval.init_point &&
+    amount !== undefined &&
+    Math.round(amount * 100) === monthlyFeeCents
+  ) {
+    return preapproval.init_point;
+  }
+
+  const cancel = await mpFetch(`/preapproval/${preapprovalId}`, {
+    method: "PUT",
+    body: JSON.stringify({ status: "cancelled" }),
+  });
+  if (!cancel.ok) throw await mpFailure("cancelamento da assinatura", cancel);
+  return null;
+}
+
 /**
  * Cria uma assinatura (Preapproval) no Mercado Pago para o aluno logado,
  * usando o valor mensal definido pelo instrutor em
  * `users/{instructorId}/students/{studentUid}.monthlyFeeCents`. Devolve o
  * `initPoint` (URL de checkout) pro app abrir com `url_launcher`.
+ *
+ * Cada aluno tem no máximo uma assinatura: quem já tem uma ativa é recusado,
+ * quem tem uma pendente retoma o mesmo checkout (ou troca por uma nova, se o
+ * valor mudou), e uma trava com prazo barra chamadas simultâneas.
  */
 export const createSubscriptionCheckout = onCall(
   { secrets: [mercadoPagoAccessToken] },
@@ -60,45 +157,69 @@ export const createSubscriptionCheckout = onCall(
       );
     }
 
-    const response = await fetch(`${MP_API}/preapproval`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${mercadoPagoAccessToken.value()}`,
-      },
-      body: JSON.stringify({
-        reason: "Mensalidade NewFitness",
-        external_reference: studentUid,
-        payer_email: student?.email,
-        back_url: BACK_URL,
-        auto_recurring: {
-          frequency: 1,
-          frequency_type: "months",
-          transaction_amount: monthlyFeeCents / 100,
-          currency_id: "BRL",
-        },
-      }),
-    });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new HttpsError(
-        "internal",
-        `Erro ao criar assinatura no Mercado Pago: ${errText}`
-      );
-    }
-
-    const preapproval = (await response.json()) as {
-      id: string;
-      init_point: string;
-    };
-
-    await db
+    const subscriptionRef = db
       .collection("users")
       .doc(studentUid)
       .collection("finance")
-      .doc("subscription")
-      .set(
+      .doc("subscription");
+
+    const plan: CheckoutPlan = await db.runTransaction(async (tx) => {
+      const now = Date.now();
+      const snap = await tx.get(subscriptionRef);
+      const decision = planCheckout(
+        snap.data() as SubscriptionState | undefined,
+        now
+      );
+      if (decision.action === "proceed") {
+        tx.set(
+          subscriptionRef,
+          { checkoutLockUntil: now + CHECKOUT_LOCK_MS },
+          { merge: true }
+        );
+      }
+      return decision;
+    });
+
+    if (plan.action === "reject") {
+      throw new HttpsError(
+        "failed-precondition",
+        plan.reason === "active" ? ACTIVE_MESSAGE : IN_PROGRESS_MESSAGE
+      );
+    }
+
+    try {
+      if (plan.existingPreapprovalId) {
+        const initPoint = await resolvePendingCheckout(
+          plan.existingPreapprovalId,
+          monthlyFeeCents,
+          subscriptionRef
+        );
+        if (initPoint) return { initPoint };
+      }
+
+      const response = await mpFetch("/preapproval", {
+        method: "POST",
+        body: JSON.stringify({
+          reason: "Mensalidade NewFitness",
+          external_reference: studentUid,
+          payer_email: student?.email,
+          back_url: BACK_URL,
+          auto_recurring: {
+            frequency: 1,
+            frequency_type: "months",
+            transaction_amount: monthlyFeeCents / 100,
+            currency_id: "BRL",
+          },
+        }),
+      });
+      if (!response.ok) throw await mpFailure("criação da assinatura", response);
+
+      const preapproval = (await response.json()) as {
+        id: string;
+        init_point: string;
+      };
+
+      await subscriptionRef.set(
         {
           status: "pending",
           mpPreapprovalId: preapproval.id,
@@ -108,43 +229,35 @@ export const createSubscriptionCheckout = onCall(
         { merge: true }
       );
 
-    return { initPoint: preapproval.init_point };
+      return { initPoint: preapproval.init_point };
+    } catch (err) {
+      if (err instanceof HttpsError) throw err;
+      console.error("Mercado Pago: falha de rede no checkout", err);
+      throw new HttpsError(
+        "unavailable",
+        "Não foi possível falar com o Mercado Pago. Tente novamente."
+      );
+    } finally {
+      await subscriptionRef.set(
+        { checkoutLockUntil: admin.firestore.FieldValue.delete() },
+        { merge: true }
+      );
+    }
   }
 );
 
 /**
- * Assinatura HMAC-SHA256 do payload conforme o padrão de validação de
- * webhook do Mercado Pago: manifest `id:{dataId};request-id:{requestId};ts:{ts};`
- * comparado ao `v1` do header `x-signature`. Confirme o formato exato na
- * documentação do Mercado Pago (Webhooks > Validação de assinatura) ao
- * configurar em produção — provedores de pagamento às vezes ajustam detalhes.
+ * Resultado de buscar no Mercado Pago o recurso avisado: `null` quando ele
+ * não existe (ex: notificação de teste), o que não adianta reenviar. Erro
+ * temporário sobe para o webhook responder 502 e o Mercado Pago reenviar.
  */
-function isValidSignature(params: {
-  dataId: string;
-  requestId: string | undefined;
-  signatureHeader: string | undefined;
-  secret: string;
-}): boolean {
-  const { dataId, requestId, signatureHeader, secret } = params;
-  if (!signatureHeader) return false;
-
-  const parts = Object.fromEntries(
-    signatureHeader.split(",").map((p) => {
-      const [key, value] = p.split("=");
-      return [key.trim(), value?.trim()];
-    })
-  );
-  const ts = parts["ts"];
-  const v1 = parts["v1"];
-  if (!ts || !v1) return false;
-
-  const manifest = `id:${dataId};request-id:${requestId ?? ""};ts:${ts};`;
-  const expected = crypto
-    .createHmac("sha256", secret)
-    .update(manifest)
-    .digest("hex");
-
-  return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(v1));
+async function fetchNotified<T>(path: string): Promise<T | null> {
+  const response = await mpFetch(path);
+  if (response.status === 404) return null;
+  if (!response.ok) {
+    throw new Error(`Mercado Pago respondeu ${response.status} em ${path}`);
+  }
+  return (await response.json()) as T;
 }
 
 /**
@@ -182,81 +295,59 @@ export const mercadoPagoWebhook = onRequest(
     }
 
     const db = admin.firestore();
-    const authHeader = { Authorization: `Bearer ${mercadoPagoAccessToken.value()}` };
+    const subscriptionOf = (studentUid: string) =>
+      db
+        .collection("users")
+        .doc(studentUid)
+        .collection("finance")
+        .doc("subscription");
 
-    if (type === "payment") {
-      const paymentResp = await fetch(`${MP_API}/v1/payments/${dataId}`, {
-        headers: authHeader,
-      });
-      if (!paymentResp.ok) {
-        res.status(200).send("ok"); // não retenta se o próprio MP falhar
-        return;
-      }
-      const payment = (await paymentResp.json()) as {
-        id: number;
-        status: string;
-        external_reference: string;
-        transaction_amount: number;
-      };
-      const studentUid = payment.external_reference;
-      if (studentUid) {
-        const subscriptionRef = db
-          .collection("users")
-          .doc(studentUid)
-          .collection("finance")
-          .doc("subscription");
-
-        await subscriptionRef
-          .collection("payments")
-          .doc(`${payment.id}`)
-          .set({
-            amountCents: Math.round(payment.transaction_amount * 100),
-            date: Date.now(),
-            status: payment.status,
-            mpPaymentId: payment.id,
+    try {
+      if (type === "payment") {
+        const payment = await fetchNotified<
+          MpPayment & { external_reference: string; transaction_amount: number }
+        >(`/v1/payments/${dataId}`);
+        if (payment?.external_reference) {
+          const subscriptionRef = subscriptionOf(payment.external_reference);
+          await db.runTransaction(async (tx) => {
+            const snap = await tx.get(subscriptionRef);
+            const now = Date.now();
+            tx.set(subscriptionRef.collection("payments").doc(`${payment.id}`), {
+              amountCents: Math.round(payment.transaction_amount * 100),
+              date: now,
+              status: payment.status,
+              mpPaymentId: payment.id,
+            });
+            tx.set(
+              subscriptionRef,
+              paymentUpdate(snap.data() as SubscriptionState | undefined, payment, now),
+              { merge: true }
+            );
           });
-
-        if (payment.status === "approved") {
-          await subscriptionRef.set(
-            {
-              status: "authorized",
-              lastPaymentStatus: "approved",
-              nextPaymentDate: Date.now() + 30 * 24 * 60 * 60 * 1000,
-              updatedAt: Date.now(),
-            },
-            { merge: true }
-          );
-        } else {
-          await subscriptionRef.set(
-            { lastPaymentStatus: payment.status, updatedAt: Date.now() },
-            { merge: true }
-          );
+        }
+      } else if (type === "subscription_preapproval" || type === "preapproval") {
+        const preapproval = await fetchNotified<{
+          id: string;
+          status: string;
+          external_reference: string;
+        }>(`/preapproval/${dataId}`);
+        if (preapproval?.external_reference) {
+          const subscriptionRef = subscriptionOf(preapproval.external_reference);
+          await db.runTransaction(async (tx) => {
+            const snap = await tx.get(subscriptionRef);
+            const update = preapprovalUpdate(
+              snap.data() as Parameters<typeof preapprovalUpdate>[0],
+              preapproval,
+              Date.now()
+            );
+            if (update) tx.set(subscriptionRef, update, { merge: true });
+          });
         }
       }
-    } else if (type === "subscription_preapproval" || type === "preapproval") {
-      const preapprovalResp = await fetch(`${MP_API}/preapproval/${dataId}`, {
-        headers: authHeader,
-      });
-      if (!preapprovalResp.ok) {
-        res.status(200).send("ok");
-        return;
-      }
-      const preapproval = (await preapprovalResp.json()) as {
-        status: string;
-        external_reference: string;
-      };
-      const studentUid = preapproval.external_reference;
-      if (studentUid) {
-        await db
-          .collection("users")
-          .doc(studentUid)
-          .collection("finance")
-          .doc("subscription")
-          .set(
-            { status: preapproval.status, updatedAt: Date.now() },
-            { merge: true }
-          );
-      }
+    } catch (err) {
+      console.error("Mercado Pago: falha ao processar o webhook", err);
+      res.status(502).send("Try again");
+      return;
     }
 
     res.status(200).send("ok");

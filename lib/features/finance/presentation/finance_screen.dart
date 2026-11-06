@@ -139,26 +139,30 @@ class _StudentFinanceView extends StatelessWidget {
                         '${DateFormat('dd/MM/yyyy').format(subscription.nextPaymentDate!)}',
                       ),
                     const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: provider.isCreatingCheckout
-                          ? null
-                          : () => _subscribe(context),
-                      child: provider.isCreatingCheckout
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : Text(
-                              subscription.status ==
-                                      SubscriptionStatus.authorized
-                                  ? 'Atualizar forma de pagamento'
-                                  : 'Assinar',
-                            ),
-                    ),
+                    // Assinatura ativa não ganha botão: assinar de novo
+                    // cobraria o aluno duas vezes (o servidor também recusa).
+                    if (subscription.status == SubscriptionStatus.authorized ||
+                        subscription.status == SubscriptionStatus.paused)
+                      const Text(
+                        'Para mudar a forma de pagamento, acesse sua conta '
+                        'do Mercado Pago.',
+                      )
+                    else
+                      ElevatedButton(
+                        onPressed: provider.isCreatingCheckout
+                            ? null
+                            : () => _subscribe(context),
+                        child: provider.isCreatingCheckout
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text('Assinar'),
+                      ),
                   ],
                 ),
               ),
