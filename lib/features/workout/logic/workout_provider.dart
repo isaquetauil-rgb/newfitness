@@ -12,6 +12,7 @@ import 'package:newfitness/shared/models/logged_exercise.dart';
 import 'package:newfitness/shared/models/training_plan.dart';
 import 'package:newfitness/shared/models/workout.dart';
 import 'package:newfitness/shared/models/workout_set.dart';
+import 'package:newfitness/shared/models/workout_templates.dart';
 import 'package:newfitness/shared/services/firestore_service.dart';
 
 const _uuid = Uuid();
@@ -75,6 +76,10 @@ class WorkoutProvider extends ChangeNotifier {
   Workout? _activeWorkout;
   DateTime? _startedAt;
   bool _saving = false;
+  Workout? _lastSaved;
+
+  /// Treino gravado pelo último [finishWorkout], para o resumo na tela.
+  Workout? get lastSaved => _lastSaved;
 
   Workout? get activeWorkout => _activeWorkout;
   bool get hasActiveWorkout => _activeWorkout != null;
@@ -140,6 +145,34 @@ class WorkoutProvider extends ChangeNotifier {
           ),
           // Cópia independente (não a mesma instância do plano).
           prescription: PlanExercise.fromMap(planExercise.toMap()),
+        ),
+      );
+    }
+    _changed();
+  }
+
+  /// Inicia um treino pronto do catálogo: a sugestão de séries e repetições
+  /// funciona como a prescrição de um plano.
+  void startFromTemplate(
+    String userId,
+    WorkoutTemplate template,
+    int subWorkoutIndex,
+  ) => startFromPlan(userId, template.toPlan(userId), subWorkoutIndex);
+
+  /// Começa de novo um treino do histórico: mesmos exercícios e quantidade
+  /// de séries, todas vazias.
+  void repeatWorkout(String userId, Workout workout) {
+    startWorkout(userId, name: workout.name, source: workout.source);
+    for (final exercise in workout.exercises) {
+      _activeWorkout!.exercises.add(
+        LoggedExercise(
+          exerciseId: exercise.exerciseId,
+          exerciseName: exercise.exerciseName,
+          sets: List.generate(
+            exercise.sets.length.clamp(1, 20),
+            (_) => WorkoutSet(),
+          ),
+          prescription: exercise.prescription,
         ),
       );
     }
@@ -250,6 +283,7 @@ class WorkoutProvider extends ChangeNotifier {
               (e, st) => _log.warning('Falha ao registrar progresso', e, st),
             ),
       );
+      _lastSaved = toSave;
       _activeWorkout = null;
       _startedAt = null;
       _saving = false;

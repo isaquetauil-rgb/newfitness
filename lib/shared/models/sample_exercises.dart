@@ -1,4 +1,5 @@
 import 'exercise.dart';
+import 'sample_functional_exercises.dart';
 
 /// Biblioteca inicial de exercícios, usada como fallback enquanto a
 /// coleção `exercises` do Firestore está vazia (ver
@@ -485,4 +486,5 @@ final List<Exercise> sampleExercises = [
       'Desça controladamente sem relaxar totalmente entre repetições.',
     ],
   ),
+  ...sampleFunctionalExercises,
 ];

@@ -6,6 +6,7 @@
 class AppRoutes {
   AppRoutes._();
 
+  static const welcome = '/welcome';
   static const login = '/login';
   static const register = '/register';
   static const forgotPassword = '/forgot-password';
@@ -13,6 +14,7 @@ class AppRoutes {
   static const home = '/home';
   static const workout = '/workout';
   static const workoutExercisePicker = '/workout/exercise-picker';
+  static const workoutTemplates = '/workout-templates';
   static const exercises = '/exercises';
   static const exerciseDetail = '/exercises/detail';
   static const progress = '/progress';

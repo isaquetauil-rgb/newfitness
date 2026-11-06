@@ -11,11 +11,17 @@ class LocalPrefs {
   static const _lastTabIndexKey = 'last_tab_index';
   static const _darkModeKey = 'dark_mode';
   static const _activeWorkoutKey = 'active_workout_v1';
+  static const _onboardingSeenKey = 'onboarding_seen';
 
   int? get lastTabIndex => _prefs.getInt(_lastTabIndexKey);
 
   Future<void> setLastTabIndex(int index) =>
       _prefs.setInt(_lastTabIndexKey, index);
+
+  /// As telas de primeira visita já foram vistas neste aparelho?
+  bool get onboardingSeen => _prefs.getBool(_onboardingSeenKey) ?? false;
+
+  Future<void> setOnboardingSeen() => _prefs.setBool(_onboardingSeenKey, true);
 
   bool get isDarkMode => _prefs.getBool(_darkModeKey) ?? false;
 

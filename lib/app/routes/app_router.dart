@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import 'package:newfitness/app/widgets/app_shell.dart';
 import 'package:newfitness/app/widgets/coming_soon_screen.dart';
+import 'package:newfitness/core/di/injector.dart';
+import 'package:newfitness/core/storage/local_prefs.dart';
 import 'package:newfitness/features/admin/presentation/admin_dashboard_screen.dart';
 import 'package:newfitness/features/admin/presentation/admin_exercise_form_screen.dart';
 import 'package:newfitness/features/admin/presentation/admin_exercises_screen.dart';
@@ -27,6 +29,7 @@ import 'package:newfitness/features/instructor/presentation/plan_editor_screen.d
 import 'package:newfitness/features/instructor/presentation/plan_templates_screen.dart';
 import 'package:newfitness/features/instructor/presentation/student_detail_screen.dart';
 import 'package:newfitness/features/notifications/presentation/reminders_screen.dart';
+import 'package:newfitness/features/onboarding/presentation/onboarding_screen.dart';
 import 'package:newfitness/features/nutrition/presentation/nutrition_plan_editor_screen.dart';
 import 'package:newfitness/features/nutrition/presentation/nutrition_screen.dart';
 import 'package:newfitness/features/nutrition/presentation/nutrition_student_detail_screen.dart';
@@ -40,6 +43,7 @@ import 'package:newfitness/features/progress/presentation/progress_screen.dart';
 import 'package:newfitness/features/timeline/presentation/timeline_screen.dart';
 import 'package:newfitness/features/workout/presentation/exercise_picker_screen.dart';
 import 'package:newfitness/features/workout/presentation/workout_screen.dart';
+import 'package:newfitness/features/workout/presentation/workout_templates_screen.dart';
 import 'package:newfitness/shared/models/body_photo.dart';
 import 'package:newfitness/shared/models/exercise.dart';
 
@@ -57,6 +61,11 @@ GoRouter buildAppRouter(AuthProvider authProvider) {
     initialLocation: AppRoutes.login,
     refreshListenable: authProvider,
     redirect: (context, state) {
+      final onWelcome = state.matchedLocation == AppRoutes.welcome;
+      if (!getIt<LocalPrefs>().onboardingSeen) {
+        return onWelcome ? null : AppRoutes.welcome;
+      }
+
       final loggedIn = authProvider.isLoggedIn;
       final loggingIn =
           state.matchedLocation == AppRoutes.login ||
@@ -64,7 +73,7 @@ GoRouter buildAppRouter(AuthProvider authProvider) {
           state.matchedLocation == AppRoutes.forgotPassword;
 
       if (!loggedIn && !loggingIn) return AppRoutes.login;
-      if (loggedIn && loggingIn) return AppRoutes.home;
+      if (loggedIn && (loggingIn || onWelcome)) return AppRoutes.home;
 
       // Painel admin: mesmo escondido da barra de navegação para quem não
       // é dono do app, um link direto não pode dar acesso.
@@ -74,6 +83,11 @@ GoRouter buildAppRouter(AuthProvider authProvider) {
       return null;
     },
     routes: [
+      GoRoute(
+        path: AppRoutes.welcome,
+        pageBuilder: (context, state) =>
+            _fadeThrough(state, const OnboardingScreen()),
+      ),
       GoRoute(
         path: AppRoutes.login,
         pageBuilder: (context, state) =>
@@ -93,6 +107,13 @@ GoRouter buildAppRouter(AuthProvider authProvider) {
       // Itens do menu lateral sem aba própria — telas cheias com seta de
       // voltar, fora do StatefulShellRoute (mesmo padrão de detalhe usado
       // em exercícios/progresso).
+      GoRoute(
+        path: AppRoutes.workoutTemplates,
+        pageBuilder: (context, state) => _fadeThrough(
+          state,
+          WorkoutTemplatesScreen(initialTemplateId: state.extra as String?),
+        ),
+      ),
       GoRoute(
         path: AppRoutes.progressCalendar,
         pageBuilder: (context, state) =>

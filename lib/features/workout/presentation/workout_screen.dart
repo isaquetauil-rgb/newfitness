@@ -17,6 +17,8 @@ import 'package:newfitness/shared/models/logged_exercise.dart';
 import 'package:newfitness/shared/models/sample_exercises.dart';
 import 'package:newfitness/shared/models/training_plan.dart';
 import 'package:newfitness/shared/models/user_profile.dart';
+import 'package:newfitness/shared/models/workout.dart';
+import 'package:newfitness/shared/models/workout_templates.dart';
 
 import 'rest_timer_sheet.dart';
 
@@ -52,39 +54,7 @@ class WorkoutScreen extends StatelessWidget {
           : const _StartWorkoutBody(),
       floatingActionButton: workout.hasActiveWorkout
           ? FloatingActionButton.extended(
-              onPressed: workout.isSaving
-                  ? null
-                  : () async {
-                      final messenger = ScaffoldMessenger.of(context);
-                      if (workout.activeWorkout!.exercises.isEmpty) {
-                        messenger.showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Adicione ao menos um exercício antes de '
-                              'finalizar.',
-                            ),
-                          ),
-                        );
-                        return;
-                      }
-                      final result = await context
-                          .read<WorkoutProvider>()
-                          .finishWorkout();
-                      messenger.showSnackBar(
-                        SnackBar(
-                          content: Text(switch (result) {
-                            WorkoutFinishResult.saved => 'Treino salvo! 💪',
-                            WorkoutFinishResult.endedWithoutSets =>
-                              'Nenhuma série registrada — o treino foi '
-                                  'encerrado sem entrar no histórico.',
-                            WorkoutFinishResult.failed =>
-                              'Não foi possível salvar o treino. '
-                                  'Verifique a conexão e tente de novo — '
-                                  'nada foi perdido.',
-                          }),
-                        ),
-                      );
-                    },
+              onPressed: workout.isSaving ? null : () => _finish(context),
               icon: workout.isSaving
                   ? const SizedBox(
                       height: 16,
@@ -98,6 +68,93 @@ class WorkoutScreen extends StatelessWidget {
               label: const Text('Finalizar treino'),
             )
           : null,
+    );
+  }
+
+  Future<void> _finish(BuildContext context) async {
+    final provider = context.read<WorkoutProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+    final exercises = provider.activeWorkout!.exercises;
+    if (exercises.isEmpty) {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Adicione ao menos um exercício antes de finalizar.'),
+        ),
+      );
+      return;
+    }
+
+    // Sem séries o treino não é salvo: avisa antes de ele sumir.
+    if (!WorkoutProvider.hasRealizedSets(exercises)) {
+      final discard = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Nenhuma série preenchida'),
+          content: const Text(
+            'Para salvar, preencha o peso ou as repetições, ou marque a '
+            'série como feita.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Sair sem salvar'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Continuar treino'),
+            ),
+          ],
+        ),
+      );
+      if (discard != true) return;
+      await provider.finishWorkout();
+      return;
+    }
+
+    final result = await provider.finishWorkout();
+    if (!context.mounted) return;
+    if (result == WorkoutFinishResult.saved) {
+      _showSavedSummary(context, provider.lastSaved!);
+    } else if (result == WorkoutFinishResult.failed) {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Não foi possível salvar o treino. Verifique a conexão e tente '
+            'de novo. Nada foi perdido.',
+          ),
+        ),
+      );
+    }
+  }
+
+  void _showSavedSummary(BuildContext context, Workout saved) {
+    final volume = saved.totalVolume;
+    // Exercícios sem série realizada continuam no treino, mas não contam.
+    final done = saved.exercises.where((e) => e.sets.isNotEmpty).length;
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        icon: const Icon(Icons.check_circle_outline, size: 40),
+        title: const Text('Treino salvo!'),
+        content: Text(
+          '$done exercício(s) · ${saved.totalSets} '
+          'série(s)${volume > 0 ? ' · ${volume.toStringAsFixed(0)} kg' : ''}'
+          '\n\nEle fica guardado no seu histórico, em Progresso.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Fechar'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              context.go(AppRoutes.progress);
+            },
+            child: const Text('Ver no histórico'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -145,13 +202,22 @@ class _StartWorkoutBody extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'Inicie um treino livre ou siga um plano do seu instrutor.',
+          'Escolha um treino pronto, siga o plano do seu personal ou monte '
+          'um treino livre.',
           textAlign: TextAlign.center,
           style: TextStyle(color: Colors.grey.shade600),
         ),
         const SizedBox(height: 24),
         Center(
-          child: ElevatedButton.icon(
+          child: FilledButton.icon(
+            onPressed: () => context.push(AppRoutes.workoutTemplates),
+            icon: const Icon(Icons.auto_awesome_outlined),
+            label: const Text('Ver treinos prontos'),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Center(
+          child: OutlinedButton.icon(
             onPressed: () => context.read<WorkoutProvider>().startWorkout(uid),
             icon: const Icon(Icons.play_arrow),
             label: const Text('Iniciar treino livre'),
@@ -308,6 +374,13 @@ class _ActiveWorkoutBodyState extends State<_ActiveWorkoutBody> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
       children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Text(
+            'Preencha cada série e toque em Finalizar treino para salvar.',
+            style: TextStyle(color: Colors.grey.shade600),
+          ),
+        ),
         for (int i = 0; i < exercises.length; i++)
           // A chave amarra cada card (e os campos de texto dentro dele) ao
           // exercício, não à posição — sem ela, remover um exercício fazia
@@ -317,6 +390,11 @@ class _ActiveWorkoutBodyState extends State<_ActiveWorkoutBody> {
             exerciseIndex: i,
             exercise: exercises[i],
             isUnilateral: unilateralIds.contains(exercises[i].exerciseId),
+            isTemplate:
+                provider.activeWorkout!.source?.planId.startsWith(
+                  templatePlanPrefix,
+                ) ??
+                false,
           ),
         const SizedBox(height: 8),
         OutlinedButton.icon(
@@ -344,11 +422,15 @@ class _ExerciseCard extends StatelessWidget {
   /// prescrição; o modelo da série não muda).
   final bool isUnilateral;
 
+  /// Veio de um treino pronto: a meta é sugestão, não prescrição.
+  final bool isTemplate;
+
   const _ExerciseCard({
     super.key,
     required this.exerciseIndex,
     required this.exercise,
     this.isUnilateral = false,
+    this.isTemplate = false,
   });
 
   Future<void> _swapExercise(BuildContext context) async {
@@ -419,6 +501,7 @@ class _ExerciseCard extends StatelessWidget {
               _PrescriptionBlock(
                 exercise: exercise,
                 isUnilateral: isUnilateral,
+                isTemplate: isTemplate,
               ),
               const SizedBox(height: 12),
               Text(
@@ -434,7 +517,7 @@ class _ExerciseCard extends StatelessWidget {
               children: const [
                 SizedBox(
                   width: 32,
-                  child: Text('Série', style: TextStyle(color: Colors.grey)),
+                  child: Text('Nº', style: TextStyle(color: Colors.grey)),
                 ),
                 Expanded(
                   child: Center(
@@ -475,19 +558,22 @@ class _PrescriptionBlock extends StatelessWidget {
   const _PrescriptionBlock({
     required this.exercise,
     required this.isUnilateral,
+    this.isTemplate = false,
   });
 
   final LoggedExercise exercise;
   final bool isUnilateral;
+  final bool isTemplate;
 
   @override
   Widget build(BuildContext context) {
     final p = exercise.prescription!;
     final load = prescriptionLoad(p);
     final notes = p.notes?.trim();
+    final label = isTemplate ? 'Sugerido' : 'Prescrito';
     final title = exercise.prescriptionMatchesExercise
-        ? 'Prescrito'
-        : 'Prescrito para ${p.exerciseName}';
+        ? label
+        : '$label para ${p.exerciseName}';
     final muted = Theme.of(context).colorScheme.onSurfaceVariant;
 
     return Container(
