@@ -66,6 +66,22 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   }
 }
 
+/// Vitrine da tela inicial: os grátis e alguns perfis do Premium. O catálogo
+/// completo fica em "Ver todos".
+const _featuredIds = [
+  'primeiros_passos',
+  'em_casa',
+  'duas_divisoes',
+  'futebol',
+  'mma',
+  'corrida',
+  'idosos',
+];
+
+final List<WorkoutTemplate> _featured = [
+  for (final id in _featuredIds) workoutTemplates.firstWhere((t) => t.id == id),
+];
+
 class _StudentHomeBody extends StatefulWidget {
   const _StudentHomeBody({super.key, required this.profile});
 
@@ -150,10 +166,10 @@ class _StudentHomeBodyState extends State<_StudentHomeBody> {
               height: 136,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
-                itemCount: workoutTemplates.length,
+                itemCount: _featured.length,
                 separatorBuilder: (_, _) => const SizedBox(width: 12),
                 itemBuilder: (context, index) =>
-                    _TemplateCard(template: workoutTemplates[index]),
+                    _TemplateCard(template: _featured[index]),
               ),
             ),
             const SizedBox(height: 20),

@@ -36,12 +36,58 @@ class AdminExercisesScreen extends StatelessWidget {
     }
   }
 
+  Future<void> _addMissing(BuildContext context) async {
+    final provider = context.read<ExerciseProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+    final names = provider.missingDefaults.map((e) => e.name).toList();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Adicionar ${names.length} exercício(s)?'),
+        content: SingleChildScrollView(child: Text(names.join('\n'))),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Adicionar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      final added = await provider.addMissingDefaults();
+      messenger.showSnackBar(
+        SnackBar(content: Text('$added exercício(s) adicionado(s).')),
+      );
+    } catch (_) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Não foi possível adicionar agora.')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final exercises = context.watch<ExerciseProvider>().exercises;
+    final provider = context.watch<ExerciseProvider>();
+    final exercises = provider.exercises;
+    final missing = exercises.isEmpty ? 0 : provider.missingDefaults.length;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Biblioteca de exercícios')),
+      appBar: AppBar(
+        title: const Text('Biblioteca de exercícios'),
+        actions: [
+          if (missing > 0)
+            TextButton.icon(
+              onPressed: () => _addMissing(context),
+              icon: const Icon(Icons.playlist_add),
+              label: Text('$missing novos'),
+            ),
+        ],
+      ),
       body: exercises.isEmpty
           ? const Center(child: Text('Nenhum exercício cadastrado ainda.'))
           : ListView.builder(

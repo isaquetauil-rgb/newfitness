@@ -70,6 +70,26 @@ class ExerciseProvider extends ChangeNotifier {
     }
   }
 
+  /// Exercícios padrão do app que ainda não estão na biblioteca.
+  List<Exercise> get missingDefaults {
+    final ids = {for (final e in _exercises) e.id};
+    return [
+      for (final e in sampleExercises)
+        if (!ids.contains(e.id)) e,
+    ];
+  }
+
+  /// Adiciona só os exercícios padrão que faltam (ex: os criados numa versão
+  /// nova do app). Não toca nos que já existem nem recria nada em massa:
+  /// é o admin quem decide, pela tela de administração.
+  Future<int> addMissingDefaults() async {
+    final missing = missingDefaults;
+    for (final exercise in missing) {
+      await _firestoreService.seedExercise(exercise);
+    }
+    return missing.length;
+  }
+
   @override
   void dispose() {
     _sub?.cancel();

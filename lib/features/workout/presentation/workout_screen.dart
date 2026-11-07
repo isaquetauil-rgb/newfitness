@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -9,10 +12,12 @@ import 'package:newfitness/features/exercises/logic/exercise_pool.dart';
 import 'package:newfitness/features/exercises/logic/exercise_provider.dart';
 import 'package:newfitness/features/exercises/presentation/exercise_alternatives_sheet.dart';
 import 'package:newfitness/features/instructor/logic/custom_exercise_provider.dart';
+import 'package:newfitness/features/progress/logic/progress_record_provider.dart';
 import 'package:newfitness/features/workout/logic/prescription_format.dart';
 import 'package:newfitness/features/workout/logic/training_plan_provider.dart';
 import 'package:newfitness/features/workout/logic/workout_provider.dart';
 import 'package:newfitness/shared/models/exercise.dart';
+import 'package:newfitness/shared/models/exercise_progress_record.dart';
 import 'package:newfitness/shared/models/logged_exercise.dart';
 import 'package:newfitness/shared/models/sample_exercises.dart';
 import 'package:newfitness/shared/models/training_plan.dart';
@@ -50,7 +55,18 @@ class WorkoutScreen extends StatelessWidget {
             : null,
       ),
       body: workout.hasActiveWorkout
-          ? const _ActiveWorkoutBody()
+          ? Column(
+              children: [
+                // Fica fixo no topo enquanto a lista rola.
+                if (workout.restEndsAt != null)
+                  _RestBar(
+                    key: ValueKey(workout.restEndsAt),
+                    endsAt: workout.restEndsAt!,
+                    totalSeconds: workout.restTotalSeconds,
+                  ),
+                const Expanded(child: _ActiveWorkoutBody()),
+              ],
+            )
           : const _StartWorkoutBody(),
       floatingActionButton: workout.hasActiveWorkout
           ? FloatingActionButton.extended(
@@ -177,6 +193,101 @@ class WorkoutScreen extends StatelessWidget {
             child: const Text('Cancelar treino'),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Contagem do descanso entre séries, iniciada ao marcar uma série.
+class _RestBar extends StatefulWidget {
+  const _RestBar({super.key, required this.endsAt, required this.totalSeconds});
+
+  final DateTime endsAt;
+  final int totalSeconds;
+
+  @override
+  State<_RestBar> createState() => _RestBarState();
+}
+
+class _RestBarState extends State<_RestBar> {
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
+  }
+
+  void _tick() {
+    if (!mounted) return;
+    if (!DateTime.now().isBefore(widget.endsAt)) {
+      _timer?.cancel();
+      HapticFeedback.heavyImpact();
+      context.read<WorkoutProvider>().skipRest();
+      return;
+    }
+    setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = context.read<WorkoutProvider>();
+    final left = widget.endsAt
+        .difference(DateTime.now())
+        .inSeconds
+        .clamp(0, widget.totalSeconds);
+    final label = '${left ~/ 60}:${(left % 60).toString().padLeft(2, '0')}';
+    const ink = Color(0xFF14171A);
+
+    return Material(
+      color: Theme.of(context).colorScheme.primary,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+        child: Row(
+          children: [
+            const Icon(Icons.timer_outlined, color: ink),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Descanso $label',
+                    style: const TextStyle(
+                      color: ink,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  LinearProgressIndicator(
+                    value: widget.totalSeconds == 0
+                        ? 0
+                        : left / widget.totalSeconds,
+                    color: ink,
+                    backgroundColor: Colors.white54,
+                  ),
+                ],
+              ),
+            ),
+            TextButton(
+              onPressed: () => provider.addRest(15),
+              style: TextButton.styleFrom(foregroundColor: ink),
+              child: const Text('+15 s'),
+            ),
+            TextButton(
+              onPressed: provider.skipRest,
+              style: TextButton.styleFrom(foregroundColor: ink),
+              child: const Text('Pular'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -359,7 +470,39 @@ class _ActiveWorkoutBodyState extends State<_ActiveWorkoutBody> {
     );
   }
 
+  // Última carga e recorde de cada exercício, para mostrar durante o treino.
+  Stream<List<ExerciseProgressRecord>>? _records;
+  String? _recordsUid;
+
+  Stream<List<ExerciseProgressRecord>> _recordsFor(String uid) {
+    if (_records == null || _recordsUid != uid) {
+      _recordsUid = uid;
+      try {
+        _records = context.read<ProgressRecordProvider>().watchRecords(uid);
+      } on ProviderNotFoundException {
+        _records = const Stream.empty();
+      }
+    }
+    return _records!;
+  }
+
   Widget _buildList(BuildContext context, List<Exercise> custom) {
+    final uid = context.read<AuthProvider>().user?.uid;
+    if (uid == null) return _buildExercises(context, custom, const {});
+    return StreamBuilder<List<ExerciseProgressRecord>>(
+      stream: _recordsFor(uid),
+      builder: (context, snapshot) => _buildExercises(context, custom, {
+        for (final record in snapshot.data ?? const <ExerciseProgressRecord>[])
+          record.exerciseId: record,
+      }),
+    );
+  }
+
+  Widget _buildExercises(
+    BuildContext context,
+    List<Exercise> custom,
+    Map<String, ExerciseProgressRecord> records,
+  ) {
     final provider = context.watch<WorkoutProvider>();
     final exercises = provider.activeWorkout!.exercises;
     final global = context.watch<ExerciseProvider>().exercises;
@@ -389,6 +532,7 @@ class _ActiveWorkoutBodyState extends State<_ActiveWorkoutBody> {
             key: ObjectKey(exercises[i]),
             exerciseIndex: i,
             exercise: exercises[i],
+            record: records[exercises[i].exerciseId],
             isUnilateral: unilateralIds.contains(exercises[i].exerciseId),
             isTemplate:
                 provider.activeWorkout!.source?.planId.startsWith(
@@ -425,13 +569,22 @@ class _ExerciseCard extends StatelessWidget {
   /// Veio de um treino pronto: a meta é sugestão, não prescrição.
   final bool isTemplate;
 
+  /// Histórico deste exercício, para mostrar a última carga.
+  final ExerciseProgressRecord? record;
+
   const _ExerciseCard({
     super.key,
     required this.exerciseIndex,
     required this.exercise,
     this.isUnilateral = false,
     this.isTemplate = false,
+    this.record,
   });
+
+  static String _kg(double value) => value
+      .toStringAsFixed(1)
+      .replaceFirst(RegExp(r'\.0$'), '')
+      .replaceAll('.', ',');
 
   Future<void> _swapExercise(BuildContext context) async {
     final provider = context.read<WorkoutProvider>();
@@ -495,6 +648,16 @@ class _ExerciseCard extends StatelessWidget {
               Text(
                 'No lugar de ${exercise.replacedExerciseName}',
                 style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              ),
+            if (record != null && record!.lastLoadKg > 0)
+              Text(
+                'Última vez: ${_kg(record!.lastLoadKg)} kg · '
+                'recorde: ${_kg(record!.bestLoadKg)} kg',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             if (exercise.prescription != null) ...[
               const SizedBox(height: 8),

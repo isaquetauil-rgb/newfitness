@@ -102,6 +102,7 @@ class _WorkoutTemplatesScreenState extends State<WorkoutTemplatesScreen> {
                   'Para treinar na academia e em casa',
                 ),
                 (TemplateCategory.sport, 'Para o seu esporte'),
+                (TemplateCategory.fight, 'Para lutas'),
                 (TemplateCategory.care, 'Para o seu corpo'),
               ])
                 if (_visible.any((t) => t.category == category)) ...[
@@ -300,19 +301,43 @@ class _TemplateSheet extends StatelessWidget {
             ),
             const SizedBox(height: 8),
           ],
-          for (int w = 0; w < template.workouts.length; w++) ...[
+          if (!locked) ...[
+            const Text(
+              'Aquecimento',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 4),
+            for (final step in template.warmUp)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Text('• $step'),
+              ),
+          ],
+          // Bloqueado: só uma prévia, para o conteúdo do Premium não ficar
+          // inteiro à mostra.
+          for (int w = 0; w < (locked ? 1 : template.workouts.length); w++) ...[
             const SizedBox(height: 12),
             Text(
               template.workouts[w].label,
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 4),
-            for (final exercise in template.workouts[w].exercises)
+            for (final exercise in template.workouts[w].exercises.take(
+              locked ? 3 : template.workouts[w].exercises.length,
+            ))
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 3),
                 child: Text(
                   '${exercise.exerciseName}: ${exercise.targetSets} x '
                   '${exercise.targetReps}',
+                ),
+              ),
+            if (locked)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  'E mais exercícios, aquecimento e progressão no Premium.',
+                  style: TextStyle(color: muted),
                 ),
               ),
             if (!locked) ...[
@@ -327,6 +352,15 @@ class _TemplateSheet extends StatelessWidget {
                 ),
               ),
             ],
+          ],
+          if (!locked) ...[
+            const SizedBox(height: 20),
+            const Text(
+              'Como progredir',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 4),
+            Text(template.progression),
           ],
         ],
       ),

@@ -196,12 +196,44 @@ class WorkoutProvider extends ChangeNotifier {
     double? weightKg,
     bool? completed,
   }) {
-    final set = _activeWorkout?.exercises[exerciseIndex].sets[setIndex];
-    if (set == null) return;
+    final exercise = _activeWorkout?.exercises[exerciseIndex];
+    final set = exercise?.sets[setIndex];
+    if (exercise == null || set == null) return;
+    final justCompleted = completed == true && !set.completed;
     if (reps != null) set.reps = reps;
     if (weightKg != null) set.weightKg = weightKg;
     if (completed != null) set.completed = completed;
+    // Marcar a série como feita já começa o descanso indicado.
+    if (justCompleted) startRest(exercise.prescription?.restSeconds ?? 60);
     _changed();
+  }
+
+  DateTime? _restEndsAt;
+  int _restTotalSeconds = 0;
+
+  /// Fim do descanso em andamento, ou `null` sem descanso.
+  DateTime? get restEndsAt => _restEndsAt;
+  int get restTotalSeconds => _restTotalSeconds;
+
+  void startRest(int seconds) {
+    if (seconds <= 0) return;
+    _restTotalSeconds = seconds;
+    _restEndsAt = DateTime.now().add(Duration(seconds: seconds));
+    notifyListeners();
+  }
+
+  void addRest(int seconds) {
+    final ends = _restEndsAt;
+    if (ends == null) return;
+    _restTotalSeconds += seconds;
+    _restEndsAt = ends.add(Duration(seconds: seconds));
+    notifyListeners();
+  }
+
+  void skipRest() {
+    if (_restEndsAt == null) return;
+    _restEndsAt = null;
+    notifyListeners();
   }
 
   void removeExercise(int exerciseIndex) {
@@ -238,6 +270,7 @@ class WorkoutProvider extends ChangeNotifier {
   void cancelWorkout() {
     _activeWorkout = null;
     _startedAt = null;
+    _restEndsAt = null;
     unawaited(_store?.clear());
     notifyListeners();
   }
@@ -284,6 +317,7 @@ class WorkoutProvider extends ChangeNotifier {
             ),
       );
       _lastSaved = toSave;
+      _restEndsAt = null;
       _activeWorkout = null;
       _startedAt = null;
       _saving = false;
