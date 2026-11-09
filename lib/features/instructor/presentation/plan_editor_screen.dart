@@ -7,9 +7,11 @@ import 'package:newfitness/features/exercises/logic/exercise_pool.dart';
 import 'package:newfitness/features/exercises/presentation/exercise_alternatives_sheet.dart';
 import 'package:newfitness/features/instructor/logic/plan_template_provider.dart';
 import 'package:newfitness/features/workout/logic/training_plan_provider.dart';
+import 'package:newfitness/features/workout/presentation/workout_templates_screen.dart';
 import 'package:newfitness/shared/models/exercise.dart';
 import 'package:newfitness/shared/models/plan_template.dart';
 import 'package:newfitness/shared/models/training_plan.dart';
+import 'package:newfitness/shared/models/workout_templates.dart';
 
 /// Argumentos para `/instructor/student/plan`.
 class PlanEditorArgs {
@@ -729,6 +731,37 @@ String? validatePlanRest(int? restSeconds) {
 
 /// Bottom sheet com a lista de modelos salvos pelo instrutor — usado por
 /// [PlanEditorScreen._useTemplate] pra escolher um pra clonar no plano atual.
+/// Converte um treino pronto do app num modelo do personal, levando o
+/// aquecimento e a progressão para as instruções do plano.
+@visibleForTesting
+PlanTemplate planTemplateFromReady(
+  WorkoutTemplate ready,
+  String instructorUid,
+) => PlanTemplate(
+  id: '$templatePlanPrefix${ready.id}',
+  instructorUid: instructorUid,
+  title: ready.title,
+  instructions: [
+    'Aquecimento: ${ready.warmUp.join(' ')}',
+    'Como progredir: ${ready.progression}',
+    if (ready.safetyNote != null) 'Atenção: ${ready.safetyNote}',
+  ].join('\n\n'),
+  workouts: ready.workouts,
+  createdAt: DateTime.now(),
+);
+
+class _PickerHeader extends StatelessWidget {
+  const _PickerHeader(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(top: 8, bottom: 8),
+    child: Text(text, style: const TextStyle(fontWeight: FontWeight.w700)),
+  );
+}
+
 class _TemplatePickerSheet extends StatelessWidget {
   const _TemplatePickerSheet({required this.instructorUid});
 
@@ -755,42 +788,64 @@ class _TemplatePickerSheet extends StatelessWidget {
                 stream: provider.watchTemplates(instructorUid),
                 builder: (context, snapshot) {
                   final templates = snapshot.data ?? [];
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  if (templates.isEmpty) {
-                    return Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(32),
-                        child: Text(
-                          'Nenhum modelo salvo ainda.',
-                          style: TextStyle(color: Colors.grey.shade600),
+                  final waiting =
+                      snapshot.connectionState == ConnectionState.waiting;
+                  final muted = TextStyle(color: Colors.grey.shade600);
+
+                  Widget tile(PlanTemplate template, {String? subtitle}) {
+                    final exerciseCount = template.workouts.fold<int>(
+                      0,
+                      (sum, w) => sum + w.exercises.length,
+                    );
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      child: ListTile(
+                        leading: const Icon(Icons.fitness_center),
+                        title: Text(template.title),
+                        subtitle: Text(
+                          subtitle ??
+                              '${template.workouts.length} treino(s) · '
+                                  '$exerciseCount exercício(s)',
                         ),
+                        onTap: () => Navigator.pop(context, template),
                       ),
                     );
                   }
-                  return ListView.builder(
+
+                  return ListView(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: templates.length,
-                    itemBuilder: (context, i) {
-                      final template = templates[i];
-                      final exerciseCount = template.workouts.fold<int>(
-                        0,
-                        (sum, w) => sum + w.exercises.length,
-                      );
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        child: ListTile(
-                          leading: const Icon(Icons.fitness_center),
-                          title: Text(template.title),
-                          subtitle: Text(
-                            '${template.workouts.length} treino(s) · '
-                            '$exerciseCount exercício(s)',
+                    children: [
+                      const _PickerHeader('Seus modelos'),
+                      if (waiting)
+                        const Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Center(child: CircularProgressIndicator()),
+                        )
+                      else if (templates.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Text(
+                            'Nenhum modelo salvo ainda.',
+                            style: muted,
                           ),
-                          onTap: () => Navigator.pop(context, template),
+                        )
+                      else
+                        for (final template in templates) tile(template),
+                      const _PickerHeader('Treinos prontos do NewFitness'),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Text(
+                          'Ponto de partida: ajuste séries, cargas e '
+                          'exercícios ao aluno antes de salvar.',
+                          style: muted,
                         ),
-                      );
-                    },
+                      ),
+                      for (final ready in workoutTemplates)
+                        tile(
+                          planTemplateFromReady(ready, instructorUid),
+                          subtitle: templateFacts(ready),
+                        ),
+                    ],
                   );
                 },
               ),

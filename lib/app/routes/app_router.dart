@@ -40,6 +40,8 @@ import 'package:newfitness/features/progress/presentation/body_progress_screen.d
 import 'package:newfitness/features/progress/presentation/physical_assessment_screen.dart';
 import 'package:newfitness/features/progress/presentation/progress_calendar_screen.dart';
 import 'package:newfitness/features/progress/presentation/progress_screen.dart';
+import 'package:newfitness/features/support/presentation/admin_support_screen.dart';
+import 'package:newfitness/features/support/presentation/support_chat_screen.dart';
 import 'package:newfitness/features/timeline/presentation/timeline_screen.dart';
 import 'package:newfitness/features/workout/presentation/exercise_picker_screen.dart';
 import 'package:newfitness/features/workout/presentation/workout_screen.dart';
@@ -107,6 +109,11 @@ GoRouter buildAppRouter(AuthProvider authProvider) {
       // Itens do menu lateral sem aba própria — telas cheias com seta de
       // voltar, fora do StatefulShellRoute (mesmo padrão de detalhe usado
       // em exercícios/progresso).
+      GoRoute(
+        path: AppRoutes.support,
+        pageBuilder: (context, state) =>
+            _fadeThrough(state, const SupportChatScreen()),
+      ),
       GoRoute(
         path: AppRoutes.workoutTemplates,
         pageBuilder: (context, state) => _fadeThrough(
@@ -382,6 +389,28 @@ GoRouter buildAppRouter(AuthProvider authProvider) {
                       state,
                       const AdminProfessionalRequestsScreen(),
                     ),
+                  ),
+                  GoRoute(
+                    path: 'support',
+                    pageBuilder: (context, state) =>
+                        _fadeThrough(state, const AdminSupportScreen()),
+                    routes: [
+                      GoRoute(
+                        path: 'thread',
+                        pageBuilder: (context, state) {
+                          final args = state.extra as SupportThreadArgs?;
+                          return _fadeThrough(
+                            state,
+                            args == null
+                                ? const AdminSupportScreen()
+                                : SupportChatScreen(
+                                    studentUid: args.uid,
+                                    studentName: args.name,
+                                  ),
+                          );
+                        },
+                      ),
+                    ],
                   ),
                 ],
               ),

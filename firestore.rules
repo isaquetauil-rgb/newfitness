@@ -432,6 +432,71 @@ service cloud.firestore {
         allow write: if false;
       }
     }
+    // Canal de apoio: cada aluno tem UMA conversa com a equipe (o admin),
+    // em `support_threads/{uid}`. Só o dono e o admin leem. O aluno só
+    // escreve como 'student'; só o admin escreve como 'admin'. Mensagens
+    // são imutáveis. No resumo da conversa, cada lado só pode marcar como
+    // lida a própria parte sem enviar mensagem.
+    match /support_threads/{uid} {
+      function threadOk() {
+        return request.resource.data.keys().hasOnly([
+            'uid', 'name', 'lastMessage', 'lastMessageAt', 'lastFrom',
+            'unreadByAdmin', 'unreadByStudent'
+          ]) &&
+          request.resource.data.uid == uid &&
+          request.resource.data.name is string &&
+          request.resource.data.name.size() <= 200 &&
+          request.resource.data.lastMessage is string &&
+          request.resource.data.lastMessage.size() <= 140 &&
+          request.resource.data.lastMessageAt is int &&
+          request.resource.data.lastFrom in ['student', 'admin'] &&
+          request.resource.data.unreadByAdmin is bool &&
+          request.resource.data.unreadByStudent is bool;
+      }
+      function onlyChanged(field) {
+        return request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly([field]);
+      }
+
+      allow read: if request.auth != null &&
+        (request.auth.uid == uid || isAdmin());
+      // Enviar mensagem sempre deixa a conversa como não lida para o outro
+      // lado: assim ninguém apaga o aviso de mensagem nova do outro.
+      function sentByStudent() {
+        return request.resource.data.lastFrom == 'student' &&
+          request.resource.data.unreadByAdmin == true;
+      }
+      function sentByAdmin() {
+        return request.resource.data.lastFrom == 'admin' &&
+          request.resource.data.unreadByStudent == true;
+      }
+
+      allow create: if request.auth != null && threadOk() && (
+        (request.auth.uid == uid && sentByStudent()) ||
+        (isAdmin() && sentByAdmin())
+      );
+      allow update: if request.auth != null && threadOk() && (
+        (request.auth.uid == uid &&
+          (sentByStudent() || onlyChanged('unreadByStudent'))) ||
+        (isAdmin() && (sentByAdmin() || onlyChanged('unreadByAdmin')))
+      );
+      allow delete: if false;
+
+      match /messages/{messageId} {
+        allow read: if request.auth != null &&
+          (request.auth.uid == uid || isAdmin());
+        allow create: if request.auth != null &&
+          request.resource.data.keys().hasOnly(['text', 'from', 'createdAt']) &&
+          request.resource.data.text is string &&
+          request.resource.data.text.size() >= 1 &&
+          request.resource.data.text.size() <= 1000 &&
+          request.resource.data.createdAt is int && (
+            (request.auth.uid == uid && request.resource.data.from == 'student') ||
+            (isAdmin() && request.resource.data.from == 'admin')
+          );
+        allow update, delete: if false;
+      }
+    }
     match /invite_codes/{code} {
       // Reservas de código de convite (garantem unicidade) — só a Cloud
       // Function `ensureInviteCode`/`linkToProfessional` (Admin SDK) lê e

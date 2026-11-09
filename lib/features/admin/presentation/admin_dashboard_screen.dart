@@ -152,6 +152,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               onTap: () => context.push(AppRoutes.adminProfessionalRequests),
             ),
           ),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.volunteer_activism_outlined),
+              title: const Text('Mensagens dos alunos'),
+              subtitle: const Text('Responder, motivar e dar apoio'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push(AppRoutes.adminSupport),
+            ),
+          ),
         ],
       ),
     );

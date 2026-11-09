@@ -36,6 +36,9 @@ class AppRoutes {
   static const adminExerciseForm = '/admin/exercises/edit';
   static const adminTaxonomy = '/admin/taxonomy';
   static const adminProfessionalRequests = '/admin/professional-requests';
+  static const adminSupport = '/admin/support';
+  static const adminSupportThread = '/admin/support/thread';
+  static const support = '/support';
   static const profile = '/profile';
   static const progressCalendar = '/progress-calendar';
 

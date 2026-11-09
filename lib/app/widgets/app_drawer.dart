@@ -150,6 +150,18 @@ class AppDrawer extends StatelessWidget {
                     color: AppTheme.progressAccent,
                     onTap: () => _pushRoute(context, AppRoutes.nutrition),
                   ),
+                  _DrawerTile(
+                    icon: Icons.auto_awesome_outlined,
+                    label: 'Treinos prontos',
+                    color: AppTheme.trainingAccent,
+                    onTap: () =>
+                        _pushRoute(context, AppRoutes.workoutTemplates),
+                  ),
+                  _DrawerTile(
+                    icon: Icons.volunteer_activism_outlined,
+                    label: 'Fale com a equipe',
+                    onTap: () => _pushRoute(context, AppRoutes.support),
+                  ),
                   const Divider(),
                   _DrawerTile(
                     icon: Icons.person_outline,

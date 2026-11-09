@@ -510,6 +510,21 @@ class _ExploreGrid extends StatelessWidget {
         'Nutrição',
         () => context.push(AppRoutes.nutrition),
       ),
+      (
+        Icons.auto_awesome_outlined,
+        'Treinos prontos',
+        () => context.push(AppRoutes.workoutTemplates),
+      ),
+      (
+        Icons.volunteer_activism_outlined,
+        'Apoio',
+        () => context.push(AppRoutes.support),
+      ),
+      (
+        Icons.calendar_today_outlined,
+        'Agenda',
+        () => context.push(AppRoutes.agenda),
+      ),
     ];
 
     return GridView.count(
