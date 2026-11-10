@@ -45,6 +45,10 @@ class WorkoutTemplate {
     this.safetyNote,
   });
 
+  /// Treinos da área de saúde: o aluno responde o questionário de saúde
+  /// antes de começar sozinho (ver `HealthScreening`).
+  bool get needsHealthScreening => category == TemplateCategory.care;
+
   /// Formato aceito por `WorkoutProvider.startFromPlan`.
   TrainingPlan toPlan(String userId) => TrainingPlan(
     id: '$templatePlanPrefix$id',

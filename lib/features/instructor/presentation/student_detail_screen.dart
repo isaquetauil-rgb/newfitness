@@ -11,7 +11,9 @@ import 'package:newfitness/features/instructor/presentation/ai_suggestion_sheet.
 import 'package:newfitness/features/instructor/presentation/plan_editor_screen.dart';
 import 'package:newfitness/features/progress/presentation/exercise_progress_list.dart';
 import 'package:newfitness/features/progress/presentation/physical_assessment_screen.dart';
+import 'package:newfitness/features/workout/data/health_screening_service.dart';
 import 'package:newfitness/features/workout/logic/training_plan_provider.dart';
+import 'package:newfitness/shared/models/health_screening.dart';
 import 'package:newfitness/shared/models/training_plan.dart';
 import 'package:newfitness/shared/models/workout.dart';
 import 'package:newfitness/shared/services/firestore_service.dart';
@@ -51,6 +53,9 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
     widget.studentUid,
   );
   late final _workoutsStream = _firestoreService.watchWorkouts(
+    widget.studentUid,
+  );
+  late final _screeningStream = HealthScreeningService().watchLatest(
     widget.studentUid,
   );
 
@@ -156,6 +161,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          _HealthScreeningCard(stream: _screeningStream),
           const Text(
             'Notas sobre o aluno',
             style: TextStyle(fontWeight: FontWeight.w700),
@@ -365,6 +371,57 @@ class _StatCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Última resposta do aluno ao questionário de saúde, quando houver. Com
+/// algum "sim", destaca o que ele marcou para o personal levar em conta.
+class _HealthScreeningCard extends StatelessWidget {
+  const _HealthScreeningCard({required this.stream});
+
+  final Stream<HealthScreening?> stream;
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<HealthScreening?>(
+      stream: stream,
+      builder: (context, snapshot) {
+        final s = snapshot.data;
+        if (s == null) return const SizedBox.shrink();
+        final colors = Theme.of(context).colorScheme;
+        final date = DateFormat('dd/MM/yyyy')
+            .format(DateTime.fromMillisecondsSinceEpoch(s.createdAt));
+        return Card(
+          color: s.cleared ? null : colors.errorContainer,
+          margin: const EdgeInsets.only(bottom: 16),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  s.cleared
+                      ? 'Questionário de saúde: sem restrições ($date)'
+                      : 'Questionário de saúde: precisa de atenção ($date)',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: s.cleared ? null : colors.onErrorContainer,
+                  ),
+                ),
+                for (final q in s.flaggedQuestions)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      '• Sim: $q',
+                      style: TextStyle(color: colors.onErrorContainer),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

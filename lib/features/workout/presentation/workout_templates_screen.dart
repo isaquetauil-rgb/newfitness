@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 import 'package:newfitness/app/routes/app_routes.dart';
 import 'package:newfitness/features/auth/logic/auth_provider.dart';
 import 'package:newfitness/features/finance/logic/finance_provider.dart';
+import 'package:newfitness/features/workout/data/health_screening_service.dart';
+import 'package:newfitness/features/workout/presentation/health_screening_sheet.dart';
 import 'package:newfitness/features/workout/logic/workout_provider.dart';
 import 'package:newfitness/shared/models/subscription.dart';
 import 'package:newfitness/shared/models/workout_templates.dart';
@@ -14,9 +16,16 @@ enum _Filter { all, free, premium }
 /// Catálogo de treinos prontos. [initialTemplateId] abre direto o detalhe
 /// de um treino (usado pelos cards da tela inicial).
 class WorkoutTemplatesScreen extends StatefulWidget {
-  const WorkoutTemplatesScreen({super.key, this.initialTemplateId});
+  const WorkoutTemplatesScreen({
+    super.key,
+    this.initialTemplateId,
+    this.screeningService,
+  });
 
   final String? initialTemplateId;
+
+  /// Para testes; por padrão usa o Firestore.
+  final HealthScreeningService? screeningService;
 
   @override
   State<WorkoutTemplatesScreen> createState() => _WorkoutTemplatesScreenState();
@@ -64,6 +73,7 @@ class _WorkoutTemplatesScreenState extends State<WorkoutTemplatesScreen> {
         template: template,
         locked: template.isPremium && !unlockedPremium,
         hostContext: context,
+        screeningService: widget.screeningService,
       ),
     );
   }
@@ -218,19 +228,29 @@ class _TemplateSheet extends StatelessWidget {
     required this.template,
     required this.locked,
     required this.hostContext,
+    this.screeningService,
   });
 
   final WorkoutTemplate template;
   final bool locked;
+  final HealthScreeningService? screeningService;
 
   /// Contexto da tela: continua válido depois que a folha fecha.
   final BuildContext hostContext;
 
-  void _start(BuildContext sheetContext, int index) {
+  Future<void> _start(BuildContext sheetContext, int index) async {
     final workout = hostContext.read<WorkoutProvider>();
     final uid = hostContext.read<AuthProvider>().user?.uid;
     Navigator.pop(sheetContext);
     if (uid == null) return;
+    if (template.needsHealthScreening && !workout.hasActiveWorkout) {
+      final cleared = await ensureHealthClearance(
+        hostContext,
+        uid,
+        service: screeningService,
+      );
+      if (!cleared || !hostContext.mounted) return;
+    }
     if (workout.hasActiveWorkout) {
       ScaffoldMessenger.of(hostContext).showSnackBar(
         const SnackBar(
@@ -300,6 +320,14 @@ class _TemplateSheet extends StatelessWidget {
               label: const Text('Vincular personal'),
             ),
             const SizedBox(height: 8),
+          ],
+          if (!locked && template.needsHealthScreening) ...[
+            Text(
+              'Antes de começar, você responde 5 perguntas rápidas de saúde. '
+              'Se alguma for "sim", indicamos treinar com um personal.',
+              style: TextStyle(color: muted),
+            ),
+            const SizedBox(height: 12),
           ],
           if (!locked) ...[
             const Text(

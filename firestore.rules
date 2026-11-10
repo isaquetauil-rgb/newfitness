@@ -105,6 +105,29 @@ service cloud.firestore {
       match /reminders/{reminderId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
+      match /health_screenings/{screeningId} {
+        // Questionário de saúde respondido antes de um treino pronto da área
+        // de saúde. Só o próprio aluno responde; cada resposta é um registro
+        // novo que ninguém edita nem apaga (fica como prova do que foi
+        // declarado). `cleared` tem de bater com as respostas: só é true
+        // quando nenhuma é "sim". Leem: dono, personal vinculado e admin.
+        allow read: if request.auth != null && (
+          request.auth.uid == userId ||
+          get(/databases/$(database)/documents/users/$(userId)).data.get('instructorId', null) == request.auth.uid ||
+          isAdmin()
+        );
+        allow create: if request.auth != null && request.auth.uid == userId &&
+          request.resource.data.keys().hasOnly(['answers', 'cleared', 'createdAt', 'version']) &&
+          request.resource.data.keys().hasAll(['answers', 'cleared', 'createdAt', 'version']) &&
+          request.resource.data.answers is list &&
+          request.resource.data.answers.size() >= 1 &&
+          request.resource.data.answers.size() <= 20 &&
+          request.resource.data.cleared is bool &&
+          request.resource.data.cleared == !request.resource.data.answers.hasAny([true]) &&
+          request.resource.data.createdAt is int &&
+          request.resource.data.version is int;
+        allow update, delete: if false;
+      }
       // ---- Evolução física (dados sensíveis) ----
       // Helpers do domínio de evolução: `userId` é sempre o ALUNO dono dos
       // dados. O vínculo é lido do perfil do aluno, que o próprio aluno não
