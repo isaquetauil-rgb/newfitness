@@ -1,3 +1,5 @@
+import 'package:newfitness/shared/utils/one_rep_max.dart';
+
 import 'logged_exercise.dart';
 
 /// Entrada agregada de um exercício dentro de um treino — ver
@@ -7,10 +9,15 @@ class ExerciseProgressInput {
   final double topSetLoadKg;
   final double totalVolume;
 
+  /// Maior 1RM estimado do dia (Epley, séries de 1 a 12 reps). `null` quando
+  /// nenhuma série entra na conta.
+  final double? bestE1rmKg;
+
   const ExerciseProgressInput({
     required this.exerciseName,
     required this.topSetLoadKg,
     required this.totalVolume,
+    this.bestE1rmKg,
   });
 }
 
@@ -39,31 +46,44 @@ Map<String, ExerciseProgressInput> aggregateProgressInputs(
     );
     final totalVolume = exercise.totalVolume;
     if (topSetLoad <= 0 && totalVolume <= 0) continue;
+    final e1rm = bestE1rm(exercise.sets);
 
     final current = aggregated[exercise.exerciseId];
+    final currentE1rm = current?.bestE1rmKg;
     aggregated[exercise.exerciseId] = ExerciseProgressInput(
       exerciseName: exercise.exerciseName,
       topSetLoadKg: current == null || topSetLoad > current.topSetLoadKg
           ? topSetLoad
           : current.topSetLoadKg,
       totalVolume: (current?.totalVolume ?? 0) + totalVolume,
+      bestE1rmKg: e1rm == null
+          ? currentE1rm
+          : currentE1rm == null || e1rm > currentE1rm
+          ? e1rm
+          : currentE1rm,
     );
   }
   return aggregated;
 }
 
 /// Um ponto de progresso: o resumo de um exercício dentro de um treino
-/// finalizado específico — carga do melhor set daquele dia e o volume total
-/// do exercício naquele treino (reps × peso somado de todas as séries).
+/// finalizado específico — carga do melhor set daquele dia, o volume total
+/// do exercício naquele treino (reps × peso somado de todas as séries) e o
+/// maior 1RM estimado do dia.
 class ProgressPoint {
   final DateTime date;
   final double topSetLoadKg;
   final double totalVolume;
 
+  /// 1RM estimado do dia. Opcional: pontos gravados antes desta versão não
+  /// têm, e treinos só com séries acima de 12 reps também não.
+  final double? e1rmKg;
+
   const ProgressPoint({
     required this.date,
     required this.topSetLoadKg,
     required this.totalVolume,
+    this.e1rmKg,
   });
 
   factory ProgressPoint.fromMap(Map<String, dynamic> map) {
@@ -73,6 +93,7 @@ class ProgressPoint {
       ),
       topSetLoadKg: (map['topSetLoadKg'] as num?)?.toDouble() ?? 0,
       totalVolume: (map['totalVolume'] as num?)?.toDouble() ?? 0,
+      e1rmKg: (map['e1rmKg'] as num?)?.toDouble(),
     );
   }
 
@@ -81,6 +102,7 @@ class ProgressPoint {
       'date': date.millisecondsSinceEpoch,
       'topSetLoadKg': topSetLoadKg,
       'totalVolume': totalVolume,
+      'e1rmKg': ?e1rmKg,
     };
   }
 }
@@ -102,6 +124,10 @@ class ExerciseProgressRecord {
   final DateTime lastPerformedAt;
   final int totalSessions;
 
+  /// Maior 1RM estimado já registrado. Opcional: registros de antes desta
+  /// versão começam sem e ganham o valor no próximo treino.
+  final double? bestE1rmKg;
+
   /// Histórico limitado (mais recentes por último) — usado pra desenhar um
   /// gráfico de evolução; ver `_historyLimit` em `FirestoreService`.
   final List<ProgressPoint> history;
@@ -113,8 +139,13 @@ class ExerciseProgressRecord {
     required this.lastLoadKg,
     required this.lastPerformedAt,
     required this.totalSessions,
+    this.bestE1rmKg,
     this.history = const [],
   });
+
+  /// Marcas atuais, para detectar recordes no próximo treino.
+  RecordBaseline get baseline =>
+      RecordBaseline(bestLoadKg: bestLoadKg, bestE1rmKg: bestE1rmKg);
 
   factory ExerciseProgressRecord.fromMap(String id, Map<String, dynamic> map) {
     return ExerciseProgressRecord(
@@ -126,6 +157,7 @@ class ExerciseProgressRecord {
         map['lastPerformedAt'] as int? ?? DateTime.now().millisecondsSinceEpoch,
       ),
       totalSessions: (map['totalSessions'] as num?)?.toInt() ?? 0,
+      bestE1rmKg: (map['bestE1rmKg'] as num?)?.toDouble(),
       history:
           (map['history'] as List<dynamic>?)
               ?.map(
@@ -144,6 +176,7 @@ class ExerciseProgressRecord {
       'lastLoadKg': lastLoadKg,
       'lastPerformedAt': lastPerformedAt.millisecondsSinceEpoch,
       'totalSessions': totalSessions,
+      'bestE1rmKg': ?bestE1rmKg,
       'history': history.map((p) => p.toMap()).toList(),
     };
   }
@@ -159,19 +192,23 @@ class ExerciseProgressRecord {
     required DateTime date,
     required double topSetLoadKg,
     required double totalVolume,
+    double? e1rmKg,
     int historyLimit = 50,
   }) {
+    final rounded = e1rmKg == null ? null : roundKg(e1rmKg);
     final history = [
       ...?existing?.history,
       ProgressPoint(
         date: date,
         topSetLoadKg: topSetLoadKg,
         totalVolume: totalVolume,
+        e1rmKg: rounded,
       ),
     ];
     final trimmedHistory = history.length > historyLimit
         ? history.sublist(history.length - historyLimit)
         : history;
+    final previousE1rm = existing?.bestE1rmKg;
 
     return ExerciseProgressRecord(
       exerciseId: exerciseId,
@@ -182,6 +219,11 @@ class ExerciseProgressRecord {
       lastLoadKg: topSetLoadKg,
       lastPerformedAt: date,
       totalSessions: (existing?.totalSessions ?? 0) + 1,
+      bestE1rmKg: rounded == null
+          ? previousE1rm
+          : previousE1rm == null || rounded > previousE1rm
+          ? rounded
+          : previousE1rm,
       history: trimmedHistory,
     );
   }

@@ -14,6 +14,9 @@ import 'package:newfitness/features/exercises/presentation/exercise_alternatives
 import 'package:newfitness/features/instructor/logic/custom_exercise_provider.dart';
 import 'package:newfitness/features/progress/logic/progress_record_provider.dart';
 import 'package:newfitness/features/workout/logic/prescription_format.dart';
+import 'package:newfitness/shared/utils/one_rep_max.dart';
+import 'package:newfitness/features/workout/logic/progression/suggest_next.dart';
+import 'package:newfitness/features/workout/logic/progression/workout_suggestion.dart';
 import 'package:newfitness/features/workout/logic/training_plan_provider.dart';
 import 'package:newfitness/features/workout/logic/workout_provider.dart';
 import 'package:newfitness/shared/models/exercise.dart';
@@ -23,6 +26,7 @@ import 'package:newfitness/shared/models/sample_exercises.dart';
 import 'package:newfitness/shared/models/training_plan.dart';
 import 'package:newfitness/shared/models/user_profile.dart';
 import 'package:newfitness/shared/models/workout.dart';
+import 'package:newfitness/shared/models/workout_set.dart';
 import 'package:newfitness/shared/models/workout_templates.dart';
 
 import 'rest_timer_sheet.dart';
@@ -130,7 +134,11 @@ class WorkoutScreen extends StatelessWidget {
     final result = await provider.finishWorkout();
     if (!context.mounted) return;
     if (result == WorkoutFinishResult.saved) {
-      _showSavedSummary(context, provider.lastSaved!);
+      _showSavedSummary(
+        context,
+        provider.lastSaved!,
+        provider.lastSavedRecords,
+      );
     } else if (result == WorkoutFinishResult.failed) {
       messenger.showSnackBar(
         const SnackBar(
@@ -143,7 +151,11 @@ class WorkoutScreen extends StatelessWidget {
     }
   }
 
-  void _showSavedSummary(BuildContext context, Workout saved) {
+  void _showSavedSummary(
+    BuildContext context,
+    Workout saved,
+    List<PersonalRecord> records,
+  ) {
     final volume = saved.totalVolume;
     // Exercícios sem série realizada continuam no treino, mas não contam.
     final done = saved.exercises.where((e) => e.sets.isNotEmpty).length;
@@ -152,10 +164,41 @@ class WorkoutScreen extends StatelessWidget {
       builder: (ctx) => AlertDialog(
         icon: const Icon(Icons.check_circle_outline, size: 40),
         title: const Text('Treino salvo!'),
-        content: Text(
-          '$done exercício(s) · ${saved.totalSets} '
-          'série(s)${volume > 0 ? ' · ${volume.toStringAsFixed(0)} kg' : ''}'
-          '\n\nEle fica guardado no seu histórico, em Progresso.',
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '$done exercício(s) · ${saved.totalSets} '
+                'série(s)${volume > 0 ? ' · ${volume.toStringAsFixed(0)} kg' : ''}',
+              ),
+              if (records.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Text(
+                  records.length == 1
+                      ? 'Recorde de hoje'
+                      : 'Recordes de hoje (${records.length})',
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 4),
+                for (final r in records)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.emoji_events_outlined, size: 18),
+                        const SizedBox(width: 6),
+                        Expanded(child: Text(r.label)),
+                      ],
+                    ),
+                  ),
+              ],
+              const SizedBox(height: 12),
+              const Text('Ele fica guardado no seu histórico, em Progresso.'),
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -486,15 +529,36 @@ class _ActiveWorkoutBodyState extends State<_ActiveWorkoutBody> {
     return _records!;
   }
 
+  // Treinos já salvos, para a sugestão de carga.
+  Stream<List<Workout>>? _history;
+  String? _historyUid;
+
+  Stream<List<Workout>> _historyFor(String uid) {
+    if (_history == null || _historyUid != uid) {
+      _historyUid = uid;
+      try {
+        _history = context.read<WorkoutProvider>().watchHistory(uid);
+      } catch (_) {
+        _history = const Stream.empty();
+      }
+    }
+    return _history!;
+  }
+
   Widget _buildList(BuildContext context, List<Exercise> custom) {
     final uid = context.read<AuthProvider>().user?.uid;
-    if (uid == null) return _buildExercises(context, custom, const {});
+    if (uid == null) {
+      return _buildExercises(context, custom, const {}, const []);
+    }
     return StreamBuilder<List<ExerciseProgressRecord>>(
       stream: _recordsFor(uid),
-      builder: (context, snapshot) => _buildExercises(context, custom, {
-        for (final record in snapshot.data ?? const <ExerciseProgressRecord>[])
-          record.exerciseId: record,
-      }),
+      builder: (context, records) => StreamBuilder<List<Workout>>(
+        stream: _historyFor(uid),
+        builder: (context, history) => _buildExercises(context, custom, {
+          for (final record in records.data ?? const <ExerciseProgressRecord>[])
+            record.exerciseId: record,
+        }, history.data ?? const []),
+      ),
     );
   }
 
@@ -502,17 +566,49 @@ class _ActiveWorkoutBodyState extends State<_ActiveWorkoutBody> {
     BuildContext context,
     List<Exercise> custom,
     Map<String, ExerciseProgressRecord> records,
+    List<Workout> history,
   ) {
     final provider = context.watch<WorkoutProvider>();
     final exercises = provider.activeWorkout!.exercises;
+    // Marcas de antes do treino, para comemorar recordes (não notifica).
+    provider.setRecordBaselines({
+      for (final r in records.values) r.exerciseId: r.baseline,
+    });
     final global = context.watch<ExerciseProvider>().exercises;
-    final unilateralIds = {
+    final library = <String, Exercise>{
       for (final e in [
-        ...custom,
         ...(global.isNotEmpty ? global : sampleExercises),
+        ...custom,
       ])
+        e.id: e,
+    };
+    final unilateralIds = {
+      for (final e in library.values)
         if (e.isUnilateral) e.id,
     };
+
+    // Sugestão de carga por exercício; preenche os campos uma vez.
+    final suggestions = <int, ProgressionSuggestion>{};
+    if (history.isNotEmpty) {
+      for (int i = 0; i < exercises.length; i++) {
+        final s = suggestionForLogged(
+          exercises[i],
+          history,
+          library: library[exercises[i].exerciseId],
+        );
+        if (s != null) suggestions[i] = s;
+      }
+      if (suggestions.isNotEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          final p = context.read<WorkoutProvider>();
+          if (!p.hasActiveWorkout) return;
+          suggestions.forEach(
+            (i, s) => p.prefillSuggestion(i, s.weightKg, s.targetReps),
+          );
+        });
+      }
+    }
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
@@ -533,6 +629,7 @@ class _ActiveWorkoutBodyState extends State<_ActiveWorkoutBody> {
             exerciseIndex: i,
             exercise: exercises[i],
             record: records[exercises[i].exerciseId],
+            suggestion: suggestions[i],
             isUnilateral: unilateralIds.contains(exercises[i].exerciseId),
             isTemplate:
                 provider.activeWorkout!.source?.planId.startsWith(
@@ -572,6 +669,9 @@ class _ExerciseCard extends StatelessWidget {
   /// Histórico deste exercício, para mostrar a última carga.
   final ExerciseProgressRecord? record;
 
+  /// Sugestão de carga para hoje (já preenchida nos campos).
+  final ProgressionSuggestion? suggestion;
+
   const _ExerciseCard({
     super.key,
     required this.exerciseIndex,
@@ -579,7 +679,27 @@ class _ExerciseCard extends StatelessWidget {
     this.isUnilateral = false,
     this.isTemplate = false,
     this.record,
+    this.suggestion,
   });
+
+  void _explainSuggestion(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Por que essa carga?'),
+        content: Text(
+          '${suggestion!.reason}\n\nÉ só uma sugestão: ajuste peso e reps '
+          'como fizer sentido para você hoje.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Entendi'),
+          ),
+        ],
+      ),
+    );
+  }
 
   static String _kg(double value) => value
       .toStringAsFixed(1)
@@ -658,6 +778,25 @@ class _ExerciseCard extends StatelessWidget {
                   color: Theme.of(context).colorScheme.primary,
                   fontWeight: FontWeight.w600,
                 ),
+              ),
+            if (suggestion != null)
+              Row(
+                key: const ValueKey('load-suggestion'),
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Sugestão de hoje: ${_kg(suggestion!.weightKg)} kg × '
+                      '${suggestion!.targetReps}',
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.info_outline, size: 20),
+                    tooltip: 'Por que essa carga?',
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () => _explainSuggestion(context),
+                  ),
+                ],
               ),
             if (exercise.prescription != null) ...[
               const SizedBox(height: 8),
@@ -776,6 +915,50 @@ class _PrescriptionBlock extends StatelessWidget {
   }
 }
 
+/// Comemora um recorde: banner "Novo recorde!" no topo por alguns segundos
+/// e uma vibração leve.
+@visibleForTesting
+void showRecordBanner(
+  BuildContext context,
+  WorkoutSet set,
+  List<PersonalRecordKind> kinds,
+) {
+  HapticFeedback.lightImpact();
+  final messenger = ScaffoldMessenger.of(context);
+  final e1rm = epley1rm(set.weightKg, set.reps);
+  final parts = [
+    if (kinds.contains(PersonalRecordKind.load))
+      'maior carga: ${formatKg(set.weightKg)}',
+    if (kinds.contains(PersonalRecordKind.e1rm) && e1rm != null)
+      '1RM estimado: ${formatKg(e1rm)}',
+  ];
+  messenger
+    ..hideCurrentMaterialBanner()
+    ..showMaterialBanner(
+      MaterialBanner(
+        key: const ValueKey('record-banner'),
+        leading: const Icon(Icons.emoji_events_outlined),
+        content: Text('Novo recorde! ${parts.join(' · ')}'),
+        actions: [
+          TextButton(
+            onPressed: messenger.hideCurrentMaterialBanner,
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  // Só esconde se nenhum recorde mais novo tomou o lugar deste banner.
+  final shown = ++_recordBannerSeq;
+  Timer(const Duration(seconds: 4), () {
+    if (shown != _recordBannerSeq) return;
+    try {
+      messenger.hideCurrentMaterialBanner();
+    } catch (_) {}
+  });
+}
+
+int _recordBannerSeq = 0;
+
 class _SetRow extends StatelessWidget {
   final int exerciseIndex;
   final int setIndex;
@@ -804,6 +987,7 @@ class _SetRow extends StatelessWidget {
           SizedBox(width: 32, child: Text('$setNumber')),
           Expanded(
             child: _NumberField(
+              suggested: set.suggested,
               initialValue: set.weightKg == 0
                   ? ''
                   : set.weightKg
@@ -821,6 +1005,7 @@ class _SetRow extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: _NumberField(
+              suggested: set.suggested,
               initialValue: set.reps == 0 ? '' : set.reps.toString(),
               onChanged: (v) => provider.updateSet(
                 exerciseIndex,
@@ -833,11 +1018,16 @@ class _SetRow extends StatelessWidget {
             width: 40,
             child: Checkbox(
               value: set.completed,
-              onChanged: (v) => provider.updateSet(
-                exerciseIndex,
-                setIndex,
-                completed: v ?? false,
-              ),
+              onChanged: (v) {
+                final records = provider.updateSet(
+                  exerciseIndex,
+                  setIndex,
+                  completed: v ?? false,
+                );
+                if (records.isNotEmpty) {
+                  showRecordBanner(context, set, records);
+                }
+              },
             ),
           ),
         ],
@@ -846,23 +1036,63 @@ class _SetRow extends StatelessWidget {
   }
 }
 
-class _NumberField extends StatelessWidget {
+/// Campo numérico de uma série. Acompanha o valor do modelo quando ele muda
+/// por fora (ex.: a sugestão de carga chega depois de a tela abrir), sem
+/// atrapalhar quem está digitando ("22," continua "22,").
+class _NumberField extends StatefulWidget {
   final String initialValue;
   final ValueChanged<String> onChanged;
 
-  const _NumberField({required this.initialValue, required this.onChanged});
+  /// Valor ainda é só a sugestão: aparece mais apagado.
+  final bool suggested;
+
+  const _NumberField({
+    required this.initialValue,
+    required this.onChanged,
+    this.suggested = false,
+  });
+
+  @override
+  State<_NumberField> createState() => _NumberFieldState();
+}
+
+class _NumberFieldState extends State<_NumberField> {
+  late final _controller = TextEditingController(text: widget.initialValue);
+
+  static double? _parse(String v) =>
+      double.tryParse(v.trim().replaceAll(',', '.'));
+
+  @override
+  void didUpdateWidget(covariant _NumberField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final incoming = widget.initialValue;
+    // Vazio e 0 são o mesmo valor no modelo: sem isso, digitar "0,5"
+    // apagaria o "0" no meio.
+    if ((_parse(_controller.text) ?? 0) != (_parse(incoming) ?? 0)) {
+      _controller.text = incoming;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
-      initialValue: initialValue,
+      controller: _controller,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       textAlign: TextAlign.center,
+      style: widget.suggested
+          ? TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)
+          : null,
       decoration: const InputDecoration(
         isDense: true,
         contentPadding: EdgeInsets.symmetric(vertical: 8),
       ),
-      onChanged: onChanged,
+      onChanged: widget.onChanged,
     );
   }
 }

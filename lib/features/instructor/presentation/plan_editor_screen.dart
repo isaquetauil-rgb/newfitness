@@ -6,6 +6,7 @@ import 'package:newfitness/app/routes/app_routes.dart';
 import 'package:newfitness/features/exercises/logic/exercise_pool.dart';
 import 'package:newfitness/features/exercises/presentation/exercise_alternatives_sheet.dart';
 import 'package:newfitness/features/instructor/logic/plan_template_provider.dart';
+import 'package:newfitness/features/workout/logic/progression/progression_rule.dart';
 import 'package:newfitness/features/workout/logic/training_plan_provider.dart';
 import 'package:newfitness/features/workout/presentation/workout_templates_screen.dart';
 import 'package:newfitness/shared/models/exercise.dart';
@@ -531,6 +532,18 @@ class _SubWorkoutEditor extends StatelessWidget {
     final parts = <String>['${e.targetSets}x${e.targetReps}'];
     if (e.targetWeightsKg.isNotEmpty) parts.add('${e.targetWeightsKg} kg');
     parts.add('${e.restSeconds}s descanso');
+    final type = progressionTypeFromString(e.progressionType);
+    if (type != null) {
+      parts.add(
+        type == ProgressionType.linear ? 'prog. linear' : 'prog. dupla',
+      );
+    }
+    if (e.progressionIncrementKg != null) {
+      final kg = e.progressionIncrementKg!;
+      parts.add(
+        '+${(kg % 1 == 0 ? kg.toStringAsFixed(0) : '$kg').replaceAll('.', ',')} kg',
+      );
+    }
     if (e.notes != null) parts.add(e.notes!);
     return parts.join(' · ');
   }
@@ -578,6 +591,18 @@ class _PlanExerciseFormSheetState extends State<_PlanExerciseFormSheet> {
     text: widget.initial?.notes ?? '',
   );
 
+  // Regra de progressão: `null` = automática (pela faixa de reps).
+  late ProgressionType? _progression = progressionTypeFromString(
+    widget.initial?.progressionType,
+  );
+  late final _incrementCtrl = TextEditingController(
+    text: _formatLoad(
+      widget.initial?.progressionIncrementKg ??
+          ProgressionRule.defaultIncrementKg,
+    ).replaceAll('.', ','),
+  );
+  String? _incrementError;
+
   String _formatLoad(double load) =>
       load % 1 == 0 ? load.toStringAsFixed(0) : load.toString();
 
@@ -588,6 +613,7 @@ class _PlanExerciseFormSheetState extends State<_PlanExerciseFormSheet> {
     _weightsCtrl.dispose();
     _restCtrl.dispose();
     _notesCtrl.dispose();
+    _incrementCtrl.dispose();
     super.dispose();
   }
 
@@ -600,12 +626,17 @@ class _PlanExerciseFormSheetState extends State<_PlanExerciseFormSheet> {
     // prescrição incoerente com as séries criadas no treino).
     final sets = int.tryParse(_setsCtrl.text.trim());
     final rest = int.tryParse(_restCtrl.text.trim());
+    final increment = double.tryParse(
+      _incrementCtrl.text.trim().replaceAll(',', '.'),
+    );
     final setsError = validatePlanSets(sets);
     final restError = validatePlanRest(rest);
-    if (setsError != null || restError != null) {
+    final incrementError = validatePlanIncrement(increment);
+    if (setsError != null || restError != null || incrementError != null) {
       setState(() {
         _setsError = setsError;
         _restError = restError;
+        _incrementError = incrementError;
       });
       return;
     }
@@ -623,6 +654,13 @@ class _PlanExerciseFormSheetState extends State<_PlanExerciseFormSheet> {
         notes: _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
         replacedExerciseId: widget.initial?.replacedExerciseId,
         replacedExerciseName: widget.initial?.replacedExerciseName,
+        // Só grava o que o personal mudou: o resto segue o padrão.
+        progressionType: _progression == null
+            ? null
+            : progressionTypeToString(_progression!),
+        progressionIncrementKg: increment == ProgressionRule.defaultIncrementKg
+            ? null
+            : increment,
       ),
     );
   }
@@ -636,80 +674,143 @@ class _PlanExerciseFormSheetState extends State<_PlanExerciseFormSheet> {
         20,
         20 + MediaQuery.of(context).viewInsets.bottom,
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            widget.exercise.name,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _setsCtrl,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: 'Séries',
-                    errorText: _setsError,
-                    errorMaxLines: 2,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: TextField(
-                  controller: _repsCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Reps (ex: 10-12)',
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _weightsCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Peso por série (ex: 40/50/60)',
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: TextField(
-                  controller: _restCtrl,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: 'Descanso (s)',
-                    errorText: _restError,
-                    errorMaxLines: 2,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _notesCtrl,
-            decoration: const InputDecoration(
-              labelText: 'Observação (opcional)',
-            ),
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: _confirm,
-            child: const Text('Adicionar ao plano'),
-          ),
-        ],
-      ),
+      child: SingleChildScrollView(child: _form(context)),
     );
   }
+
+  Widget _form(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          widget.exercise.name,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _setsCtrl,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: 'Séries',
+                  errorText: _setsError,
+                  errorMaxLines: 2,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TextField(
+                controller: _repsCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Reps (ex: 10-12)',
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _weightsCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Peso por série (ex: 40/50/60)',
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TextField(
+                controller: _restCtrl,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: 'Descanso (s)',
+                  errorText: _restError,
+                  errorMaxLines: 2,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _notesCtrl,
+          decoration: const InputDecoration(labelText: 'Observação (opcional)'),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 3,
+              child: DropdownButtonFormField<ProgressionType?>(
+                key: const ValueKey('progression-type'),
+                initialValue: _progression,
+                isExpanded: true,
+                decoration: const InputDecoration(
+                  labelText: 'Progressão de carga',
+                ),
+                items: [
+                  const DropdownMenuItem(
+                    value: null,
+                    child: Text('Automática (pelas reps)'),
+                  ),
+                  for (final type in ProgressionType.values)
+                    DropdownMenuItem(
+                      value: type,
+                      child: Text(progressionTypeLabel(type)),
+                    ),
+                ],
+                onChanged: (v) => setState(() => _progression = v),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              flex: 2,
+              child: TextField(
+                key: const ValueKey('progression-increment'),
+                controller: _incrementCtrl,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                decoration: InputDecoration(
+                  labelText: 'Sobe (kg)',
+                  errorText: _incrementError,
+                  errorMaxLines: 2,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'O app sugere a carga do aluno a cada treino com base nisso.',
+          style: TextStyle(
+            fontSize: 12,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 16),
+        ElevatedButton(
+          onPressed: _confirm,
+          child: const Text('Adicionar ao plano'),
+        ),
+      ],
+    );
+  }
+}
+
+/// Incremento de carga da progressão: de 0,5 a 50 kg.
+@visibleForTesting
+String? validatePlanIncrement(double? kg) {
+  if (kg == null) return 'Informe um número.';
+  if (kg < 0.5 || kg > 50) return 'Entre 0,5 e 50 kg.';
+  return null;
 }
 
 /// Séries prescritas: inteiro de 1 a 20 (o treino cria no máximo 20

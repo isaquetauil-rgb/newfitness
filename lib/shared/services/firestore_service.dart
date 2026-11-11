@@ -526,6 +526,7 @@ class FirestoreService {
           date: workout.date,
           topSetLoadKg: entry.value.topSetLoadKg,
           totalVolume: entry.value.totalVolume,
+          e1rmKg: entry.value.bestE1rmKg,
           historyLimit: _progressHistoryLimit,
         );
         await doc.set(updated.toMap());

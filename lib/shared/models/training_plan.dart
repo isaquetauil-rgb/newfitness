@@ -19,6 +19,15 @@ class PlanExercise {
   final String? replacedExerciseId;
   final String? replacedExerciseName;
 
+  /// Regra de progressão escolhida pelo personal: 'linear' ou
+  /// 'doubleProgression' (ver `ProgressionType`). `null` = automática (faixa
+  /// de reps vira dupla, número único vira linear). Campo opcional: planos
+  /// antigos não têm.
+  final String? progressionType;
+
+  /// Quanto a carga sobe quando o aluno bate a meta. `null` = 2,5 kg.
+  final double? progressionIncrementKg;
+
   const PlanExercise({
     required this.exerciseId,
     required this.exerciseName,
@@ -29,6 +38,8 @@ class PlanExercise {
     this.notes,
     this.replacedExerciseId,
     this.replacedExerciseName,
+    this.progressionType,
+    this.progressionIncrementKg,
   });
 
   factory PlanExercise.fromMap(Map<String, dynamic> map) {
@@ -42,9 +53,13 @@ class PlanExercise {
       notes: map['notes'] as String?,
       replacedExerciseId: map['replacedExerciseId'] as String?,
       replacedExerciseName: map['replacedExerciseName'] as String?,
+      progressionType: map['progressionType'] as String?,
+      progressionIncrementKg: (map['progressionIncrementKg'] as num?)
+          ?.toDouble(),
     );
   }
 
+  /// Os campos de progressão só são gravados quando o personal escolheu.
   Map<String, dynamic> toMap() {
     return {
       'exerciseId': exerciseId,
@@ -56,6 +71,8 @@ class PlanExercise {
       'notes': notes,
       'replacedExerciseId': replacedExerciseId,
       'replacedExerciseName': replacedExerciseName,
+      'progressionType': ?progressionType,
+      'progressionIncrementKg': ?progressionIncrementKg,
     };
   }
 
@@ -77,6 +94,8 @@ class PlanExercise {
       notes: notes,
       replacedExerciseId: replacedExerciseId ?? this.replacedExerciseId,
       replacedExerciseName: replacedExerciseName ?? this.replacedExerciseName,
+      progressionType: progressionType,
+      progressionIncrementKg: progressionIncrementKg,
     );
   }
 }

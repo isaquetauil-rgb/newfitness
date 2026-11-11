@@ -7,6 +7,7 @@ import 'package:newfitness/core/di/injector.dart';
 import 'package:newfitness/core/logging/app_logger.dart';
 import 'package:newfitness/core/storage/local_prefs.dart';
 import 'package:newfitness/features/workout/data/active_workout_store.dart';
+import 'package:newfitness/shared/utils/one_rep_max.dart';
 import 'package:newfitness/shared/models/exercise.dart';
 import 'package:newfitness/shared/models/logged_exercise.dart';
 import 'package:newfitness/shared/models/training_plan.dart';
@@ -189,7 +190,23 @@ class WorkoutProvider extends ChangeNotifier {
     _changed();
   }
 
-  void updateSet(
+  /// Melhores marcas de cada exercício antes deste treino (por
+  /// `exerciseId`), vindas de `progress_records` — a tela atualiza. Usadas
+  /// para detectar recordes ao marcar séries e no resumo final.
+  Map<String, RecordBaseline> _baselines = const {};
+
+  void setRecordBaselines(Map<String, RecordBaseline> baselines) {
+    _baselines = baselines;
+  }
+
+  List<PersonalRecord> _lastRecords = const [];
+
+  /// Recordes batidos no treino gravado pelo último [finishWorkout].
+  List<PersonalRecord> get lastSavedRecords => _lastRecords;
+
+  /// Atualiza a série. Quando ela acaba de ser marcada como feita, devolve
+  /// os recordes que ela bateu (vazio se nenhum), para a tela comemorar.
+  List<PersonalRecordKind> updateSet(
     int exerciseIndex,
     int setIndex, {
     int? reps,
@@ -198,14 +215,52 @@ class WorkoutProvider extends ChangeNotifier {
   }) {
     final exercise = _activeWorkout?.exercises[exerciseIndex];
     final set = exercise?.sets[setIndex];
-    if (exercise == null || set == null) return;
+    if (exercise == null || set == null) return const [];
     final justCompleted = completed == true && !set.completed;
     if (reps != null) set.reps = reps;
     if (weightKg != null) set.weightKg = weightKg;
     if (completed != null) set.completed = completed;
+    // Mexeu na série ou marcou como feita: a sugestão vira o realizado.
+    if (reps != null || weightKg != null || completed == true) {
+      set.suggested = false;
+    }
     // Marcar a série como feita já começa o descanso indicado.
     if (justCompleted) startRest(exercise.prescription?.restSeconds ?? 60);
     _changed();
+    if (!justCompleted) return const [];
+    // Outras séries feitas hoje no mesmo exercício (inclusive se ele
+    // aparece mais de uma vez no treino).
+    final others = [
+      for (final e in _activeWorkout!.exercises)
+        if (e.exerciseId == exercise.exerciseId) ...e.sets,
+    ];
+    return detectSetRecords(set, others, _baselines[exercise.exerciseId]);
+  }
+
+  /// Exercícios do treino em andamento que já receberam a sugestão — para
+  /// não preencher de novo se o aluno apagar os campos.
+  final _prefilled = Expando<bool>('prefilled');
+
+  /// Preenche as séries vazias do exercício com a sugestão de carga (marcadas
+  /// como [WorkoutSet.suggested]). Só uma vez por exercício; séries que o
+  /// aluno já preencheu ficam como estão.
+  void prefillSuggestion(int exerciseIndex, double weightKg, int reps) {
+    final exercises = _activeWorkout?.exercises;
+    if (exercises == null || exerciseIndex >= exercises.length) return;
+    final exercise = exercises[exerciseIndex];
+    if (_prefilled[exercise] == true) return;
+    _prefilled[exercise] = true;
+    var changed = false;
+    for (final set in exercise.sets) {
+      if (!set.completed && set.reps == 0 && set.weightKg == 0) {
+        set
+          ..weightKg = weightKg
+          ..reps = reps
+          ..suggested = true;
+        changed = true;
+      }
+    }
+    if (changed) _changed();
   }
 
   DateTime? _restEndsAt;
@@ -317,6 +372,7 @@ class WorkoutProvider extends ChangeNotifier {
             ),
       );
       _lastSaved = toSave;
+      _lastRecords = recordsOfTheDay(realized, _baselines);
       _restEndsAt = null;
       _activeWorkout = null;
       _startedAt = null;
@@ -339,8 +395,11 @@ class WorkoutProvider extends ChangeNotifier {
   /// carga (ex: as séries vazias criadas para representar a quantidade
   /// prescrita). Uma série concluída com 0 kg NÃO entra aqui (peso do
   /// corpo), nem qualquer série com reps ou carga.
+  ///
+  /// Série só com a sugestão de carga, sem o aluno mexer nem marcar como
+  /// feita, também é vazia.
   static bool isEmptySet(WorkoutSet s) =>
-      !s.completed && s.reps == 0 && s.weightKg == 0;
+      !s.completed && (s.suggested || (s.reps == 0 && s.weightKg == 0));
 
   /// Alguma série foi realizada? (qualquer série que não seja vazia — reps,
   /// carga, ou concluída mesmo com 0 kg, ex: peso do corpo).
