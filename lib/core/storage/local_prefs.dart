@@ -34,4 +34,17 @@ class LocalPrefs {
       _prefs.setString(_activeWorkoutKey, json);
 
   Future<void> clearActiveWorkout() => _prefs.remove(_activeWorkoutKey);
+
+  // Cronômetro de descanso (Configurações). Tudo ligado por padrão.
+  static const _restAutoStartKey = 'rest_auto_start';
+  static const _restSoundKey = 'rest_sound';
+  static const _restVibrationKey = 'rest_vibration';
+
+  bool get restAutoStart => _prefs.getBool(_restAutoStartKey) ?? true;
+  bool get restSound => _prefs.getBool(_restSoundKey) ?? true;
+  bool get restVibration => _prefs.getBool(_restVibrationKey) ?? true;
+
+  Future<void> setRestAutoStart(bool v) => _prefs.setBool(_restAutoStartKey, v);
+  Future<void> setRestSound(bool v) => _prefs.setBool(_restSoundKey, v);
+  Future<void> setRestVibration(bool v) => _prefs.setBool(_restVibrationKey, v);
 }

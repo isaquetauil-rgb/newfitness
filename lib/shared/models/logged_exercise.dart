@@ -41,8 +41,11 @@ class LoggedExercise {
     this.prescription,
   }) : sets = sets ?? [WorkoutSet()];
 
-  double get totalVolume =>
-      sets.fold(0, (sum, s) => sum + (s.reps * s.weightKg));
+  /// Reps × peso das séries que contam (aquecimento fica de fora).
+  double get totalVolume => sets.fold(
+    0,
+    (sum, s) => s.countsForStats ? sum + (s.reps * s.weightKg) : sum,
+  );
 
   /// A prescrição é deste mesmo exercício (e não de um que foi trocado)?
   bool get prescriptionMatchesExercise =>

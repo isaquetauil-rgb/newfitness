@@ -13,6 +13,7 @@ import 'package:newfitness/features/auth/logic/auth_provider.dart';
 import 'package:newfitness/features/auth/presentation/email_verification_notice.dart';
 import 'package:newfitness/features/profile/presentation/manage_link_sheet.dart';
 import 'package:newfitness/features/workout/logic/workout_provider.dart';
+import 'package:newfitness/features/workout/presentation/rest_timer_sheet.dart';
 import 'package:newfitness/shared/models/user_profile.dart';
 import 'package:newfitness/shared/models/workout.dart';
 import 'package:newfitness/shared/services/firestore_service.dart';
@@ -383,6 +384,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         value: themeProvider.isDarkMode,
                         onChanged: themeProvider.setDarkMode,
                       ),
+                      const Divider(height: 1),
+                      const RestTimerSettingsTiles(),
                     ],
                   ),
                 ),

@@ -18,6 +18,7 @@ import 'package:newfitness/shared/utils/one_rep_max.dart';
 import 'package:newfitness/features/workout/logic/progression/suggest_next.dart';
 import 'package:newfitness/features/workout/logic/progression/workout_suggestion.dart';
 import 'package:newfitness/features/workout/logic/training_plan_provider.dart';
+import 'package:newfitness/features/workout/logic/warmup.dart';
 import 'package:newfitness/features/workout/logic/workout_provider.dart';
 import 'package:newfitness/shared/models/exercise.dart';
 import 'package:newfitness/shared/models/exercise_progress_record.dart';
@@ -62,12 +63,7 @@ class WorkoutScreen extends StatelessWidget {
           ? Column(
               children: [
                 // Fica fixo no topo enquanto a lista rola.
-                if (workout.restEndsAt != null)
-                  _RestBar(
-                    key: ValueKey(workout.restEndsAt),
-                    endsAt: workout.restEndsAt!,
-                    totalSeconds: workout.restTotalSeconds,
-                  ),
+                RestTimerBar(controller: workout.restTimer),
                 const Expanded(child: _ActiveWorkoutBody()),
               ],
             )
@@ -236,101 +232,6 @@ class WorkoutScreen extends StatelessWidget {
             child: const Text('Cancelar treino'),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// Contagem do descanso entre séries, iniciada ao marcar uma série.
-class _RestBar extends StatefulWidget {
-  const _RestBar({super.key, required this.endsAt, required this.totalSeconds});
-
-  final DateTime endsAt;
-  final int totalSeconds;
-
-  @override
-  State<_RestBar> createState() => _RestBarState();
-}
-
-class _RestBarState extends State<_RestBar> {
-  Timer? _timer;
-
-  @override
-  void initState() {
-    super.initState();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
-  }
-
-  void _tick() {
-    if (!mounted) return;
-    if (!DateTime.now().isBefore(widget.endsAt)) {
-      _timer?.cancel();
-      HapticFeedback.heavyImpact();
-      context.read<WorkoutProvider>().skipRest();
-      return;
-    }
-    setState(() {});
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final provider = context.read<WorkoutProvider>();
-    final left = widget.endsAt
-        .difference(DateTime.now())
-        .inSeconds
-        .clamp(0, widget.totalSeconds);
-    final label = '${left ~/ 60}:${(left % 60).toString().padLeft(2, '0')}';
-    const ink = Color(0xFF14171A);
-
-    return Material(
-      color: Theme.of(context).colorScheme.primary,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
-        child: Row(
-          children: [
-            const Icon(Icons.timer_outlined, color: ink),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Descanso $label',
-                    style: const TextStyle(
-                      color: ink,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  LinearProgressIndicator(
-                    value: widget.totalSeconds == 0
-                        ? 0
-                        : left / widget.totalSeconds,
-                    color: ink,
-                    backgroundColor: Colors.white54,
-                  ),
-                ],
-              ),
-            ),
-            TextButton(
-              onPressed: () => provider.addRest(15),
-              style: TextButton.styleFrom(foregroundColor: ink),
-              child: const Text('+15 s'),
-            ),
-            TextButton(
-              onPressed: provider.skipRest,
-              style: TextButton.styleFrom(foregroundColor: ink),
-              child: const Text('Pular'),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -529,6 +430,19 @@ class _ActiveWorkoutBodyState extends State<_ActiveWorkoutBody> {
     return _records!;
   }
 
+  /// Texto do bi-set/tri-set no card do exercício, ou `null` se sozinho.
+  String? _supersetText(WorkoutProvider provider, int index) {
+    final group = provider.supersetGroupOf(index);
+    if (group == null) return null;
+    final members = provider.supersetMembers(index);
+    if (members.length < 2) return null;
+    final pos = members.indexOf(index) + 1;
+    final last = pos == members.length;
+    return '${supersetLabel(group, members.length)} · $pos de '
+        '${members.length} — '
+        '${last ? 'depois deste, descanse' : 'sem descanso, vá para o próximo'}';
+  }
+
   // Treinos já salvos, para a sugestão de carga.
   Stream<List<Workout>>? _history;
   String? _historyUid;
@@ -630,6 +544,7 @@ class _ActiveWorkoutBodyState extends State<_ActiveWorkoutBody> {
             exercise: exercises[i],
             record: records[exercises[i].exerciseId],
             suggestion: suggestions[i],
+            superset: _supersetText(provider, i),
             isUnilateral: unilateralIds.contains(exercises[i].exerciseId),
             isTemplate:
                 provider.activeWorkout!.source?.planId.startsWith(
@@ -672,6 +587,9 @@ class _ExerciseCard extends StatelessWidget {
   /// Sugestão de carga para hoje (já preenchida nos campos).
   final ProgressionSuggestion? suggestion;
 
+  /// "Bi-set A · 1 de 2 — alterne; descanso depois do último", ou `null`.
+  final String? superset;
+
   const _ExerciseCard({
     super.key,
     required this.exerciseIndex,
@@ -680,7 +598,22 @@ class _ExerciseCard extends StatelessWidget {
     this.isTemplate = false,
     this.record,
     this.suggestion,
+    this.superset,
   });
+
+  void _generateWarmup(BuildContext context) {
+    final added = context.read<WorkoutProvider>().generateWarmup(exerciseIndex);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          added == 0
+              ? 'Preencha a carga da série de trabalho para gerar o '
+                    'aquecimento.'
+              : '$added séries de aquecimento adicionadas.',
+        ),
+      ),
+    );
+  }
 
   void _explainSuggestion(BuildContext context) {
     showDialog<void>(
@@ -764,6 +697,19 @@ class _ExerciseCard extends StatelessWidget {
                 ),
               ],
             ),
+            if (superset != null)
+              Padding(
+                key: const ValueKey('superset-label'),
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(
+                  superset!,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: Theme.of(context).colorScheme.tertiary,
+                  ),
+                ),
+              ),
             if (exercise.replacedExerciseName != null)
               Text(
                 'No lugar de ${exercise.replacedExerciseName}',
@@ -839,12 +785,30 @@ class _ExerciseCard extends StatelessWidget {
                 key: ObjectKey(exercise.sets[s]),
                 exerciseIndex: exerciseIndex,
                 setIndex: s,
-                setNumber: s + 1,
+                // Numera só as séries de trabalho (aquecimento mostra "A").
+                setNumber: exercise.sets
+                    .take(s + 1)
+                    .where((x) => !x.isWarmup)
+                    .length,
               ),
-            TextButton.icon(
-              onPressed: () => provider.addSet(exerciseIndex),
-              icon: const Icon(Icons.add, size: 18),
-              label: const Text('Adicionar série'),
+            Wrap(
+              spacing: 4,
+              children: [
+                TextButton.icon(
+                  onPressed: () => provider.addSet(exerciseIndex),
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('Adicionar série'),
+                ),
+                TextButton.icon(
+                  key: const ValueKey('generate-warmup'),
+                  onPressed: () => _generateWarmup(context),
+                  icon: const Icon(
+                    Icons.local_fire_department_outlined,
+                    size: 18,
+                  ),
+                  label: const Text('Gerar aquecimento'),
+                ),
+              ],
             ),
           ],
         ),
@@ -984,7 +948,40 @@ class _SetRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          SizedBox(width: 32, child: Text('$setNumber')),
+          SizedBox(
+            width: 32,
+            child: PopupMenuButton<SetType>(
+              key: ValueKey('set-type-$exerciseIndex-$setIndex'),
+              tooltip: 'Tipo da série',
+              initialValue: set.type,
+              padding: EdgeInsets.zero,
+              onSelected: (t) =>
+                  provider.setSetType(exerciseIndex, setIndex, t),
+              itemBuilder: (_) => [
+                for (final t in SetType.values)
+                  PopupMenuItem(value: t, child: Text(t.label)),
+              ],
+              child: Text(
+                set.type == SetType.normal
+                    ? '$setNumber'
+                    : set.isWarmup
+                    ? 'A'
+                    : '$setNumber${set.type.letter}',
+                style: TextStyle(
+                  fontWeight: set.type == SetType.normal
+                      ? null
+                      : FontWeight.w700,
+                  color: set.isWarmup
+                      ? Theme.of(context).colorScheme.onSurfaceVariant
+                      : set.type == SetType.normal
+                      ? null
+                      : Theme.of(context).colorScheme.tertiary,
+                  decoration: TextDecoration.underline,
+                  decorationStyle: TextDecorationStyle.dotted,
+                ),
+              ),
+            ),
+          ),
           Expanded(
             child: _NumberField(
               suggested: set.suggested,

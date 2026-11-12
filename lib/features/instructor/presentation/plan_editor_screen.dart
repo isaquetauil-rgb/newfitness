@@ -8,6 +8,7 @@ import 'package:newfitness/features/exercises/presentation/exercise_alternatives
 import 'package:newfitness/features/instructor/logic/plan_template_provider.dart';
 import 'package:newfitness/features/workout/logic/progression/progression_rule.dart';
 import 'package:newfitness/features/workout/logic/training_plan_provider.dart';
+import 'package:newfitness/features/workout/logic/warmup.dart';
 import 'package:newfitness/features/workout/presentation/workout_templates_screen.dart';
 import 'package:newfitness/shared/models/exercise.dart';
 import 'package:newfitness/shared/models/plan_template.dart';
@@ -532,6 +533,7 @@ class _SubWorkoutEditor extends StatelessWidget {
     final parts = <String>['${e.targetSets}x${e.targetReps}'];
     if (e.targetWeightsKg.isNotEmpty) parts.add('${e.targetWeightsKg} kg');
     parts.add('${e.restSeconds}s descanso');
+    if (e.supersetGroup != null) parts.add('bi-set ${e.supersetGroup}');
     final type = progressionTypeFromString(e.progressionType);
     if (type != null) {
       parts.add(
@@ -603,6 +605,9 @@ class _PlanExerciseFormSheetState extends State<_PlanExerciseFormSheet> {
   );
   String? _incrementError;
 
+  // Bi-set/tri-set: mesma letra = feitos alternando.
+  late String? _superset = widget.initial?.supersetGroup;
+
   String _formatLoad(double load) =>
       load % 1 == 0 ? load.toStringAsFixed(0) : load.toString();
 
@@ -661,6 +666,7 @@ class _PlanExerciseFormSheetState extends State<_PlanExerciseFormSheet> {
         progressionIncrementKg: increment == ProgressionRule.defaultIncrementKg
             ? null
             : increment,
+        supersetGroup: _superset,
       ),
     );
   }
@@ -794,6 +800,25 @@ class _PlanExerciseFormSheetState extends State<_PlanExerciseFormSheet> {
             fontSize: 12,
             color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
+        ),
+        const SizedBox(height: 12),
+        DropdownButtonFormField<String?>(
+          key: const ValueKey('superset-group'),
+          initialValue: _superset,
+          isExpanded: true,
+          decoration: const InputDecoration(
+            labelText: 'Bi-set / tri-set',
+            helperText:
+                'Exercícios com a mesma letra são feitos alternando; o '
+                'descanso vem depois do último.',
+            helperMaxLines: 2,
+          ),
+          items: [
+            const DropdownMenuItem(value: null, child: Text('Nenhum')),
+            for (final g in supersetGroups)
+              DropdownMenuItem(value: g, child: Text('Grupo $g')),
+          ],
+          onChanged: (v) => setState(() => _superset = v),
         ),
         const SizedBox(height: 16),
         ElevatedButton(

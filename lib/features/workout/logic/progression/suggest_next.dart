@@ -177,9 +177,16 @@ class _Session {
   final int? targetSets;
 
   static _Session? from(ExerciseSession s, ProgressionRule rule) {
+    // Aquecimento e drop ficam de fora: o aquecimento é leve de propósito, e
+    // o drop vem logo depois de outra série com menos carga e menos reps —
+    // contá-los faria a carga nunca subir.
     final done = [
       for (final set in s.sets)
-        if (set.completed && set.reps > 0) set,
+        if (set.completed &&
+            set.reps > 0 &&
+            set.type != SetType.warmup &&
+            set.type != SetType.drop)
+          set,
     ];
     if (done.isEmpty) return null;
     final weight = done.map((e) => e.weightKg).reduce((a, b) => a > b ? a : b);

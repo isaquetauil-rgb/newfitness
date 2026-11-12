@@ -28,6 +28,11 @@ class PlanExercise {
   /// Quanto a carga sobe quando o aluno bate a meta. `null` = 2,5 kg.
   final double? progressionIncrementKg;
 
+  /// Bi-set/tri-set: exercícios com a mesma letra ("A", "B"...) são feitos
+  /// alternando, e o descanso só começa depois do último do grupo. `null` =
+  /// exercício sozinho. Campo opcional.
+  final String? supersetGroup;
+
   const PlanExercise({
     required this.exerciseId,
     required this.exerciseName,
@@ -40,6 +45,7 @@ class PlanExercise {
     this.replacedExerciseName,
     this.progressionType,
     this.progressionIncrementKg,
+    this.supersetGroup,
   });
 
   factory PlanExercise.fromMap(Map<String, dynamic> map) {
@@ -56,10 +62,12 @@ class PlanExercise {
       progressionType: map['progressionType'] as String?,
       progressionIncrementKg: (map['progressionIncrementKg'] as num?)
           ?.toDouble(),
+      supersetGroup: map['supersetGroup'] as String?,
     );
   }
 
-  /// Os campos de progressão só são gravados quando o personal escolheu.
+  /// Os campos de progressão e o bi-set só são gravados quando o personal
+  /// escolheu.
   Map<String, dynamic> toMap() {
     return {
       'exerciseId': exerciseId,
@@ -73,6 +81,7 @@ class PlanExercise {
       'replacedExerciseName': replacedExerciseName,
       'progressionType': ?progressionType,
       'progressionIncrementKg': ?progressionIncrementKg,
+      'supersetGroup': ?supersetGroup,
     };
   }
 
@@ -96,6 +105,7 @@ class PlanExercise {
       replacedExerciseName: replacedExerciseName ?? this.replacedExerciseName,
       progressionType: progressionType,
       progressionIncrementKg: progressionIncrementKg,
+      supersetGroup: supersetGroup,
     );
   }
 }

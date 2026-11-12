@@ -6,7 +6,13 @@ import 'package:uuid/uuid.dart';
 import 'package:newfitness/core/di/injector.dart';
 import 'package:newfitness/core/logging/app_logger.dart';
 import 'package:newfitness/core/storage/local_prefs.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
+
+import 'package:newfitness/features/notifications/data/notification_service.dart';
 import 'package:newfitness/features/workout/data/active_workout_store.dart';
+import 'package:newfitness/features/workout/data/rest_alerts.dart';
+import 'package:newfitness/features/workout/logic/rest_timer_controller.dart';
+import 'package:newfitness/features/workout/logic/warmup.dart';
 import 'package:newfitness/shared/utils/one_rep_max.dart';
 import 'package:newfitness/shared/models/exercise.dart';
 import 'package:newfitness/shared/models/logged_exercise.dart';
@@ -44,12 +50,62 @@ class WorkoutProvider extends ChangeNotifier {
   WorkoutProvider({
     FirestoreService? firestoreService,
     ActiveWorkoutStore? store,
+    RestTimerController? restTimer,
+    Future<void> Function(bool on)? keepScreenOn,
   }) : _firestoreService = firestoreService ?? getIt<FirestoreService>(),
        _store =
            store ??
-           (getIt.isRegistered<LocalPrefs>() && getIt.isReadySync<LocalPrefs>()
-               ? ActiveWorkoutStore(getIt<LocalPrefs>())
-               : null);
+           (_prefsReady ? ActiveWorkoutStore(getIt<LocalPrefs>()) : null),
+       restTimer = restTimer ?? _defaultRestTimer(),
+       _keepScreenOn = keepScreenOn ?? _defaultKeepScreenOn;
+
+  static bool get _prefsReady =>
+      getIt.isRegistered<LocalPrefs>() && getIt.isReadySync<LocalPrefs>();
+
+  /// No app: avisos reais (notificação + vibração) e as preferências salvas.
+  /// Sem os serviços registrados (testes), um cronômetro silencioso.
+  static RestTimerController _defaultRestTimer() {
+    if (!getIt.isRegistered<NotificationService>()) {
+      return RestTimerController();
+    }
+    final prefs = _prefsReady ? getIt<LocalPrefs>() : null;
+    return RestTimerController(
+      alerts: LocalRestAlerts(getIt<NotificationService>()),
+      settings: prefs == null
+          ? const RestTimerSettings()
+          : RestTimerSettings(
+              autoStart: prefs.restAutoStart,
+              sound: prefs.restSound,
+              vibration: prefs.restVibration,
+            ),
+    );
+  }
+
+  static Future<void> _defaultKeepScreenOn(bool on) =>
+      WakelockPlus.toggle(enable: on);
+
+  /// Cronômetro de descanso entre séries do treino em andamento.
+  final RestTimerController restTimer;
+
+  /// Mantém a tela acesa enquanto há treino ativo (wakelock_plus).
+  final Future<void> Function(bool on) _keepScreenOn;
+  bool _screenKeptOn = false;
+
+  void _setScreenOn(bool on) {
+    if (_screenKeptOn == on) return;
+    _screenKeptOn = on;
+    unawaited(
+      Future.sync(() => _keepScreenOn(on)).catchError((Object e) {
+        _log.fine('Não foi possível mudar a tela acesa: $e');
+      }),
+    );
+  }
+
+  /// Encerra o que pertence ao treino ativo: descanso e tela acesa.
+  void _endSession() {
+    restTimer.skip();
+    _setScreenOn(false);
+  }
 
   /// Notifica a UI e atualiza o rascunho local.
   void _changed() {
@@ -70,6 +126,7 @@ class WorkoutProvider extends ChangeNotifier {
     if (restored == null || _activeWorkout != null) return false;
     _activeWorkout = restored.$1;
     _startedAt = restored.$2;
+    _setScreenOn(true);
     notifyListeners();
     return true;
   }
@@ -102,6 +159,8 @@ class WorkoutProvider extends ChangeNotifier {
       source: source,
     );
     _startedAt = DateTime.now();
+    restTimer.skip();
+    _setScreenOn(true);
     _changed();
   }
 
@@ -135,7 +194,8 @@ class WorkoutProvider extends ChangeNotifier {
         subWorkoutLabel: subWorkout.label,
       ),
     );
-    for (final planExercise in subWorkout.exercises) {
+    // Bi-set/tri-set: os exercícios do mesmo grupo ficam juntos.
+    for (final planExercise in groupSupersets(subWorkout.exercises)) {
       _activeWorkout!.exercises.add(
         LoggedExercise(
           exerciseId: planExercise.exerciseId,
@@ -224,8 +284,12 @@ class WorkoutProvider extends ChangeNotifier {
     if (reps != null || weightKg != null || completed == true) {
       set.suggested = false;
     }
-    // Marcar a série como feita já começa o descanso indicado.
-    if (justCompleted) startRest(exercise.prescription?.restSeconds ?? 60);
+    // Marcar a série como feita já começa o descanso indicado (se o início
+    // automático estiver ligado nas configurações).
+    // Em bi-set/tri-set, só depois do último exercício do grupo.
+    if (justCompleted && isLastOfSuperset(exerciseIndex)) {
+      restTimer.onSetCompleted(exercise.prescription?.restSeconds ?? 60);
+    }
     _changed();
     if (!justCompleted) return const [];
     // Outras séries feitas hoje no mesmo exercício (inclusive se ele
@@ -252,7 +316,10 @@ class WorkoutProvider extends ChangeNotifier {
     _prefilled[exercise] = true;
     var changed = false;
     for (final set in exercise.sets) {
-      if (!set.completed && set.reps == 0 && set.weightKg == 0) {
+      if (!set.isWarmup &&
+          !set.completed &&
+          set.reps == 0 &&
+          set.weightKg == 0) {
         set
           ..weightKg = weightKg
           ..reps = reps
@@ -263,32 +330,70 @@ class WorkoutProvider extends ChangeNotifier {
     if (changed) _changed();
   }
 
-  DateTime? _restEndsAt;
-  int _restTotalSeconds = 0;
-
-  /// Fim do descanso em andamento, ou `null` sem descanso.
-  DateTime? get restEndsAt => _restEndsAt;
-  int get restTotalSeconds => _restTotalSeconds;
-
-  void startRest(int seconds) {
-    if (seconds <= 0) return;
-    _restTotalSeconds = seconds;
-    _restEndsAt = DateTime.now().add(Duration(seconds: seconds));
-    notifyListeners();
+  /// Grupo de bi-set/tri-set do exercício (da prescrição), ou `null`.
+  String? supersetGroupOf(int exerciseIndex) {
+    final exercises = _activeWorkout?.exercises;
+    if (exercises == null || exerciseIndex >= exercises.length) return null;
+    return exercises[exerciseIndex].prescription?.supersetGroup;
   }
 
-  void addRest(int seconds) {
-    final ends = _restEndsAt;
-    if (ends == null) return;
-    _restTotalSeconds += seconds;
-    _restEndsAt = ends.add(Duration(seconds: seconds));
-    notifyListeners();
+  /// Índices dos exercícios do treino no mesmo grupo de [exerciseIndex]
+  /// (só ele mesmo, se não está em grupo).
+  List<int> supersetMembers(int exerciseIndex) {
+    final group = supersetGroupOf(exerciseIndex);
+    if (group == null) return [exerciseIndex];
+    final exercises = _activeWorkout!.exercises;
+    return [
+      for (int i = 0; i < exercises.length; i++)
+        if (exercises[i].prescription?.supersetGroup == group) i,
+    ];
   }
 
-  void skipRest() {
-    if (_restEndsAt == null) return;
-    _restEndsAt = null;
-    notifyListeners();
+  /// O exercício fecha a rodada do bi-set (é o último do grupo)? Fora de
+  /// grupo, sempre.
+  bool isLastOfSuperset(int exerciseIndex) =>
+      supersetMembers(exerciseIndex).last == exerciseIndex;
+
+  /// Troca o tipo da série (normal, aquecimento, drop, falha).
+  void setSetType(int exerciseIndex, int setIndex, SetType type) {
+    final set = _activeWorkout?.exercises[exerciseIndex].sets[setIndex];
+    if (set == null || set.type == type) return;
+    set.type = type;
+    _changed();
+  }
+
+  /// Monta séries de aquecimento antes da primeira série de trabalho, a
+  /// partir da carga dela (ver [generateWarmupSets]). Substitui o
+  /// aquecimento ainda não feito. Devolve quantas séries criou (0 se não há
+  /// carga de trabalho preenchida).
+  int generateWarmup(int exerciseIndex) {
+    final exercise = _activeWorkout?.exercises[exerciseIndex];
+    if (exercise == null) return 0;
+    final work = exercise.sets
+        .where((s) => !s.isWarmup && s.weightKg > 0)
+        .map((s) => s.weightKg)
+        .firstOrNull;
+    if (work == null) return 0;
+    final warmups = generateWarmupSets(work);
+    if (warmups.isEmpty) return 0;
+    exercise.sets.removeWhere((s) => s.isWarmup && !s.completed);
+    final firstWork = exercise.sets.indexWhere((s) => !s.isWarmup);
+    exercise.sets.insertAll(
+      firstWork < 0 ? exercise.sets.length : firstWork,
+      warmups,
+    );
+    _changed();
+    return warmups.length;
+  }
+
+  /// Atalho para [RestTimerController.skip].
+  void skipRest() => restTimer.skip();
+
+  @override
+  void dispose() {
+    _setScreenOn(false);
+    restTimer.dispose();
+    super.dispose();
   }
 
   void removeExercise(int exerciseIndex) {
@@ -325,7 +430,7 @@ class WorkoutProvider extends ChangeNotifier {
   void cancelWorkout() {
     _activeWorkout = null;
     _startedAt = null;
-    _restEndsAt = null;
+    _endSession();
     unawaited(_store?.clear());
     notifyListeners();
   }
@@ -341,6 +446,7 @@ class WorkoutProvider extends ChangeNotifier {
     if (!hasRealizedSets(realized)) {
       _activeWorkout = null;
       _startedAt = null;
+      _endSession();
       await _store?.clear();
       notifyListeners();
       return WorkoutFinishResult.endedWithoutSets;
@@ -373,7 +479,7 @@ class WorkoutProvider extends ChangeNotifier {
       );
       _lastSaved = toSave;
       _lastRecords = recordsOfTheDay(realized, _baselines);
-      _restEndsAt = null;
+      _endSession();
       _activeWorkout = null;
       _startedAt = null;
       _saving = false;

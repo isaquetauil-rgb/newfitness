@@ -43,8 +43,11 @@ class ReminderProvider extends ChangeNotifier {
         notifyListeners();
         // Reagenda todas as notificações para refletir o estado atual
         // (cobre alterações feitas em outro dispositivo, por exemplo).
+        // Um lembrete que falhe ao agendar não impede os outros.
         for (final r in list) {
-          await _notificationService.scheduleReminder(r);
+          try {
+            await _notificationService.scheduleReminder(r);
+          } catch (_) {}
         }
       },
       // Ex: permissão negada no logout — sem isso o erro ficava sem dono.

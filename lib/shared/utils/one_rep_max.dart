@@ -17,18 +17,23 @@ double? epley1rm(double weightKg, int reps) {
 }
 
 /// Maior 1RM estimado entre as séries, ou `null` se nenhuma vale.
+/// Aquecimento não conta.
 double? bestE1rm(Iterable<WorkoutSet> sets) {
   double? best;
   for (final s in sets) {
+    if (!s.countsForStats) continue;
     final e = epley1rm(s.weightKg, s.reps);
     if (e != null && (best == null || e > best)) best = e;
   }
   return best;
 }
 
-/// Maior carga entre as séries (0 se nenhuma tem carga).
-double bestLoad(Iterable<WorkoutSet> sets) =>
-    sets.fold(0, (max, s) => s.weightKg > max ? s.weightKg : max);
+/// Maior carga entre as séries (0 se nenhuma tem carga). Aquecimento não
+/// conta.
+double bestLoad(Iterable<WorkoutSet> sets) => sets.fold(
+  0,
+  (max, s) => s.countsForStats && s.weightKg > max ? s.weightKg : max,
+);
 
 /// Melhores marcas já registradas de um exercício, antes do treino de hoje.
 /// `null` = ainda não há marca (ex.: registros antigos sem 1RM).
@@ -80,7 +85,12 @@ List<PersonalRecordKind> detectSetRecords(
   Iterable<WorkoutSet> others,
   RecordBaseline? baseline,
 ) {
-  if (baseline == null || set.weightKg <= 0 || set.reps <= 0) return const [];
+  if (baseline == null ||
+      !set.countsForStats ||
+      set.weightKg <= 0 ||
+      set.reps <= 0) {
+    return const [];
+  }
   final doneOthers = others.where((s) => s.completed && !identical(s, set));
   final kinds = <PersonalRecordKind>[];
 

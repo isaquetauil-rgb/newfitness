@@ -209,6 +209,37 @@ void main() {
     expect(kept, hasLength(1));
   });
 
+  testWidgets('gerar aquecimento e trocar o tipo da série', (tester) async {
+    await pump(tester);
+
+    // Carga de trabalho sugerida: 42,5 kg → aquecimento 17,5 / 25 / 35.
+    final button = find.byKey(const ValueKey('generate-warmup'));
+    await tester.ensureVisible(button);
+    // Tira o botão de baixo do "Finalizar treino" flutuante.
+    await tester.drag(find.byType(ListView).first, const Offset(0, -300));
+    await tester.pumpAndSettle();
+    await tester.tap(button);
+    await tester.pumpAndSettle();
+    final sets = workoutProvider.activeWorkout!.exercises.single.sets;
+    expect(sets.where((s) => s.isWarmup).map((s) => s.weightKg), [
+      17.5,
+      25,
+      35,
+    ]);
+    expect(find.text('A'), findsNWidgets(3));
+    expect(find.text('3 séries de aquecimento adicionadas.'), findsOneWidget);
+
+    // A 1ª série de trabalho (índice 3) vira drop: aparece "1D".
+    final menu = find.byKey(const ValueKey('set-type-0-3'));
+    await tester.ensureVisible(menu);
+    await tester.tap(menu);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Drop').last);
+    await tester.pumpAndSettle();
+    expect(sets[3].type, SetType.drop);
+    expect(find.text('1D'), findsOneWidget);
+  });
+
   testWidgets('recorde: banner + vibração e resumo lista os recordes', (
     tester,
   ) async {

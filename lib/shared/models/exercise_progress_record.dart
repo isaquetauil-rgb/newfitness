@@ -40,10 +40,8 @@ Map<String, ExerciseProgressInput> aggregateProgressInputs(
     // ignorado aqui (não trava os demais) e dois exercícios sem ID nunca
     // são somados como se fossem o mesmo.
     if (exercise.exerciseId.trim().isEmpty) continue;
-    final topSetLoad = exercise.sets.fold<double>(
-      0,
-      (max, s) => s.weightKg > max ? s.weightKg : max,
-    );
+    // Aquecimento não conta para carga de topo nem 1RM (ver `bestLoad`).
+    final topSetLoad = bestLoad(exercise.sets);
     final totalVolume = exercise.totalVolume;
     if (topSetLoad <= 0 && totalVolume <= 0) continue;
     final e1rm = bestE1rm(exercise.sets);
