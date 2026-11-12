@@ -384,7 +384,7 @@ void main() {
         provider.updateSet(0, 1, reps: 10, weightKg: 30, completed: true);
         // remada (3 séries): concluída com 0 kg (peso do corpo), reps sem
         // concluir, carga sem reps
-        provider.updateSet(1, 0, completed: true);
+        provider.updateSet(1, 0, reps: 12, completed: true);
         provider.updateSet(1, 1, reps: 12);
         provider.updateSet(1, 2, weightKg: 20);
 

@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 
 import 'package:newfitness/core/di/injector.dart';
 import 'package:newfitness/core/storage/local_prefs.dart';
+import 'package:newfitness/features/notifications/data/notification_service.dart';
+import 'package:newfitness/features/notifications/logic/reminder_provider.dart';
 import 'package:newfitness/features/workout/logic/rest_timer_controller.dart';
 import 'package:newfitness/features/workout/logic/workout_provider.dart';
 
@@ -326,6 +328,22 @@ class RestTimerSettingsTiles extends StatelessWidget {
           ? getIt<LocalPrefs>()
           : null);
 
+  /// Som e vibração valem também para os lembretes: atualiza o serviço e
+  /// reagenda os lembretes no canal novo.
+  void _applyToReminders(BuildContext context, RestTimerSettings s) {
+    if (getIt.isRegistered<NotificationService>()) {
+      getIt<NotificationService>().setPreferences(
+        sound: s.sound,
+        vibration: s.vibration,
+      );
+    }
+    try {
+      context.read<ReminderProvider>().rescheduleAll();
+    } on ProviderNotFoundException {
+      // Fora do app (testes): não há lembretes para reagendar.
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final controller = context.read<WorkoutProvider>().restTimer;
@@ -353,25 +371,29 @@ class RestTimerSettingsTiles extends StatelessWidget {
             SwitchListTile(
               key: const ValueKey('rest-sound'),
               secondary: const Icon(Icons.volume_up_outlined),
-              title: const Text('Som no fim do descanso'),
+              title: const Text('Som nas notificações'),
+              subtitle: const Text('Lembretes e fim do descanso'),
               value: s.sound,
               onChanged: (v) {
                 controller.updateSettings(
                   controller.settings.copyWith(sound: v),
                 );
                 prefs?.setRestSound(v);
+                _applyToReminders(context, controller.settings);
               },
             ),
             SwitchListTile(
               key: const ValueKey('rest-vibration'),
               secondary: const Icon(Icons.vibration),
-              title: const Text('Vibrar no fim do descanso'),
+              title: const Text('Vibrar nas notificações'),
+              subtitle: const Text('Lembretes e fim do descanso'),
               value: s.vibration,
               onChanged: (v) {
                 controller.updateSettings(
                   controller.settings.copyWith(vibration: v),
                 );
                 prefs?.setRestVibration(v);
+                _applyToReminders(context, controller.settings);
               },
             ),
           ],

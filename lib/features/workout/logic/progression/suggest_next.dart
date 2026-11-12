@@ -3,6 +3,7 @@
 library;
 
 import 'package:newfitness/shared/models/workout_set.dart';
+import 'package:newfitness/shared/utils/format.dart';
 
 import 'progression_rule.dart';
 
@@ -226,14 +227,8 @@ double _deload(double weight, ProgressionRule rule) {
   return next > 0 ? next : weight;
 }
 
-String _kg(double kg) {
-  final text = kg == kg.roundToDouble()
-      ? kg.toStringAsFixed(0)
-      : kg.toStringAsFixed(kg * 10 == (kg * 10).roundToDouble() ? 1 : 2);
-  return '${text.replaceAll('.', ',')} kg';
-}
+String _kg(double kg) => formatKg(kg);
 
-String _pct(double p) =>
-    '${(p == p.roundToDouble() ? p.toStringAsFixed(0) : p.toString()).replaceAll('.', ',')}%';
+String _pct(double p) => '${formatKgNumber(p)}%';
 
 String _sets(int n) => n == 1 ? '1 série' : '$n séries';

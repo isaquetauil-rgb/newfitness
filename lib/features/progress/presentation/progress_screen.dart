@@ -8,6 +8,7 @@ import 'package:newfitness/app/widgets/tab_switch_signal.dart';
 import 'package:newfitness/features/auth/logic/auth_provider.dart';
 import 'package:newfitness/features/workout/logic/workout_provider.dart';
 import 'package:newfitness/shared/models/workout.dart';
+import 'package:newfitness/shared/utils/format.dart';
 
 import 'body_progress_screen.dart';
 import 'exercise_progress_list.dart';
@@ -184,10 +185,7 @@ class _SummaryRow extends StatelessWidget {
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: _StatCard(
-            label: 'Volume total',
-            value: '${totalVolume.toStringAsFixed(0)} kg',
-          ),
+          child: _StatCard(label: 'Volume total', value: formatKg(totalVolume)),
         ),
       ],
     );
@@ -292,7 +290,7 @@ class _WorkoutHistoryTile extends StatelessWidget {
         subtitle: Text(
           '${DateFormat('dd/MM/yyyy').format(workout.date)} · ${workout.totalSets} séries',
         ),
-        trailing: Text('${workout.totalVolume.toStringAsFixed(0)} kg'),
+        trailing: Text(formatKg(workout.totalVolume)),
       ),
     );
   }

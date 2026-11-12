@@ -69,6 +69,16 @@ class ReminderProvider extends ChangeNotifier {
     await _notificationService.cancelAll();
   }
 
+  /// Reagenda todos os lembretes (ex.: o aluno mudou som/vibração nas
+  /// configurações — o canal da notificação muda).
+  Future<void> rescheduleAll() async {
+    for (final r in _reminders) {
+      try {
+        await _notificationService.scheduleReminder(r);
+      } catch (_) {}
+    }
+  }
+
   Future<bool> requestNotificationPermission() {
     return _notificationService.requestPermission();
   }

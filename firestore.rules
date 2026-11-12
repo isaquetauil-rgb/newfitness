@@ -60,12 +60,16 @@ service cloud.firestore {
         request.resource.data.get('instructorId', null) == null &&
         request.resource.data.get('nutritionistId', null) == null &&
         request.resource.data.get('inviteCode', null) == null &&
-        request.resource.data.get('pendingRoleChange', null) == null;
+        request.resource.data.get('pendingRoleChange', null) == null &&
+        request.resource.data.get('freeWorkoutDisabled', null) == null;
       // `role` e `pendingRoleChange` (trava de rebaixamento em andamento)
       // só mudam pela Cloud Function `setUserRole` — NEM o admin grava
       // `role` pelo cliente. Mudar só o papel de um instrutor deixava os
       // alunos com `instructorId` apontando para ele, e ele continuava com
       // acesso; a Function encerra esses vínculos antes de trocar o papel.
+      // `freeWorkoutDisabled` (treino livre desativado pelo personal): o
+      // próprio aluno NÃO muda; só o personal vinculado — e, no documento
+      // do aluno, ele só pode mexer nesse campo (booleano) — ou o admin.
       allow update: if request.auth != null &&
         request.resource.data.get('role', null) == resource.data.get('role', null) &&
         request.resource.data.get('pendingRoleChange', null) == resource.data.get('pendingRoleChange', null) && (
@@ -73,7 +77,12 @@ service cloud.firestore {
           request.auth.uid == userId &&
           request.resource.data.get('instructorId', null) == resource.data.get('instructorId', null) &&
           request.resource.data.get('nutritionistId', null) == resource.data.get('nutritionistId', null) &&
-          request.resource.data.get('inviteCode', null) == resource.data.get('inviteCode', null)
+          request.resource.data.get('inviteCode', null) == resource.data.get('inviteCode', null) &&
+          request.resource.data.get('freeWorkoutDisabled', null) == resource.data.get('freeWorkoutDisabled', null)
+        ) || (
+          resource.data.get('instructorId', null) == request.auth.uid &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['freeWorkoutDisabled']) &&
+          request.resource.data.freeWorkoutDisabled is bool
         )
       );
       // Nenhum cliente apaga um perfil (nem o admin): apagar e recriar o

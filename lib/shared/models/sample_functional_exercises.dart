@@ -11,6 +11,7 @@ Exercise _functional({
   required List<String> steps,
   String level = 'iniciante',
   String category = 'funcional',
+  bool timed = false,
 }) => Exercise(
   id: id,
   name: name,
@@ -24,6 +25,8 @@ Exercise _functional({
   category: category,
   objectives: const ['funcional'],
   instructions: steps,
+  // Isometrias (prancha, suspensão): medidas em segundos.
+  tracksDuration: timed,
 );
 
 /// Exercícios além da biblioteca original: mobilidade, equilíbrio, esportes,
@@ -149,6 +152,7 @@ final List<Exercise> sampleFunctionalExercises = [
   ),
   _functional(
     id: 'side_plank',
+    timed: true,
     video: 'dfJo1PYR2-k',
     name: 'Prancha lateral',
     muscleGroup: 'Abdômen',
@@ -282,6 +286,7 @@ final List<Exercise> sampleFunctionalExercises = [
   ),
   _functional(
     id: 'dead_hang',
+    timed: true,
     video: 'l3-MUxW-aLs',
     name: 'Suspensão na barra',
     muscleGroup: 'Costas',

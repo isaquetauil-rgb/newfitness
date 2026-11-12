@@ -35,6 +35,12 @@ class LocalPrefs {
 
   Future<void> clearActiveWorkout() => _prefs.remove(_activeWorkoutKey);
 
+  /// O PAR-Q já abriu sozinho neste aparelho (o onboarding não insiste;
+  /// depois disso, só o cartão da tela inicial lembra).
+  static const _parqPromptedKey = 'parq_prompted';
+  bool get parqPrompted => _prefs.getBool(_parqPromptedKey) ?? false;
+  Future<void> setParqPrompted() => _prefs.setBool(_parqPromptedKey, true);
+
   // Cronômetro de descanso (Configurações). Tudo ligado por padrão.
   static const _restAutoStartKey = 'rest_auto_start';
   static const _restSoundKey = 'rest_sound';

@@ -39,6 +39,19 @@ enum WorkoutFinishResult {
   failed,
 }
 
+/// Resultado de [WorkoutProvider.generateWarmup].
+class WarmupResult {
+  const WarmupResult.added(this.count) : alreadyHasWarmup = false;
+  const WarmupResult.noWorkWeight() : count = 0, alreadyHasWarmup = false;
+  const WarmupResult.alreadyHas() : count = 0, alreadyHasWarmup = true;
+
+  /// Séries de aquecimento criadas.
+  final int count;
+
+  /// O exercício já tinha aquecimento: nada foi feito.
+  final bool alreadyHasWarmup;
+}
+
 /// Gerencia o treino em andamento (sessão atual) e o histórico salvo.
 class WorkoutProvider extends ChangeNotifier {
   final FirestoreService _firestoreService;
@@ -69,6 +82,13 @@ class WorkoutProvider extends ChangeNotifier {
       return RestTimerController();
     }
     final prefs = _prefsReady ? getIt<LocalPrefs>() : null;
+    // As mesmas chaves de som e vibração valem para os lembretes.
+    if (prefs != null) {
+      getIt<NotificationService>().setPreferences(
+        sound: prefs.restSound,
+        vibration: prefs.restVibration,
+      );
+    }
     return RestTimerController(
       alerts: LocalRestAlerts(getIt<NotificationService>()),
       settings: prefs == null
@@ -264,6 +284,13 @@ class WorkoutProvider extends ChangeNotifier {
   /// Recordes batidos no treino gravado pelo último [finishWorkout].
   List<PersonalRecord> get lastSavedRecords => _lastRecords;
 
+  /// Descanso depois de uma série de aquecimento.
+  static const warmupRestSeconds = 30;
+
+  /// A série pode ser marcada como feita? Precisa de reps (ou segundos, no
+  /// exercício por tempo) maiores que zero.
+  static bool canComplete(WorkoutSet set) => set.reps > 0 || set.seconds > 0;
+
   /// Atualiza a série. Quando ela acaba de ser marcada como feita, devolve
   /// os recordes que ela bateu (vazio se nenhum), para a tela comemorar.
   List<PersonalRecordKind> updateSet(
@@ -271,23 +298,34 @@ class WorkoutProvider extends ChangeNotifier {
     int setIndex, {
     int? reps,
     double? weightKg,
+    int? seconds,
     bool? completed,
   }) {
     final exercise = _activeWorkout?.exercises[exerciseIndex];
     final set = exercise?.sets[setIndex];
     if (exercise == null || set == null) return const [];
-    final justCompleted = completed == true && !set.completed;
     if (reps != null) set.reps = reps;
     if (weightKg != null) set.weightKg = weightKg;
+    if (seconds != null) set.seconds = seconds;
+    // Série sem reps (ou sem segundos, no exercício por tempo) não pode ser
+    // marcada como feita — a tela avisa antes (ver [canComplete]).
+    if (completed == true && !canComplete(set)) completed = null;
+    final justCompleted = completed == true && !set.completed;
     if (completed != null) set.completed = completed;
     // Mexeu na série ou marcou como feita: a sugestão vira o realizado.
-    if (reps != null || weightKg != null || completed == true) {
+    if (reps != null ||
+        weightKg != null ||
+        seconds != null ||
+        completed == true) {
       set.suggested = false;
     }
     // Marcar a série como feita já começa o descanso indicado (se o início
     // automático estiver ligado nas configurações).
-    // Em bi-set/tri-set, só depois do último exercício do grupo.
-    if (justCompleted && isLastOfSuperset(exerciseIndex)) {
+    // Aquecimento: descanso curto. Em bi-set/tri-set, só depois do último
+    // exercício do grupo.
+    if (justCompleted && set.isWarmup) {
+      restTimer.onSetCompleted(warmupRestSeconds);
+    } else if (justCompleted && isLastOfSuperset(exerciseIndex)) {
       restTimer.onSetCompleted(exercise.prescription?.restSeconds ?? 60);
     }
     _changed();
@@ -363,27 +401,26 @@ class WorkoutProvider extends ChangeNotifier {
   }
 
   /// Monta séries de aquecimento antes da primeira série de trabalho, a
-  /// partir da carga dela (ver [generateWarmupSets]). Substitui o
-  /// aquecimento ainda não feito. Devolve quantas séries criou (0 se não há
-  /// carga de trabalho preenchida).
-  int generateWarmup(int exerciseIndex) {
+  /// partir da carga dela (ver [generateWarmupSets]).
+  ///
+  /// NUNCA altera, apaga ou reordena séries que já existem (feitas ou não):
+  /// só insere as novas antes da primeira série de trabalho.
+  WarmupResult generateWarmup(int exerciseIndex) {
     final exercise = _activeWorkout?.exercises[exerciseIndex];
-    if (exercise == null) return 0;
+    if (exercise == null) return const WarmupResult.noWorkWeight();
+    if (exercise.sets.any((s) => s.isWarmup)) {
+      return const WarmupResult.alreadyHas();
+    }
     final work = exercise.sets
-        .where((s) => !s.isWarmup && s.weightKg > 0)
+        .where((s) => s.weightKg > 0)
         .map((s) => s.weightKg)
         .firstOrNull;
-    if (work == null) return 0;
+    if (work == null) return const WarmupResult.noWorkWeight();
     final warmups = generateWarmupSets(work);
-    if (warmups.isEmpty) return 0;
-    exercise.sets.removeWhere((s) => s.isWarmup && !s.completed);
-    final firstWork = exercise.sets.indexWhere((s) => !s.isWarmup);
-    exercise.sets.insertAll(
-      firstWork < 0 ? exercise.sets.length : firstWork,
-      warmups,
-    );
+    if (warmups.isEmpty) return const WarmupResult.noWorkWeight();
+    exercise.sets.insertAll(0, warmups);
     _changed();
-    return warmups.length;
+    return WarmupResult.added(warmups.length);
   }
 
   /// Atalho para [RestTimerController.skip].
@@ -505,7 +542,8 @@ class WorkoutProvider extends ChangeNotifier {
   /// Série só com a sugestão de carga, sem o aluno mexer nem marcar como
   /// feita, também é vazia.
   static bool isEmptySet(WorkoutSet s) =>
-      !s.completed && (s.suggested || (s.reps == 0 && s.weightKg == 0));
+      !s.completed &&
+      (s.suggested || (s.reps == 0 && s.weightKg == 0 && s.seconds == 0));
 
   /// Alguma série foi realizada? (qualquer série que não seja vazia — reps,
   /// carga, ou concluída mesmo com 0 kg, ex: peso do corpo).

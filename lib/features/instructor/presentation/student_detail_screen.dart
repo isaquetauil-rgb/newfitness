@@ -14,6 +14,8 @@ import 'package:newfitness/features/progress/presentation/physical_assessment_sc
 import 'package:newfitness/features/workout/data/health_screening_service.dart';
 import 'package:newfitness/features/workout/logic/training_plan_provider.dart';
 import 'package:newfitness/shared/models/health_screening.dart';
+import 'package:newfitness/shared/models/user_profile.dart';
+import 'package:newfitness/shared/utils/format.dart';
 import 'package:newfitness/shared/models/training_plan.dart';
 import 'package:newfitness/shared/models/workout.dart';
 import 'package:newfitness/shared/services/firestore_service.dart';
@@ -56,6 +58,10 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
     widget.studentUid,
   );
   late final _screeningStream = HealthScreeningService().watchLatest(
+    widget.studentUid,
+  );
+  // Perfil do aluno ao vivo: PAR-Q e treino livre liberado ou não.
+  late final _studentStream = _firestoreService.watchUserProfile(
     widget.studentUid,
   );
 
@@ -161,6 +167,24 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          _StudentSafetyCard(
+            stream: _studentStream,
+            onToggleFreeWorkout: (allowed) async {
+              final messenger = ScaffoldMessenger.of(context);
+              try {
+                await _firestoreService.setFreeWorkoutDisabled(
+                  widget.studentUid,
+                  !allowed,
+                );
+              } catch (_) {
+                messenger.showSnackBar(
+                  const SnackBar(
+                    content: Text('Não foi possível mudar o treino livre.'),
+                  ),
+                );
+              }
+            },
+          ),
           _HealthScreeningCard(stream: _screeningStream),
           const Text(
             'Notas sobre o aluno',
@@ -312,7 +336,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
                       Expanded(
                         child: _StatCard(
                           label: 'Volume total',
-                          value: '${totalVolume.toStringAsFixed(0)} kg',
+                          value: formatKg(totalVolume),
                         ),
                       ),
                     ],
@@ -326,9 +350,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
                         subtitle: Text(
                           '${DateFormat('dd/MM/yyyy').format(w.date)} · ${w.totalSets} séries',
                         ),
-                        trailing: Text(
-                          '${w.totalVolume.toStringAsFixed(0)} kg',
-                        ),
+                        trailing: Text(formatKg(w.totalVolume)),
                       ),
                     ),
                 ],
@@ -417,6 +439,85 @@ class _HealthScreeningCard extends StatelessWidget {
                       style: TextStyle(color: colors.onErrorContainer),
                     ),
                   ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Para o personal: PAR-Q do aluno (com data e o que marcou "sim") e a chave
+/// do treino livre.
+class _StudentSafetyCard extends StatelessWidget {
+  const _StudentSafetyCard({
+    required this.stream,
+    required this.onToggleFreeWorkout,
+  });
+
+  final Stream<UserProfile?> stream;
+  final ValueChanged<bool> onToggleFreeWorkout;
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<UserProfile?>(
+      stream: stream,
+      builder: (context, snapshot) {
+        final student = snapshot.data;
+        if (student == null) return const SizedBox.shrink();
+        final colors = Theme.of(context).colorScheme;
+        final parq = student.parq;
+        final flagged = parq?.needsMedicalClearance ?? false;
+        return Card(
+          key: const ValueKey('student-safety-card'),
+          color: flagged ? colors.errorContainer : null,
+          margin: const EdgeInsets.only(bottom: 16),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 4, 4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  parq == null
+                      ? 'PAR-Q: ainda não respondido'
+                      : flagged
+                      ? 'PAR-Q: recomendar liberação médica '
+                            '(${DateFormat('dd/MM/yyyy').format(parq.answeredDate)})'
+                      : 'PAR-Q: sem restrições '
+                            '(${DateFormat('dd/MM/yyyy').format(parq.answeredDate)})',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: flagged ? colors.onErrorContainer : null,
+                  ),
+                ),
+                for (final q in parq?.flaggedQuestions ?? const <String>[])
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4, right: 8),
+                    child: Text(
+                      '• Sim: $q',
+                      style: TextStyle(color: colors.onErrorContainer),
+                    ),
+                  ),
+                SwitchListTile(
+                  key: const ValueKey('free-workout-switch'),
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    'Permitir treino livre',
+                    style: TextStyle(
+                      color: flagged ? colors.onErrorContainer : null,
+                    ),
+                  ),
+                  subtitle: Text(
+                    'Desligado, o aluno só treina pelo seu plano e pelos '
+                    'treinos prontos.',
+                    style: TextStyle(
+                      color: flagged ? colors.onErrorContainer : null,
+                    ),
+                  ),
+                  value: student.freeWorkoutDisabled != true,
+                  onChanged: onToggleFreeWorkout,
+                ),
               ],
             ),
           ),

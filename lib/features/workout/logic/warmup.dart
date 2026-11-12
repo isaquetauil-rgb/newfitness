@@ -9,25 +9,29 @@ import 'package:newfitness/shared/models/workout_set.dart';
 /// - a partir de 40 kg: 40%, 60% e 80% (10, 6 e 3 reps);
 /// - abaixo disso: 50% e 75% (8 e 4 reps).
 ///
-/// Arredonda para o passo das anilhas ([stepKg]; padrão 2,5 kg a partir de
-/// 20 kg e 0,5 kg abaixo). Descarta séries que arredondam para 0, para a
-/// própria carga de trabalho ou que repetem a anterior.
-List<WorkoutSet> generateWarmupSets(double workKg, {double? stepKg}) {
+/// Arredonda para múltiplos de [warmupStepKg] (2,5 kg), com mínimo de
+/// 2,5 kg. Descarta séries que ficariam iguais ou acima da carga de
+/// trabalho ou que repetem a anterior (com carga de trabalho de até 2,5 kg
+/// não há aquecimento).
+List<WorkoutSet> generateWarmupSets(double workKg) {
   if (workKg <= 0) return const [];
-  final step = stepKg ?? (workKg >= 20 ? 2.5 : 0.5);
   final plan = workKg >= 40
       ? const [(0.4, 10), (0.6, 6), (0.8, 3)]
       : const [(0.5, 8), (0.75, 4)];
 
   final sets = <WorkoutSet>[];
   for (final (pct, reps) in plan) {
-    final kg = _round(workKg * pct, step);
-    if (kg <= 0 || kg >= workKg) continue;
+    var kg = _round(workKg * pct, warmupStepKg);
+    if (kg < warmupStepKg) kg = warmupStepKg;
+    if (kg >= workKg) continue;
     if (sets.isNotEmpty && sets.last.weightKg == kg) continue;
     sets.add(WorkoutSet(weightKg: kg, reps: reps, type: SetType.warmup));
   }
   return sets;
 }
+
+/// Passo (e mínimo) das cargas de aquecimento.
+const double warmupStepKg = 2.5;
 
 double _round(double kg, double step) =>
     double.parse(((kg / step).round() * step).toStringAsFixed(2));

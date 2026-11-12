@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/foundation.dart'
     show TargetPlatform, defaultTargetPlatform, kIsWeb, visibleForTesting;
 import 'package:flutter/services.dart' show PlatformException;
@@ -33,10 +35,40 @@ class NotificationService {
 
   bool _initialized = false;
 
-  static const _channelId = 'reminders_channel';
-  static const _channelName = 'Lembretes';
-  static const _channelDescription =
+  /// Canais das versões anteriores, apagados no [init]. O Android não deixa
+  /// mudar som/vibração de um canal já criado (o de lembretes saiu sem som em
+  /// alguns aparelhos), então os canais novos têm IDs novos.
+  @visibleForTesting
+  static const oldChannelIds = [
+    'reminders_channel',
+    'rest_timer_sound_vibration',
+    'rest_timer_sound',
+    'rest_timer_vibration',
+    'rest_timer_silent',
+  ];
+
+  static const _reminderDescription =
       'Lembretes de água e suplementos do NewFitness';
+
+  /// Vibra três vezes, para ser notado com o celular no bolso.
+  static final _vibrationPattern = Int64List.fromList([
+    0,
+    500,
+    300,
+    500,
+    300,
+    500,
+  ]);
+
+  /// Som e vibração das notificações (Configurações). Valem para lembretes
+  /// e para o fim do descanso; mudar exige reagendar os lembretes.
+  bool _sound = true;
+  bool _vibration = true;
+
+  void setPreferences({required bool sound, required bool vibration}) {
+    _sound = sound;
+    _vibration = vibration;
+  }
 
   bool get _isAndroid =>
       !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
@@ -75,6 +107,13 @@ class NotificationService {
         macOS: iosSettings,
       ),
     );
+    if (_isAndroid) {
+      for (final id in oldChannelIds) {
+        try {
+          await _android?.deleteNotificationChannel(id);
+        } catch (_) {}
+      }
+    }
 
     _initialized = true;
   }
@@ -156,15 +195,10 @@ class NotificationService {
         title,
         body,
         _nextInstanceOf(reminder.hour, reminder.minute),
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-            _channelId,
-            _channelName,
-            channelDescription: _channelDescription,
-            importance: Importance.high,
-            priority: Priority.high,
-          ),
-          iOS: DarwinNotificationDetails(),
+        _details(
+          NotificationKind.reminder,
+          sound: _sound,
+          vibration: _vibration,
         ),
         androidScheduleMode: mode,
         uiLocalNotificationDateInterpretation:
@@ -178,9 +212,45 @@ class NotificationService {
   /// reagendar com o mesmo id substitui a anterior.
   static const restEndNotificationId = 900001;
 
-  /// Avisa o fim do descanso em [at], mesmo com o app fechado. Os canais do
-  /// Android não mudam som/vibração depois de criados, por isso há um canal
-  /// para cada combinação.
+  /// Detalhes da notificação no canal certo para o tipo e para o som e a
+  /// vibração escolhidos (os canais do Android não mudam depois de criados,
+  /// por isso há um para cada combinação).
+  NotificationDetails _details(
+    NotificationKind kind, {
+    required bool sound,
+    required bool vibration,
+  }) {
+    final channel = channelFor(kind, sound: sound, vibration: vibration);
+    final rest = kind == NotificationKind.rest;
+    return NotificationDetails(
+      android: AndroidNotificationDetails(
+        channel.id,
+        channel.name,
+        channelDescription: rest
+            ? 'Aviso de fim do descanso entre séries'
+            : _reminderDescription,
+        importance: rest ? Importance.max : Importance.high,
+        priority: rest ? Priority.max : Priority.high,
+        category: rest
+            ? AndroidNotificationCategory.alarm
+            : AndroidNotificationCategory.reminder,
+        playSound: sound,
+        enableVibration: vibration,
+        vibrationPattern: vibration ? _vibrationPattern : null,
+      ),
+      iOS: DarwinNotificationDetails(
+        presentAlert: true,
+        presentBanner: true,
+        presentList: true,
+        presentSound: sound,
+        interruptionLevel: rest
+            ? InterruptionLevel.timeSensitive
+            : InterruptionLevel.active,
+      ),
+    );
+  }
+
+  /// Avisa o fim do descanso em [at], mesmo com o app fechado.
   Future<void> scheduleRestEnd(
     DateTime at, {
     required bool sound,
@@ -188,29 +258,13 @@ class NotificationService {
   }) async {
     if (kIsWeb) return;
     await init();
-    final channel = restChannelFor(sound: sound, vibration: vibration);
     await _schedule(
       (mode) => _plugin.zonedSchedule(
         restEndNotificationId,
         'Descanso acabou',
         'Hora da próxima série 💪',
         tz.TZDateTime.from(at, tz.UTC),
-        NotificationDetails(
-          android: AndroidNotificationDetails(
-            channel.$1,
-            channel.$2,
-            channelDescription: 'Aviso de fim do descanso entre séries',
-            importance: Importance.high,
-            priority: Priority.high,
-            category: AndroidNotificationCategory.alarm,
-            playSound: sound,
-            enableVibration: vibration,
-          ),
-          iOS: DarwinNotificationDetails(
-            presentSound: sound,
-            interruptionLevel: InterruptionLevel.timeSensitive,
-          ),
-        ),
+        _details(NotificationKind.rest, sound: sound, vibration: vibration),
         androidScheduleMode: mode,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
@@ -257,18 +311,29 @@ class NotificationService {
   }
 }
 
-/// Canal (id, nome) do aviso de fim do descanso para cada combinação de som
-/// e vibração.
+enum NotificationKind { reminder, rest }
+
+/// Canal do Android para o tipo de aviso e a combinação de som e vibração:
+/// "lembretes" (importância alta) e "descanso" (importância máxima), com
+/// som padrão e vibração quando ligados nas configurações.
 @visibleForTesting
-(String, String) restChannelFor({
+({String id, String name}) channelFor(
+  NotificationKind kind, {
   required bool sound,
   required bool vibration,
-}) => switch ((sound, vibration)) {
-  (true, true) => ('rest_timer_sound_vibration', 'Descanso: som e vibração'),
-  (true, false) => ('rest_timer_sound', 'Descanso: só som'),
-  (false, true) => ('rest_timer_vibration', 'Descanso: só vibração'),
-  (false, false) => ('rest_timer_silent', 'Descanso: silencioso'),
-};
+}) {
+  final (base, label) = switch (kind) {
+    NotificationKind.reminder => ('lembretes', 'Lembretes'),
+    NotificationKind.rest => ('descanso', 'Fim do descanso'),
+  };
+  final (suffix, detail) = switch ((sound, vibration)) {
+    (true, true) => ('som_vibracao', ''),
+    (true, false) => ('som', ' (só som)'),
+    (false, true) => ('vibracao', ' (só vibração)'),
+    (false, false) => ('silencioso', ' (silencioso)'),
+  };
+  return (id: '${base}_$suffix', name: '$label$detail');
+}
 
 /// Modo de agendamento no Android: exato só quando o sistema permite.
 /// `null` (fora do Android ou sem resposta) usa o exato, que no iOS é

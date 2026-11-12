@@ -11,6 +11,7 @@ import 'package:newfitness/features/auth/logic/auth_provider.dart';
 import 'package:newfitness/features/exercises/logic/exercise_pool.dart';
 import 'package:newfitness/features/exercises/logic/exercise_provider.dart';
 import 'package:newfitness/features/exercises/presentation/exercise_alternatives_sheet.dart';
+import 'package:newfitness/features/health/presentation/free_workout_gate.dart';
 import 'package:newfitness/features/instructor/logic/custom_exercise_provider.dart';
 import 'package:newfitness/features/progress/logic/progress_record_provider.dart';
 import 'package:newfitness/features/workout/logic/prescription_format.dart';
@@ -168,7 +169,7 @@ class WorkoutScreen extends StatelessWidget {
             children: [
               Text(
                 '$done exercício(s) · ${saved.totalSets} '
-                'série(s)${volume > 0 ? ' · ${volume.toStringAsFixed(0)} kg' : ''}',
+                'série(s)${volume > 0 ? ' · ${formatKg(volume)}' : ''}',
               ),
               if (records.isNotEmpty) ...[
                 const SizedBox(height: 12),
@@ -274,7 +275,14 @@ class _StartWorkoutBody extends StatelessWidget {
         const SizedBox(height: 8),
         Center(
           child: OutlinedButton.icon(
-            onPressed: () => context.read<WorkoutProvider>().startWorkout(uid),
+            key: const ValueKey('start-free-workout'),
+            onPressed: () async {
+              // Bloqueio do personal e aviso de responsabilidade (uma vez).
+              if (!await ensureFreeWorkoutAllowed(context)) return;
+              if (context.mounted) {
+                context.read<WorkoutProvider>().startWorkout(uid);
+              }
+            },
             icon: const Icon(Icons.play_arrow),
             label: const Text('Iniciar treino livre'),
           ),
@@ -557,6 +565,10 @@ class _ActiveWorkoutBodyState extends State<_ActiveWorkoutBody> {
             superset: _supersetText(provider, i),
             isUnilateral: unilateralIds.contains(exercises[i].exerciseId),
             isBarbell: barbellIds.contains(exercises[i].exerciseId),
+            isTimed: isTimedExercise(
+              exercises[i],
+              library: library[exercises[i].exerciseId],
+            ),
             isTemplate:
                 provider.activeWorkout!.source?.planId.startsWith(
                   templatePlanPrefix,
@@ -604,6 +616,9 @@ class _ExerciseCard extends StatelessWidget {
   /// Exercício com barra: mostra a calculadora de anilhas no peso.
   final bool isBarbell;
 
+  /// Exercício medido em segundos: a coluna "Reps" vira "Seg".
+  final bool isTimed;
+
   const _ExerciseCard({
     super.key,
     required this.exerciseIndex,
@@ -614,17 +629,25 @@ class _ExerciseCard extends StatelessWidget {
     this.suggestion,
     this.superset,
     this.isBarbell = false,
+    this.isTimed = false,
   });
 
   void _generateWarmup(BuildContext context) {
-    final added = context.read<WorkoutProvider>().generateWarmup(exerciseIndex);
+    // Fecha o teclado antes de mexer na lista: o campo em foco muda de
+    // posição quando as séries de aquecimento entram.
+    FocusScope.of(context).unfocus();
+    final result = context.read<WorkoutProvider>().generateWarmup(
+      exerciseIndex,
+    );
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          added == 0
+          result.alreadyHasWarmup
+              ? 'Este exercício já tem aquecimento.'
+              : result.count == 0
               ? 'Preencha a carga da série de trabalho para gerar o '
                     'aquecimento.'
-              : '$added séries de aquecimento adicionadas.',
+              : '${result.count} séries de aquecimento adicionadas.',
         ),
       ),
     );
@@ -648,11 +671,6 @@ class _ExerciseCard extends StatelessWidget {
       ),
     );
   }
-
-  static String _kg(double value) => value
-      .toStringAsFixed(1)
-      .replaceFirst(RegExp(r'\.0$'), '')
-      .replaceAll('.', ',');
 
   Future<void> _swapExercise(BuildContext context) async {
     final provider = context.read<WorkoutProvider>();
@@ -730,10 +748,19 @@ class _ExerciseCard extends StatelessWidget {
                 'No lugar de ${exercise.replacedExerciseName}',
                 style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
               ),
-            if (record != null && record!.lastLoadKg > 0)
+            if (isTimed && (record?.bestSeconds ?? 0) > 0)
               Text(
-                'Última vez: ${_kg(record!.lastLoadKg)} kg · '
-                'recorde: ${_kg(record!.bestLoadKg)} kg',
+                'Recorde de tempo: ${formatSeconds(record!.bestSeconds!)}',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              )
+            else if (record != null && record!.lastLoadKg > 0)
+              Text(
+                'Última vez: ${formatKg(record!.lastLoadKg)} · '
+                'recorde: ${formatKg(record!.bestLoadKg)}',
                 style: TextStyle(
                   fontSize: 13,
                   color: Theme.of(context).colorScheme.primary,
@@ -746,7 +773,7 @@ class _ExerciseCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      'Sugestão de hoje: ${_kg(suggestion!.weightKg)} kg × '
+                      'Sugestão de hoje: ${formatKg(suggestion!.weightKg)} × '
                       '${suggestion!.targetReps}',
                       style: const TextStyle(fontSize: 13),
                     ),
@@ -777,22 +804,30 @@ class _ExerciseCard extends StatelessWidget {
             ],
             const SizedBox(height: 8),
             Row(
-              children: const [
-                SizedBox(
+              children: [
+                const SizedBox(
                   width: 32,
                   child: Text('Nº', style: TextStyle(color: Colors.grey)),
                 ),
                 Expanded(
                   child: Center(
-                    child: Text('Kg', style: TextStyle(color: Colors.grey)),
+                    child: Text(
+                      isTimed ? 'Kg (opcional)' : 'Kg',
+                      style: const TextStyle(color: Colors.grey),
+                    ),
                   ),
                 ),
+                if (isBarbell) const SizedBox(width: _plateButtonWidth),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Center(
-                    child: Text('Reps', style: TextStyle(color: Colors.grey)),
+                    child: Text(
+                      isTimed ? 'Segundos' : 'Reps',
+                      style: const TextStyle(color: Colors.grey),
+                    ),
                   ),
                 ),
-                SizedBox(width: 40),
+                const SizedBox(width: 40),
               ],
             ),
             for (int s = 0; s < exercise.sets.length; s++)
@@ -801,6 +836,7 @@ class _ExerciseCard extends StatelessWidget {
                 exerciseIndex: exerciseIndex,
                 setIndex: s,
                 isBarbell: isBarbell,
+                isTimed: isTimed,
                 // Numera só as séries de trabalho (aquecimento mostra "A").
                 setNumber: exercise.sets
                     .take(s + 1)
@@ -815,15 +851,17 @@ class _ExerciseCard extends StatelessWidget {
                   icon: const Icon(Icons.add, size: 18),
                   label: const Text('Adicionar série'),
                 ),
-                TextButton.icon(
-                  key: const ValueKey('generate-warmup'),
-                  onPressed: () => _generateWarmup(context),
-                  icon: const Icon(
-                    Icons.local_fire_department_outlined,
-                    size: 18,
+                // Aquecimento por carga não se aplica a exercício por tempo.
+                if (!isTimed)
+                  TextButton.icon(
+                    key: const ValueKey('generate-warmup'),
+                    onPressed: () => _generateWarmup(context),
+                    icon: const Icon(
+                      Icons.local_fire_department_outlined,
+                      size: 18,
+                    ),
+                    label: const Text('Gerar aquecimento'),
                   ),
-                  label: const Text('Gerar aquecimento'),
-                ),
               ],
             ),
           ],
@@ -909,8 +947,10 @@ void showRecordBanner(
   final parts = [
     if (kinds.contains(PersonalRecordKind.load))
       'maior carga: ${formatKg(set.weightKg)}',
+    if (kinds.contains(PersonalRecordKind.duration))
+      'maior tempo: ${formatSeconds(set.seconds)}',
     if (kinds.contains(PersonalRecordKind.e1rm) && e1rm != null)
-      '1RM estimado: ${formatKg(e1rm)}',
+      '1RM estimado: ${formatKg(roundKg(e1rm))}',
   ];
   messenger
     ..hideCurrentMaterialBanner()
@@ -939,11 +979,15 @@ void showRecordBanner(
 
 int _recordBannerSeq = 0;
 
+/// Largura do botão da calculadora de anilhas na linha da série.
+const double _plateButtonWidth = 40;
+
 class _SetRow extends StatelessWidget {
   final int exerciseIndex;
   final int setIndex;
   final int setNumber;
   final bool isBarbell;
+  final bool isTimed;
 
   const _SetRow({
     super.key,
@@ -951,6 +995,7 @@ class _SetRow extends StatelessWidget {
     required this.setIndex,
     required this.setNumber,
     this.isBarbell = false,
+    this.isTimed = false,
   });
 
   @override
@@ -1003,24 +1048,7 @@ class _SetRow extends StatelessWidget {
           Expanded(
             child: _NumberField(
               suggested: set.suggested,
-              trailing: isBarbell && set.weightKg > 0
-                  ? IconButton(
-                      key: ValueKey('plates-$exerciseIndex-$setIndex'),
-                      tooltip: 'Anilhas de cada lado',
-                      icon: const Icon(Icons.calculate_outlined, size: 18),
-                      visualDensity: VisualDensity.compact,
-                      padding: EdgeInsets.zero,
-                      onPressed: () => showPlateCalculator(
-                        context,
-                        weightKg: set.weightKg,
-                        onUse: (kg) => provider.updateSet(
-                          exerciseIndex,
-                          setIndex,
-                          weightKg: kg,
-                        ),
-                      ),
-                    )
-                  : null,
+              decimal: true,
               initialValue: set.weightKg == 0
                   ? ''
                   : set.weightKg
@@ -1035,23 +1063,74 @@ class _SetRow extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _NumberField(
-              suggested: set.suggested,
-              initialValue: set.reps == 0 ? '' : set.reps.toString(),
-              onChanged: (v) => provider.updateSet(
-                exerciseIndex,
-                setIndex,
-                reps: int.tryParse(v.trim()) ?? 0,
+          // Calculadora de anilhas: botão próprio, fora do campo, para o
+          // toque não ir para o texto. Só lê o peso; ele só muda se o aluno
+          // tocar em "Usar X kg" na folha.
+          if (isBarbell)
+            SizedBox(
+              width: _plateButtonWidth,
+              child: IconButton(
+                key: ValueKey('plates-$exerciseIndex-$setIndex'),
+                tooltip: 'Anilhas de cada lado',
+                icon: const Icon(Icons.calculate_outlined, size: 20),
+                onPressed: set.weightKg > 0
+                    ? () {
+                        FocusScope.of(context).unfocus();
+                        showPlateCalculator(
+                          context,
+                          weightKg: set.weightKg,
+                          onUse: (kg) => provider.updateSet(
+                            exerciseIndex,
+                            setIndex,
+                            weightKg: kg,
+                          ),
+                        );
+                      }
+                    : null,
               ),
             ),
+          const SizedBox(width: 8),
+          Expanded(
+            // Exercício por tempo: o número é a duração em segundos.
+            child: isTimed
+                ? _NumberField(
+                    initialValue: set.seconds == 0 ? '' : '${set.seconds}',
+                    onChanged: (v) => provider.updateSet(
+                      exerciseIndex,
+                      setIndex,
+                      seconds: int.tryParse(v.trim()) ?? 0,
+                    ),
+                  )
+                : _NumberField(
+                    suggested: set.suggested,
+                    initialValue: set.reps == 0 ? '' : set.reps.toString(),
+                    onChanged: (v) => provider.updateSet(
+                      exerciseIndex,
+                      setIndex,
+                      reps: int.tryParse(v.trim()) ?? 0,
+                    ),
+                  ),
           ),
           SizedBox(
             width: 40,
             child: Checkbox(
               value: set.completed,
               onChanged: (v) {
+                if (v == true && !WorkoutProvider.canComplete(set)) {
+                  ScaffoldMessenger.of(context)
+                    ..hideCurrentSnackBar()
+                    ..showSnackBar(
+                      SnackBar(
+                        duration: const Duration(seconds: 2),
+                        content: Text(
+                          isTimed
+                              ? 'Preencha os segundos antes de marcar.'
+                              : 'Preencha as repetições antes de marcar.',
+                        ),
+                      ),
+                    );
+                  return;
+                }
                 final records = provider.updateSet(
                   exerciseIndex,
                   setIndex,
@@ -1079,14 +1158,14 @@ class _NumberField extends StatefulWidget {
   /// Valor ainda é só a sugestão: aparece mais apagado.
   final bool suggested;
 
-  /// Botão dentro do campo, à direita (ex.: calculadora de anilhas).
-  final Widget? trailing;
+  /// Aceita casas decimais (peso). Reps e segundos são inteiros.
+  final bool decimal;
 
   const _NumberField({
     required this.initialValue,
     required this.onChanged,
     this.suggested = false,
-    this.trailing,
+    this.decimal = false,
   });
 
   @override
@@ -1120,19 +1199,14 @@ class _NumberFieldState extends State<_NumberField> {
   Widget build(BuildContext context) {
     return TextFormField(
       controller: _controller,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      keyboardType: TextInputType.numberWithOptions(decimal: widget.decimal),
       textAlign: TextAlign.center,
       style: widget.suggested
           ? TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)
           : null,
-      decoration: InputDecoration(
+      decoration: const InputDecoration(
         isDense: true,
-        contentPadding: const EdgeInsets.symmetric(vertical: 8),
-        suffixIcon: widget.trailing,
-        suffixIconConstraints: const BoxConstraints(
-          minWidth: 32,
-          minHeight: 32,
-        ),
+        contentPadding: EdgeInsets.symmetric(vertical: 8),
       ),
       onChanged: widget.onChanged,
     );

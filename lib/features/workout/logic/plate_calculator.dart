@@ -3,6 +3,7 @@
 library;
 
 import 'package:newfitness/shared/models/plate_setup.dart';
+import 'package:newfitness/shared/utils/format.dart';
 
 /// Resultado para um peso total.
 class PlateLoad {
@@ -103,10 +104,5 @@ PlateLoad loadPlates(double targetKg, PlateSetup setup) {
   );
 }
 
-/// "62,5 kg", "20 kg", "1,25 kg".
-String plateKg(double kg) {
-  final s = kg == kg.roundToDouble()
-      ? kg.toStringAsFixed(0)
-      : kg.toStringAsFixed(2).replaceFirst(RegExp(r'0$'), '');
-  return '${s.replaceAll('.', ',')} kg';
-}
+/// "62,5 kg", "20 kg", "1,25 kg" (ver [formatKg]).
+String plateKg(double kg) => formatKg(kg);

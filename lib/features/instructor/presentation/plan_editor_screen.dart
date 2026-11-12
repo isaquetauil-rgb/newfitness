@@ -12,6 +12,7 @@ import 'package:newfitness/features/workout/logic/warmup.dart';
 import 'package:newfitness/features/workout/presentation/workout_templates_screen.dart';
 import 'package:newfitness/shared/models/exercise.dart';
 import 'package:newfitness/shared/models/plan_template.dart';
+import 'package:newfitness/shared/utils/format.dart';
 import 'package:newfitness/shared/models/training_plan.dart';
 import 'package:newfitness/shared/models/workout_templates.dart';
 
@@ -542,9 +543,7 @@ class _SubWorkoutEditor extends StatelessWidget {
     }
     if (e.progressionIncrementKg != null) {
       final kg = e.progressionIncrementKg!;
-      parts.add(
-        '+${(kg % 1 == 0 ? kg.toStringAsFixed(0) : '$kg').replaceAll('.', ',')} kg',
-      );
+      parts.add('+${formatKg(kg)}');
     }
     if (e.notes != null) parts.add(e.notes!);
     return parts.join(' · ');

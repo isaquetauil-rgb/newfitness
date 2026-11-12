@@ -13,11 +13,15 @@ class ExerciseProgressInput {
   /// nenhuma série entra na conta.
   final double? bestE1rmKg;
 
+  /// Maior tempo do dia (exercício por tempo); 0 se não houver.
+  final int bestSeconds;
+
   const ExerciseProgressInput({
     required this.exerciseName,
     required this.topSetLoadKg,
     required this.totalVolume,
     this.bestE1rmKg,
+    this.bestSeconds = 0,
   });
 }
 
@@ -43,7 +47,8 @@ Map<String, ExerciseProgressInput> aggregateProgressInputs(
     // Aquecimento não conta para carga de topo nem 1RM (ver `bestLoad`).
     final topSetLoad = bestLoad(exercise.sets);
     final totalVolume = exercise.totalVolume;
-    if (topSetLoad <= 0 && totalVolume <= 0) continue;
+    final secs = bestSeconds(exercise.sets);
+    if (topSetLoad <= 0 && totalVolume <= 0 && secs <= 0) continue;
     final e1rm = bestE1rm(exercise.sets);
 
     final current = aggregated[exercise.exerciseId];
@@ -59,6 +64,9 @@ Map<String, ExerciseProgressInput> aggregateProgressInputs(
           : currentE1rm == null || e1rm > currentE1rm
           ? e1rm
           : currentE1rm,
+      bestSeconds: secs > (current?.bestSeconds ?? 0)
+          ? secs
+          : (current?.bestSeconds ?? 0),
     );
   }
   return aggregated;
@@ -77,11 +85,15 @@ class ProgressPoint {
   /// têm, e treinos só com séries acima de 12 reps também não.
   final double? e1rmKg;
 
+  /// Maior tempo do dia (exercício por tempo). Opcional.
+  final int? seconds;
+
   const ProgressPoint({
     required this.date,
     required this.topSetLoadKg,
     required this.totalVolume,
     this.e1rmKg,
+    this.seconds,
   });
 
   factory ProgressPoint.fromMap(Map<String, dynamic> map) {
@@ -92,6 +104,7 @@ class ProgressPoint {
       topSetLoadKg: (map['topSetLoadKg'] as num?)?.toDouble() ?? 0,
       totalVolume: (map['totalVolume'] as num?)?.toDouble() ?? 0,
       e1rmKg: (map['e1rmKg'] as num?)?.toDouble(),
+      seconds: (map['seconds'] as num?)?.toInt(),
     );
   }
 
@@ -101,6 +114,7 @@ class ProgressPoint {
       'topSetLoadKg': topSetLoadKg,
       'totalVolume': totalVolume,
       'e1rmKg': ?e1rmKg,
+      'seconds': ?seconds,
     };
   }
 }
@@ -126,6 +140,9 @@ class ExerciseProgressRecord {
   /// versão começam sem e ganham o valor no próximo treino.
   final double? bestE1rmKg;
 
+  /// Maior tempo já registrado (exercício por tempo). Opcional.
+  final int? bestSeconds;
+
   /// Histórico limitado (mais recentes por último) — usado pra desenhar um
   /// gráfico de evolução; ver `_historyLimit` em `FirestoreService`.
   final List<ProgressPoint> history;
@@ -138,12 +155,16 @@ class ExerciseProgressRecord {
     required this.lastPerformedAt,
     required this.totalSessions,
     this.bestE1rmKg,
+    this.bestSeconds,
     this.history = const [],
   });
 
   /// Marcas atuais, para detectar recordes no próximo treino.
-  RecordBaseline get baseline =>
-      RecordBaseline(bestLoadKg: bestLoadKg, bestE1rmKg: bestE1rmKg);
+  RecordBaseline get baseline => RecordBaseline(
+    bestLoadKg: bestLoadKg,
+    bestE1rmKg: bestE1rmKg,
+    bestSeconds: bestSeconds,
+  );
 
   factory ExerciseProgressRecord.fromMap(String id, Map<String, dynamic> map) {
     return ExerciseProgressRecord(
@@ -156,6 +177,7 @@ class ExerciseProgressRecord {
       ),
       totalSessions: (map['totalSessions'] as num?)?.toInt() ?? 0,
       bestE1rmKg: (map['bestE1rmKg'] as num?)?.toDouble(),
+      bestSeconds: (map['bestSeconds'] as num?)?.toInt(),
       history:
           (map['history'] as List<dynamic>?)
               ?.map(
@@ -175,6 +197,7 @@ class ExerciseProgressRecord {
       'lastPerformedAt': lastPerformedAt.millisecondsSinceEpoch,
       'totalSessions': totalSessions,
       'bestE1rmKg': ?bestE1rmKg,
+      'bestSeconds': ?bestSeconds,
       'history': history.map((p) => p.toMap()).toList(),
     };
   }
@@ -191,6 +214,7 @@ class ExerciseProgressRecord {
     required double topSetLoadKg,
     required double totalVolume,
     double? e1rmKg,
+    int seconds = 0,
     int historyLimit = 50,
   }) {
     final rounded = e1rmKg == null ? null : roundKg(e1rmKg);
@@ -201,12 +225,14 @@ class ExerciseProgressRecord {
         topSetLoadKg: topSetLoadKg,
         totalVolume: totalVolume,
         e1rmKg: rounded,
+        seconds: seconds > 0 ? seconds : null,
       ),
     ];
     final trimmedHistory = history.length > historyLimit
         ? history.sublist(history.length - historyLimit)
         : history;
     final previousE1rm = existing?.bestE1rmKg;
+    final previousSecs = existing?.bestSeconds;
 
     return ExerciseProgressRecord(
       exerciseId: exerciseId,
@@ -222,6 +248,7 @@ class ExerciseProgressRecord {
           : previousE1rm == null || rounded > previousE1rm
           ? rounded
           : previousE1rm,
+      bestSeconds: seconds > (previousSecs ?? 0) ? seconds : previousSecs,
       history: trimmedHistory,
     );
   }

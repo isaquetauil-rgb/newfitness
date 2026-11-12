@@ -109,11 +109,27 @@ void main() {
       expect(v(generateWarmupSets(30)), [(15.0, 8), (22.5, 4)]);
     });
 
-    test('cargas pequenas: passo de 0,5 kg, sem repetir nem zerar', () {
-      expect(v(generateWarmupSets(10)), [(5.0, 8), (7.5, 4)]);
-      expect(v(generateWarmupSets(1)), [(0.5, 8)]);
-      expect(generateWarmupSets(0), isEmpty);
-    });
+    test(
+      'sempre múltiplo de 2,5 kg, mínimo 2,5, nunca a carga de trabalho',
+      () {
+        expect(v(generateWarmupSets(10)), [(5.0, 8), (7.5, 4)]);
+        // 15 kg: 7,5 e 11,25 → 7,5 e 12,5 (antes saía 11,5).
+        expect(v(generateWarmupSets(15)), [(7.5, 8), (12.5, 4)]);
+        // 4 kg: 2 → 2,5 (mínimo) e 3 → 2,5 repetido: uma série só.
+        expect(v(generateWarmupSets(4)), [(2.5, 8)]);
+        // Até 2,5 kg não cabe aquecimento abaixo da carga de trabalho.
+        expect(generateWarmupSets(2.5), isEmpty);
+        expect(generateWarmupSets(1), isEmpty);
+        expect(generateWarmupSets(0), isEmpty);
+        for (final work in [7.0, 13.0, 33.0, 61.0, 97.5, 142.5]) {
+          for (final s in generateWarmupSets(work)) {
+            expect(s.weightKg % 2.5, 0, reason: '$work');
+            expect(s.weightKg, lessThan(work));
+            expect(s.weightKg, greaterThanOrEqualTo(2.5));
+          }
+        }
+      },
+    );
   });
 
   test('groupSupersets junta o grupo na posição do primeiro', () {
@@ -167,9 +183,9 @@ void main() {
 
     test('gerar aquecimento: antes da primeira série, a partir da carga', () {
       start([_p('supino')]);
-      expect(provider.generateWarmup(0), 0); // sem carga ainda
+      expect(provider.generateWarmup(0).count, 0); // sem carga ainda
       provider.updateSet(0, 0, weightKg: 60, reps: 10);
-      expect(provider.generateWarmup(0), 3);
+      expect(provider.generateWarmup(0).count, 3);
       final sets = provider.activeWorkout!.exercises[0].sets;
       expect(sets.map((s) => s.type), [
         SetType.warmup,
@@ -179,17 +195,55 @@ void main() {
         SetType.normal,
       ]);
       expect(sets.first.weightKg, 25); // 40% de 60 = 24 → 25
+    });
 
-      // Gerar de novo substitui o aquecimento não feito.
-      provider.updateSet(0, 3, weightKg: 100);
+    test('gerar aquecimento NUNCA altera séries que já existem', () {
+      start([_p('supino')]);
+      // 60 × 10 já feita (o caso do teste no celular) e a 2ª preenchida.
+      provider.updateSet(0, 0, weightKg: 60, reps: 10, completed: true);
+      provider.updateSet(0, 1, weightKg: 62.5, reps: 8);
+      timer.skip();
+      final before = [...provider.activeWorkout!.exercises[0].sets];
+      final snapshot = [for (final s in before) s.toMap()];
+
+      expect(provider.generateWarmup(0).count, 3);
+
+      final after = provider.activeWorkout!.exercises[0].sets;
+      final existing = after.where((s) => !s.isWarmup).toList();
+      // Mesmos objetos, mesma ordem, mesmos valores (inclusive "feita").
+      expect(existing, hasLength(before.length));
+      for (int i = 0; i < before.length; i++) {
+        expect(identical(existing[i], before[i]), isTrue);
+        expect(existing[i].toMap(), snapshot[i]);
+      }
+      expect(after.first.isWarmup, isTrue);
+
+      // Gerar de novo não mexe em nada: avisa que já tem aquecimento.
+      final again = provider.generateWarmup(0);
+      expect(again.alreadyHasWarmup, isTrue);
+      expect(provider.activeWorkout!.exercises[0].sets, hasLength(5));
+    });
+
+    test('série de aquecimento feita: descanso curto de 30 s', () {
+      start([_p('supino', rest: 120)]);
+      provider.updateSet(0, 0, weightKg: 60, reps: 10);
       provider.generateWarmup(0);
-      final again = provider.activeWorkout!.exercises[0].sets;
-      expect(again.where((s) => s.isWarmup).map((s) => s.weightKg), [
-        40,
-        60,
-        80,
-      ]);
-      expect(again, hasLength(5));
+      provider.updateSet(0, 0, completed: true); // aquecimento (25 × 10)
+      expect(timer.remainingSeconds, inInclusiveRange(29, 30));
+      timer.skip();
+      provider.updateSet(0, 3, completed: true); // série de trabalho
+      expect(timer.remainingSeconds, inInclusiveRange(119, 120));
+    });
+
+    test('não marca série sem reps (nem com 0)', () {
+      start([_p('supino')]);
+      provider.updateSet(0, 0, completed: true);
+      expect(provider.activeWorkout!.exercises[0].sets[0].completed, isFalse);
+      provider.updateSet(0, 0, reps: 0, weightKg: 40, completed: true);
+      expect(provider.activeWorkout!.exercises[0].sets[0].completed, isFalse);
+      expect(timer.isActive, isFalse);
+      provider.updateSet(0, 0, reps: 8, completed: true);
+      expect(provider.activeWorkout!.exercises[0].sets[0].completed, isTrue);
     });
 
     test('trocar tipo da série', () {
@@ -206,13 +260,13 @@ void main() {
       expect(ids, ['a', 'b', 'x']);
       expect(provider.supersetMembers(0), [0, 1]);
 
-      provider.updateSet(0, 0, completed: true);
+      provider.updateSet(0, 0, reps: 10, completed: true);
       expect(timer.isActive, isFalse);
-      provider.updateSet(1, 0, completed: true);
+      provider.updateSet(1, 0, reps: 10, completed: true);
       expect(timer.remainingSeconds, inInclusiveRange(89, 90));
 
       timer.skip();
-      provider.updateSet(2, 0, completed: true); // fora do grupo
+      provider.updateSet(2, 0, reps: 10, completed: true); // fora do grupo
       expect(timer.isActive, isTrue);
     });
   });

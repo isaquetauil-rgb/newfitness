@@ -97,8 +97,41 @@ void main() {
       expect(s.targetReps, 8);
     });
 
-    test('sem prescrição, peso do corpo ou por tempo: nada', () {
-      expect(suggestionForLogged(logged(null), history), isNull);
+    test('treino livre (sem prescrição): dupla progressão 8–12', () {
+      // O caso do teste no celular: Supino reto 60 × 10 no histórico.
+      final s = suggestionForLogged(logged(null), [
+        _workout(1, 'supino', 60, [10]),
+      ], library: _lib())!;
+      expect(s.weightKg, 60);
+      expect(s.targetReps, 11);
+      // Bateu 12 em tudo: sobe a carga e volta para 8.
+      final up = suggestionForLogged(logged(null), [
+        _workout(1, 'supino', 60, [12, 12]),
+      ])!;
+      expect((up.weightKg, up.targetReps), (62.5, 8));
+    });
+
+    test('exercício por tempo: cadastro ou prescrição em segundos', () {
+      expect(
+        isTimedExercise(logged(null), library: _lib(duration: true)),
+        isTrue,
+      );
+      final prancha = LoggedExercise(
+        exerciseId: 'plank',
+        exerciseName: 'Prancha',
+        prescription: const PlanExercise(
+          exerciseId: 'plank',
+          exerciseName: 'Prancha',
+          targetSets: 3,
+          targetReps: '20-30 s',
+        ),
+      );
+      expect(isTimedExercise(prancha), isTrue);
+      expect(isTimedExercise(logged()), isFalse);
+      expect(repsTextIsTimeOrDistance('8-12'), isFalse);
+    });
+
+    test('peso do corpo ou por tempo: nada', () {
       expect(
         suggestionForLogged(
           logged(),

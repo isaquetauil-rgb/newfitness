@@ -113,6 +113,10 @@ final _timeOrDistance = RegExp(
   caseSensitive: false,
 );
 
+/// O texto de prescrição é tempo ou distância ("20-30 s", "1 km"), não reps?
+bool repsTextIsTimeOrDistance(String text) =>
+    _timeOrDistance.hasMatch(text.trim().toLowerCase());
+
 /// Faixa de repetições de um texto livre de prescrição, ou `null`.
 /// "8-12" → (8, 12); "10" → (10, 10); "12 cada lado" → (12, 12).
 (int, int)? parseRepRange(String text) {

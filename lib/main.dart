@@ -9,6 +9,7 @@ import 'core/di/injector.dart';
 import 'core/error/error_handler.dart';
 import 'core/firebase/local_emulators.dart';
 import 'core/logging/app_logger.dart';
+import 'core/system/system_bars.dart';
 import 'firebase_options.dart';
 
 void main() {
@@ -27,6 +28,9 @@ void main() {
 
       setupInjector();
       await getIt.allReady();
+
+      // Barra de navegação do Android escondida com o app aberto.
+      unawaited(SystemBars.hideNavigationBar());
 
       runApp(const NewFitnessApp());
     },

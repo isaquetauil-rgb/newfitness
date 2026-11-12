@@ -18,6 +18,7 @@ import '../models/nutrition_message.dart';
 import '../models/nutrition_plan.dart';
 import '../models/physical_assessment.dart';
 import '../models/professional_request.dart';
+import '../models/parq.dart';
 import '../models/plan_template.dart';
 import '../models/plate_setup.dart';
 import '../models/reminder.dart';
@@ -106,6 +107,8 @@ class FirestoreService {
     'instructorId',
     'nutritionistId',
     'inviteCode',
+    // Só o personal vinculado muda (ver `setFreeWorkoutDisabled`).
+    'freeWorkoutDisabled',
   };
 
   /// Atualiza os dados editáveis do perfil (nome, peso, altura...). Não
@@ -121,6 +124,46 @@ class FirestoreService {
           .doc(profile.uid)
           .set(data, SetOptions(merge: true));
     });
+  }
+
+  /// Grava o PAR-Q respondido no perfil do próprio aluno.
+  Future<void> saveParq(String uid, ParQ parq) {
+    return _guard('saveParq', () {
+      return _db.collection(FirestorePaths.users).doc(uid).set({
+        'parq': parq.toMap(),
+      }, SetOptions(merge: true));
+    });
+  }
+
+  /// Registra o aceite do aviso de responsabilidade do treino livre.
+  Future<void> acceptFreeWorkoutTerms(String uid, int acceptedAt) {
+    return _guard('acceptFreeWorkoutTerms', () {
+      return _db.collection(FirestorePaths.users).doc(uid).set({
+        'freeWorkoutTermsAcceptedAt': acceptedAt,
+      }, SetOptions(merge: true));
+    });
+  }
+
+  /// O personal vinculado liga/desliga o treino livre do aluno. As regras só
+  /// deixam o personal vinculado (ou o admin) mudar este campo.
+  Future<void> setFreeWorkoutDisabled(String studentUid, bool disabled) {
+    return _guard('setFreeWorkoutDisabled', () {
+      return _db.collection(FirestorePaths.users).doc(studentUid).update({
+        'freeWorkoutDisabled': disabled,
+      });
+    });
+  }
+
+  /// Perfil de um usuário ao vivo (ex.: o personal vendo o aluno vinculado).
+  Stream<UserProfile?> watchUserProfile(String uid) {
+    return _guardStream(
+      'watchUserProfile',
+      _db
+          .collection(FirestorePaths.users)
+          .doc(uid)
+          .snapshots()
+          .map((d) => d.exists ? UserProfile.fromMap(d.id, d.data()!) : null),
+    );
   }
 
   /// Grava só a barra e as anilhas da academia (`plateSetup`) no perfil.
@@ -537,6 +580,7 @@ class FirestoreService {
           topSetLoadKg: entry.value.topSetLoadKg,
           totalVolume: entry.value.totalVolume,
           e1rmKg: entry.value.bestE1rmKg,
+          seconds: entry.value.bestSeconds,
           historyLimit: _progressHistoryLimit,
         );
         await doc.set(updated.toMap());

@@ -53,18 +53,28 @@ class WorkoutSet {
 
   SetType type;
 
+  /// Duração em segundos, nos exercícios por tempo (prancha, isometria). Nesse
+  /// caso `reps` fica 0 e a carga é opcional. Campo opcional: só é gravado
+  /// quando há tempo.
+  int seconds;
+
   WorkoutSet({
     this.reps = 0,
     this.weightKg = 0,
     this.completed = false,
     this.suggested = false,
     this.type = SetType.normal,
+    this.seconds = 0,
   });
 
   bool get isWarmup => type == SetType.warmup;
 
-  /// Conta para volume, recordes e sugestão de carga (tudo menos aquecimento).
-  bool get countsForStats => type != SetType.warmup;
+  /// Série de exercício por tempo (tem segundos).
+  bool get isTimed => seconds > 0;
+
+  /// Conta para volume, recorde de carga, 1RM e sugestão de carga: tudo
+  /// menos aquecimento e série por tempo (cujo recorde é o maior tempo).
+  bool get countsForStats => type != SetType.warmup && !isTimed;
 
   factory WorkoutSet.fromMap(Map<String, dynamic> map) {
     return WorkoutSet(
@@ -73,6 +83,7 @@ class WorkoutSet {
       completed: map['completed'] as bool? ?? false,
       suggested: map['suggested'] as bool? ?? false,
       type: setTypeFromString(map['type'] as String?),
+      seconds: (map['seconds'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -84,6 +95,7 @@ class WorkoutSet {
       'completed': completed,
       if (suggested) 'suggested': true,
       if (type != SetType.normal) 'type': type.name,
+      if (seconds > 0) 'seconds': seconds,
     };
   }
 
@@ -93,5 +105,6 @@ class WorkoutSet {
     completed: completed,
     suggested: suggested,
     type: type,
+    seconds: seconds,
   );
 }

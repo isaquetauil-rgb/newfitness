@@ -197,6 +197,8 @@ final List<Exercise> sampleExercises = [
     equipment: 'Peso do corpo',
     description: 'Fortalece o core e melhora a estabilidade da coluna.',
     videoUrl: 'https://www.youtube.com/watch?v=Yu0wjtD5FkU',
+    // Medido em segundos (ver `isTimedExercise`).
+    tracksDuration: true,
     secondaryMuscles: const ['Ombro', 'Glúteos'],
     movementPattern: 'Core/estabilização',
     difficultyLevel: 'iniciante',

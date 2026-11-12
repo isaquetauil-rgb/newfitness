@@ -39,6 +39,9 @@ class AppRoutes {
   static const adminSupport = '/admin/support';
   static const adminSupportThread = '/admin/support/thread';
   static const support = '/support';
+
+  /// PAR-Q do onboarding do aluno.
+  static const parq = '/parq';
   static const profile = '/profile';
   static const progressCalendar = '/progress-calendar';
 

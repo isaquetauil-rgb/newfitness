@@ -14,6 +14,7 @@ import 'package:newfitness/features/admin/presentation/admin_taxonomy_screen.dar
 import 'package:newfitness/features/admin/presentation/admin_users_screen.dart';
 import 'package:newfitness/features/agenda/presentation/agenda_screen.dart';
 import 'package:newfitness/features/ai/presentation/ai_hub_screen.dart';
+import 'package:newfitness/features/health/presentation/parq_screen.dart';
 import 'package:newfitness/features/auth/logic/auth_provider.dart';
 import 'package:newfitness/features/auth/presentation/forgot_password_screen.dart';
 import 'package:newfitness/features/auth/presentation/login_screen.dart';
@@ -113,6 +114,11 @@ GoRouter buildAppRouter(AuthProvider authProvider) {
         path: AppRoutes.support,
         pageBuilder: (context, state) =>
             _fadeThrough(state, const SupportChatScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.parq,
+        pageBuilder: (context, state) =>
+            _fadeThrough(state, const ParqScreen()),
       ),
       GoRoute(
         path: AppRoutes.workoutTemplates,

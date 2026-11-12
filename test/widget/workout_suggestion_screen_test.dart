@@ -209,6 +209,46 @@ void main() {
     expect(kept, hasLength(1));
   });
 
+  testWidgets('marcar sem reps: aviso e a série continua desmarcada', (
+    tester,
+  ) async {
+    await pump(tester);
+    await tester.enterText(find.byType(TextField).at(1), '');
+    await tester.pump();
+    await tester.tap(find.byType(Checkbox).first);
+    await tester.pump();
+    expect(
+      find.text('Preencha as repetições antes de marcar.'),
+      findsOneWidget,
+    );
+    expect(
+      workoutProvider.activeWorkout!.exercises.single.sets.first.completed,
+      isFalse,
+    );
+  });
+
+  testWidgets('calculadora: botão abre a folha e o peso digitado não muda', (
+    tester,
+  ) async {
+    await pump(tester);
+    await tester.enterText(find.byType(TextField).first, '30,2');
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('plates-0-0')));
+    await tester.pumpAndSettle();
+    expect(find.text('Anilhas para 30,2 kg'), findsOneWidget);
+    // Fechar sem "Usar": o peso fica 30,2.
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
+    expect(
+      workoutProvider.activeWorkout!.exercises.single.sets.first.weightKg,
+      30.2,
+    );
+    expect(
+      tester.widget<TextField>(find.byType(TextField).first).controller!.text,
+      '30,2',
+    );
+  });
+
   testWidgets('gerar aquecimento e trocar o tipo da série', (tester) async {
     await pump(tester);
 

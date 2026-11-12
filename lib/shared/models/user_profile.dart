@@ -1,3 +1,4 @@
+import 'parq.dart';
 import 'plate_setup.dart';
 
 enum UserRole { student, instructor, nutritionist }
@@ -48,6 +49,18 @@ class UserProfile {
   /// opcional: perfis antigos não têm.
   final PlateSetup? plateSetup;
 
+  /// PAR-Q respondido no onboarding (com data). Opcional.
+  final ParQ? parq;
+
+  /// Quando o aluno aceitou o aviso de responsabilidade do treino livre
+  /// (ms desde a época). Opcional.
+  final int? freeWorkoutTermsAcceptedAt;
+
+  /// O personal vinculado desativou o treino livre deste aluno. Só o
+  /// personal vinculado (ou o admin) muda — ver `firestore.rules`. Só vale
+  /// enquanto há personal vinculado ([freeWorkoutBlocked]).
+  final bool? freeWorkoutDisabled;
+
   const UserProfile({
     required this.uid,
     required this.name,
@@ -62,7 +75,15 @@ class UserProfile {
     this.inviteCode,
     this.isPrivate = false,
     this.plateSetup,
+    this.parq,
+    this.freeWorkoutTermsAcceptedAt,
+    this.freeWorkoutDisabled,
   });
+
+  /// Treino livre bloqueado agora: o personal desativou e ainda está
+  /// vinculado (se o vínculo acabar, o bloqueio deixa de valer).
+  bool get freeWorkoutBlocked =>
+      freeWorkoutDisabled == true && (instructorId?.isNotEmpty ?? false);
 
   factory UserProfile.fromMap(String uid, Map<String, dynamic> map) {
     return UserProfile(
@@ -85,6 +106,10 @@ class UserProfile {
               Map<String, dynamic>.from(map['plateSetup'] as Map),
             )
           : null,
+      parq: ParQ.fromMap(map['parq']),
+      freeWorkoutTermsAcceptedAt: (map['freeWorkoutTermsAcceptedAt'] as num?)
+          ?.toInt(),
+      freeWorkoutDisabled: map['freeWorkoutDisabled'] as bool?,
     );
   }
 
@@ -104,6 +129,9 @@ class UserProfile {
       // Omitido quando nulo: a atualização do perfil (merge) não apaga o
       // que o aluno configurou.
       'plateSetup': ?plateSetup?.toMap(),
+      'parq': ?parq?.toMap(),
+      'freeWorkoutTermsAcceptedAt': ?freeWorkoutTermsAcceptedAt,
+      'freeWorkoutDisabled': ?freeWorkoutDisabled,
     };
   }
 
@@ -119,6 +147,9 @@ class UserProfile {
     String? inviteCode,
     bool? isPrivate,
     PlateSetup? plateSetup,
+    ParQ? parq,
+    int? freeWorkoutTermsAcceptedAt,
+    bool? freeWorkoutDisabled,
   }) {
     return UserProfile(
       uid: uid,
@@ -134,6 +165,10 @@ class UserProfile {
       inviteCode: inviteCode ?? this.inviteCode,
       isPrivate: isPrivate ?? this.isPrivate,
       plateSetup: plateSetup ?? this.plateSetup,
+      parq: parq ?? this.parq,
+      freeWorkoutTermsAcceptedAt:
+          freeWorkoutTermsAcceptedAt ?? this.freeWorkoutTermsAcceptedAt,
+      freeWorkoutDisabled: freeWorkoutDisabled ?? this.freeWorkoutDisabled,
     );
   }
 }

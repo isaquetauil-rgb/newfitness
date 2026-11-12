@@ -9,6 +9,7 @@ import 'package:newfitness/core/error/app_exception.dart';
 import 'package:newfitness/core/logging/app_logger.dart';
 import 'package:newfitness/core/network/functions_client.dart';
 import 'package:newfitness/features/auth/data/auth_service.dart';
+import 'package:newfitness/shared/models/parq.dart';
 import 'package:newfitness/shared/models/plate_setup.dart';
 import 'package:newfitness/shared/models/user_profile.dart';
 import 'package:newfitness/shared/services/firestore_service.dart';
@@ -303,6 +304,39 @@ class AuthProvider extends ChangeNotifier {
   Future<void> refreshProfile() async {
     final uid = _user?.uid;
     if (uid != null) await _loadProfile(uid);
+  }
+
+  /// Salva o PAR-Q no perfil (com a data). Devolve `false` se falhar.
+  Future<bool> saveParq(List<bool> answers) async {
+    final profile = _profile;
+    if (profile == null) return false;
+    final parq = ParQ(
+      answers: answers,
+      answeredAt: DateTime.now().millisecondsSinceEpoch,
+    );
+    try {
+      await _firestoreService.saveParq(profile.uid, parq);
+      _profile = profile.copyWith(parq: parq);
+      notifyListeners();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Registra o aceite do aviso do treino livre (com a data).
+  Future<bool> acceptFreeWorkoutTerms() async {
+    final profile = _profile;
+    if (profile == null) return false;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    try {
+      await _firestoreService.acceptFreeWorkoutTerms(profile.uid, now);
+      _profile = profile.copyWith(freeWorkoutTermsAcceptedAt: now);
+      notifyListeners();
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   /// Salva a barra e as anilhas da academia no perfil (calculadora de

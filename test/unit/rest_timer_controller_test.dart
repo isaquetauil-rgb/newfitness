@@ -198,13 +198,26 @@ void main() {
     });
   });
 
-  test('canal do Android para cada combinação de som e vibração', () {
+  test('canais NOVOS para lembretes e descanso, sem repetir os antigos', () {
     final ids = {
-      for (final s in [true, false])
-        for (final v in [true, false])
-          restChannelFor(sound: s, vibration: v).$1,
+      for (final k in NotificationKind.values)
+        for (final s in [true, false])
+          for (final v in [true, false])
+            channelFor(k, sound: s, vibration: v).id,
     };
-    expect(ids, hasLength(4));
+    expect(ids, hasLength(8));
+    expect(
+      ids.intersection(NotificationService.oldChannelIds.toSet()),
+      isEmpty,
+    );
+    expect(
+      channelFor(NotificationKind.reminder, sound: true, vibration: true).id,
+      'lembretes_som_vibracao',
+    );
+    expect(
+      channelFor(NotificationKind.rest, sound: true, vibration: true).id,
+      'descanso_som_vibracao',
+    );
   });
 
   group('WorkoutProvider', () {
@@ -250,13 +263,13 @@ void main() {
     tearDown(() => timer.skip());
 
     test('marcar série começa o descanso com o restSeconds do exercício', () {
-      provider.updateSet(0, 0, completed: true);
+      provider.updateSet(0, 0, reps: 10, completed: true);
       expect(timer.remainingSeconds, inInclusiveRange(74, 75));
     });
 
     test('tela acesa durante o treino e liberada ao cancelar', () {
       expect(screen, [true]);
-      provider.updateSet(0, 0, completed: true);
+      provider.updateSet(0, 0, reps: 10, completed: true);
       provider.cancelWorkout();
       expect(screen, [true, false]);
       expect(timer.isActive, isFalse);

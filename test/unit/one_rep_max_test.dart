@@ -37,7 +37,15 @@ void main() {
     test('formato pt-BR', () {
       expect(formatKg(62.5), '62,5 kg');
       expect(formatKg(75), '75 kg');
-      expect(formatKg(133.333), '133,3 kg');
+      // O 1RM é arredondado a 0,1 kg antes de aparecer.
+      expect(formatKg(roundKg(133.333)), '133,3 kg');
+      expect(formatKg(19), '19 kg');
+      expect(formatKg(60.0), '60 kg');
+      expect(formatKg(1.25), '1,25 kg');
+      expect(formatKg(1100), '1100 kg');
+      expect(formatKgNumber(0), '0');
+      expect(formatSeconds(45), '45 s');
+      expect(formatSeconds(90), '1 min 30 s');
     });
   });
 

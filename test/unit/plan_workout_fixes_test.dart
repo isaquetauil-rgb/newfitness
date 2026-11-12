@@ -261,10 +261,11 @@ void main() {
     });
 
     test(
-      '4.4 concluída com 0 reps e 0 kg conta como realizada (peso do corpo)',
+      '4.4 concluída com reps e 0 kg conta como realizada (peso do corpo)',
       () async {
         provider.startFromPlan('u1', plan, 0);
-        provider.updateSet(1, 0, completed: true);
+        // Marcar exige reps (ver WorkoutProvider.canComplete).
+        provider.updateSet(1, 0, reps: 12, completed: true);
 
         expect(await provider.finishWorkout(), WorkoutFinishResult.saved);
         final saved =
@@ -384,7 +385,7 @@ void main() {
     });
 
     test('livre com série concluída e 0 kg: grava (peso do corpo)', () async {
-      provider.updateSet(0, 0, completed: true);
+      provider.updateSet(0, 0, reps: 12, completed: true);
 
       expect(await provider.finishWorkout(), WorkoutFinishResult.saved);
       final saved =

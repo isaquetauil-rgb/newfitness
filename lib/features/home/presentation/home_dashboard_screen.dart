@@ -6,7 +6,9 @@ import 'package:provider/provider.dart';
 import 'package:newfitness/app/routes/app_routes.dart';
 import 'package:newfitness/app/widgets/drawer_menu_button.dart';
 import 'package:newfitness/core/di/injector.dart';
+import 'package:newfitness/core/storage/local_prefs.dart';
 import 'package:newfitness/features/auth/logic/auth_provider.dart';
+import 'package:newfitness/features/health/presentation/free_workout_gate.dart';
 import 'package:newfitness/features/home/logic/week_summary.dart';
 import 'package:newfitness/features/instructor/presentation/ai_suggestion_sheet.dart';
 import 'package:newfitness/features/notifications/logic/reminder_provider.dart';
@@ -18,6 +20,7 @@ import 'package:newfitness/shared/models/user_profile.dart';
 import 'package:newfitness/shared/models/workout.dart';
 import 'package:newfitness/shared/models/workout_templates.dart';
 import 'package:newfitness/shared/services/firestore_service.dart';
+import 'package:newfitness/shared/utils/format.dart';
 
 /// Aba inicial — layout diferente por papel:
 ///  - Aluno: próxima ação, resumo da semana, último treino, treinos prontos
@@ -106,6 +109,21 @@ class _StudentHomeBodyState extends State<_StudentHomeBody> {
     _plans = uid == null
         ? const Stream.empty()
         : context.read<TrainingPlanProvider>().watchPlans(uid);
+    // Onboarding do aluno: o PAR-Q abre sozinho uma vez por aparelho; até
+    // ser respondido, um cartão na tela inicial lembra.
+    final profile = widget.profile;
+    if (profile != null &&
+        profile.role == UserRole.student &&
+        profile.parq == null &&
+        getIt.isRegistered<LocalPrefs>() &&
+        getIt.isReadySync<LocalPrefs>() &&
+        !getIt<LocalPrefs>().parqPrompted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        getIt<LocalPrefs>().setParqPrompted();
+        context.push(AppRoutes.parq);
+      });
+    }
   }
 
   @override
@@ -146,6 +164,15 @@ class _StudentHomeBodyState extends State<_StudentHomeBody> {
                 uid: widget.profile?.uid,
               ),
             ),
+            if (widget.profile?.role == UserRole.student) ...[
+              if (widget.profile!.parq == null) ...[
+                const SizedBox(height: 12),
+                const _ParqCard(),
+              ] else if (widget.profile!.parq!.needsMedicalClearance) ...[
+                const SizedBox(height: 12),
+                const _MedicalClearanceCard(),
+              ],
+            ],
             const SizedBox(height: 12),
             _WeekCard(week: week),
             if (loaded && workouts.isEmpty) ...[
@@ -181,6 +208,54 @@ class _StudentHomeBodyState extends State<_StudentHomeBody> {
           ],
         );
       },
+    );
+  }
+}
+
+/// Lembrete do PAR-Q enquanto o aluno não responde.
+class _ParqCard extends StatelessWidget {
+  const _ParqCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      key: const ValueKey('parq-card'),
+      child: ListTile(
+        leading: const Icon(Icons.health_and_safety_outlined),
+        title: const Text('Questionário de saúde (PAR-Q)'),
+        subtitle: const Text('7 perguntas rápidas antes de começar a treinar.'),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () => context.push(AppRoutes.parq),
+      ),
+    );
+  }
+}
+
+/// PAR-Q com algum "sim": recomendação de liberação médica (não bloqueia).
+class _MedicalClearanceCard extends StatelessWidget {
+  const _MedicalClearanceCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Card(
+      key: const ValueKey('medical-clearance-card'),
+      color: colors.tertiaryContainer,
+      child: ListTile(
+        leading: Icon(
+          Icons.medical_services_outlined,
+          color: colors.onTertiaryContainer,
+        ),
+        title: Text(
+          'Recomendado: liberação médica',
+          style: TextStyle(color: colors.onTertiaryContainer),
+        ),
+        subtitle: Text(
+          'Pelas suas respostas no PAR-Q, converse com um médico antes de '
+          'treinar e, se possível, treine com acompanhamento.',
+          style: TextStyle(color: colors.onTertiaryContainer),
+        ),
+      ),
     );
   }
 }
@@ -223,7 +298,12 @@ class _NextStepCard extends StatelessWidget {
       title = 'Pronto para treinar?';
       subtitle = 'Repita "${last.name}" ou escolha outro.';
       action = 'Repetir treino';
-      onPressed = () {
+      onPressed = () async {
+        // Repetir um treino livre passa pelas mesmas regras do treino livre.
+        if (last.source == null && !await ensureFreeWorkoutAllowed(context)) {
+          return;
+        }
+        if (!context.mounted) return;
         context.read<WorkoutProvider>().repeatWorkout(uid!, last);
         context.go(AppRoutes.workout);
       };
@@ -328,11 +408,9 @@ class _WeekCard extends StatelessWidget {
               Text(
                 streak >= 2
                     ? '$streak semanas seguidas treinando · '
-                          '${week.volumeThisWeek.toStringAsFixed(0)} kg nesta '
-                          'semana'
+                          '${formatKg(week.volumeThisWeek)} nesta semana'
                     : '${week.workoutsThisWeek} treino(s) · '
-                          '${week.volumeThisWeek.toStringAsFixed(0)} kg nesta '
-                          'semana',
+                          '${formatKg(week.volumeThisWeek)} nesta semana',
                 style: TextStyle(color: colors.onSurfaceVariant),
               ),
             ],

@@ -106,15 +106,26 @@ class _ProgressRecordTile extends StatelessWidget {
             const SizedBox(height: 8),
             Row(
               children: [
-                _MiniStat(
-                  label: 'Melhor carga',
-                  value: '${record.bestLoadKg.toStringAsFixed(1)} kg',
-                ),
-                const SizedBox(width: 20),
-                _MiniStat(
-                  label: 'Última',
-                  value: '${record.lastLoadKg.toStringAsFixed(1)} kg',
-                ),
+                // Exercício por tempo: o recorde é o maior tempo.
+                if ((record.bestSeconds ?? 0) > 0) ...[
+                  _MiniStat(
+                    label: 'Maior tempo',
+                    value: formatSeconds(record.bestSeconds!),
+                  ),
+                  const SizedBox(width: 20),
+                ],
+                if (record.bestLoadKg > 0 ||
+                    (record.bestSeconds ?? 0) == 0) ...[
+                  _MiniStat(
+                    label: 'Melhor carga',
+                    value: formatKg(record.bestLoadKg),
+                  ),
+                  const SizedBox(width: 20),
+                  _MiniStat(
+                    label: 'Última',
+                    value: formatKg(record.lastLoadKg),
+                  ),
+                ],
                 if (record.bestE1rmKg != null) ...[
                   const SizedBox(width: 20),
                   _MiniStat(
