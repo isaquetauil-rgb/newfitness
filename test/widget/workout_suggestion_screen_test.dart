@@ -236,6 +236,9 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('plates-0-0')));
     await tester.pumpAndSettle();
     expect(find.text('Anilhas para 30,2 kg'), findsOneWidget);
+    // Aviso abaixo da série: não fecha com as anilhas (barra de 20 kg).
+    expect(find.byKey(const ValueKey('plates-hint-0-0')), findsOneWidget);
+    expect(find.textContaining('O mais perto é 30 kg'), findsWidgets);
     // Fechar sem "Usar": o peso fica 30,2.
     await tester.tapAt(const Offset(10, 10));
     await tester.pumpAndSettle();

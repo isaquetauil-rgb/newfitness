@@ -19,11 +19,13 @@ import 'package:newfitness/shared/utils/one_rep_max.dart';
 import 'package:newfitness/features/workout/logic/progression/suggest_next.dart';
 import 'package:newfitness/features/workout/logic/progression/workout_suggestion.dart';
 import 'package:newfitness/features/workout/logic/training_plan_provider.dart';
+import 'package:newfitness/features/workout/logic/plate_calculator.dart';
 import 'package:newfitness/features/workout/logic/warmup.dart';
 import 'package:newfitness/features/workout/logic/workout_provider.dart';
 import 'package:newfitness/shared/models/exercise.dart';
 import 'package:newfitness/shared/models/exercise_progress_record.dart';
 import 'package:newfitness/shared/models/logged_exercise.dart';
+import 'package:newfitness/shared/models/plate_setup.dart';
 import 'package:newfitness/shared/models/sample_exercises.dart';
 import 'package:newfitness/shared/models/training_plan.dart';
 import 'package:newfitness/shared/models/user_profile.dart';
@@ -1007,141 +1009,172 @@ class _SetRow extends StatelessWidget {
         .exercises[exerciseIndex]
         .sets[setIndex];
 
+    // Barra: se o peso digitado não fecha com as anilhas da academia, só
+    // avisa o mais perto (o peso não muda sozinho).
+    PlateLoad? plates;
+    if (isBarbell && set.weightKg > 0) {
+      final setup =
+          context.watch<AuthProvider>().profile?.plateSetup ??
+          const PlateSetup();
+      final load = loadPlates(set.weightKg, setup);
+      if (!load.exact && !load.belowBar) plates = load;
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 32,
-            child: PopupMenuButton<SetType>(
-              key: ValueKey('set-type-$exerciseIndex-$setIndex'),
-              tooltip: 'Tipo da série',
-              initialValue: set.type,
-              padding: EdgeInsets.zero,
-              onSelected: (t) =>
-                  provider.setSetType(exerciseIndex, setIndex, t),
-              itemBuilder: (_) => [
-                for (final t in SetType.values)
-                  PopupMenuItem(value: t, child: Text(t.label)),
-              ],
+          Row(
+            children: [
+              SizedBox(
+                width: 32,
+                child: PopupMenuButton<SetType>(
+                  key: ValueKey('set-type-$exerciseIndex-$setIndex'),
+                  tooltip: 'Tipo da série',
+                  initialValue: set.type,
+                  padding: EdgeInsets.zero,
+                  onSelected: (t) =>
+                      provider.setSetType(exerciseIndex, setIndex, t),
+                  itemBuilder: (_) => [
+                    for (final t in SetType.values)
+                      PopupMenuItem(value: t, child: Text(t.label)),
+                  ],
+                  child: Text(
+                    set.type == SetType.normal
+                        ? '$setNumber'
+                        : set.isWarmup
+                        ? 'A'
+                        : '$setNumber${set.type.letter}',
+                    style: TextStyle(
+                      fontWeight: set.type == SetType.normal
+                          ? null
+                          : FontWeight.w700,
+                      color: set.isWarmup
+                          ? Theme.of(context).colorScheme.onSurfaceVariant
+                          : set.type == SetType.normal
+                          ? null
+                          : Theme.of(context).colorScheme.tertiary,
+                      decoration: TextDecoration.underline,
+                      decorationStyle: TextDecorationStyle.dotted,
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: _NumberField(
+                  suggested: set.suggested,
+                  decimal: true,
+                  initialValue: set.weightKg == 0
+                      ? ''
+                      : set.weightKg
+                            .toString()
+                            .replaceFirst(RegExp(r'\.0$'), '')
+                            .replaceAll('.', ','),
+                  onChanged: (v) => provider.updateSet(
+                    exerciseIndex,
+                    setIndex,
+                    // aceita vírgula (teclado pt-BR): "22,5" → 22.5
+                    weightKg:
+                        double.tryParse(v.trim().replaceAll(',', '.')) ?? 0,
+                  ),
+                ),
+              ),
+              // Calculadora de anilhas: botão próprio, fora do campo, para o
+              // toque não ir para o texto. Só lê o peso; ele só muda se o aluno
+              // tocar em "Usar X kg" na folha.
+              if (isBarbell)
+                SizedBox(
+                  width: _plateButtonWidth,
+                  child: IconButton(
+                    key: ValueKey('plates-$exerciseIndex-$setIndex'),
+                    tooltip: 'Anilhas de cada lado',
+                    icon: const Icon(Icons.calculate_outlined, size: 20),
+                    onPressed: set.weightKg > 0
+                        ? () {
+                            FocusScope.of(context).unfocus();
+                            showPlateCalculator(
+                              context,
+                              weightKg: set.weightKg,
+                              onUse: (kg) => provider.updateSet(
+                                exerciseIndex,
+                                setIndex,
+                                weightKg: kg,
+                              ),
+                            );
+                          }
+                        : null,
+                  ),
+                ),
+              const SizedBox(width: 8),
+              Expanded(
+                // Exercício por tempo: o número é a duração em segundos.
+                child: isTimed
+                    ? _NumberField(
+                        initialValue: set.seconds == 0 ? '' : '${set.seconds}',
+                        onChanged: (v) => provider.updateSet(
+                          exerciseIndex,
+                          setIndex,
+                          seconds: int.tryParse(v.trim()) ?? 0,
+                        ),
+                      )
+                    : _NumberField(
+                        suggested: set.suggested,
+                        initialValue: set.reps == 0 ? '' : set.reps.toString(),
+                        onChanged: (v) => provider.updateSet(
+                          exerciseIndex,
+                          setIndex,
+                          reps: int.tryParse(v.trim()) ?? 0,
+                        ),
+                      ),
+              ),
+              SizedBox(
+                width: 40,
+                child: Checkbox(
+                  value: set.completed,
+                  onChanged: (v) {
+                    if (v == true && !WorkoutProvider.canComplete(set)) {
+                      ScaffoldMessenger.of(context)
+                        ..hideCurrentSnackBar()
+                        ..showSnackBar(
+                          SnackBar(
+                            duration: const Duration(seconds: 2),
+                            content: Text(
+                              isTimed
+                                  ? 'Preencha os segundos antes de marcar.'
+                                  : 'Preencha as repetições antes de marcar.',
+                            ),
+                          ),
+                        );
+                      return;
+                    }
+                    final records = provider.updateSet(
+                      exerciseIndex,
+                      setIndex,
+                      completed: v ?? false,
+                    );
+                    if (records.isNotEmpty) {
+                      showRecordBanner(context, set, records);
+                    }
+                  },
+                ),
+              ),
+            ],
+          ),
+          if (plates != null)
+            Padding(
+              key: ValueKey('plates-hint-$exerciseIndex-$setIndex'),
+              padding: const EdgeInsets.only(left: 32, top: 2),
               child: Text(
-                set.type == SetType.normal
-                    ? '$setNumber'
-                    : set.isWarmup
-                    ? 'A'
-                    : '$setNumber${set.type.letter}',
+                'Não fecha com suas anilhas. O mais perto é '
+                '${formatKg(plates.achievedKg)} (toque na calculadora para '
+                'usar).',
                 style: TextStyle(
-                  fontWeight: set.type == SetType.normal
-                      ? null
-                      : FontWeight.w700,
-                  color: set.isWarmup
-                      ? Theme.of(context).colorScheme.onSurfaceVariant
-                      : set.type == SetType.normal
-                      ? null
-                      : Theme.of(context).colorScheme.tertiary,
-                  decoration: TextDecoration.underline,
-                  decorationStyle: TextDecorationStyle.dotted,
+                  fontSize: 12,
+                  color: Theme.of(context).colorScheme.tertiary,
                 ),
               ),
             ),
-          ),
-          Expanded(
-            child: _NumberField(
-              suggested: set.suggested,
-              decimal: true,
-              initialValue: set.weightKg == 0
-                  ? ''
-                  : set.weightKg
-                        .toString()
-                        .replaceFirst(RegExp(r'\.0$'), '')
-                        .replaceAll('.', ','),
-              onChanged: (v) => provider.updateSet(
-                exerciseIndex,
-                setIndex,
-                // aceita vírgula (teclado pt-BR): "22,5" → 22.5
-                weightKg: double.tryParse(v.trim().replaceAll(',', '.')) ?? 0,
-              ),
-            ),
-          ),
-          // Calculadora de anilhas: botão próprio, fora do campo, para o
-          // toque não ir para o texto. Só lê o peso; ele só muda se o aluno
-          // tocar em "Usar X kg" na folha.
-          if (isBarbell)
-            SizedBox(
-              width: _plateButtonWidth,
-              child: IconButton(
-                key: ValueKey('plates-$exerciseIndex-$setIndex'),
-                tooltip: 'Anilhas de cada lado',
-                icon: const Icon(Icons.calculate_outlined, size: 20),
-                onPressed: set.weightKg > 0
-                    ? () {
-                        FocusScope.of(context).unfocus();
-                        showPlateCalculator(
-                          context,
-                          weightKg: set.weightKg,
-                          onUse: (kg) => provider.updateSet(
-                            exerciseIndex,
-                            setIndex,
-                            weightKg: kg,
-                          ),
-                        );
-                      }
-                    : null,
-              ),
-            ),
-          const SizedBox(width: 8),
-          Expanded(
-            // Exercício por tempo: o número é a duração em segundos.
-            child: isTimed
-                ? _NumberField(
-                    initialValue: set.seconds == 0 ? '' : '${set.seconds}',
-                    onChanged: (v) => provider.updateSet(
-                      exerciseIndex,
-                      setIndex,
-                      seconds: int.tryParse(v.trim()) ?? 0,
-                    ),
-                  )
-                : _NumberField(
-                    suggested: set.suggested,
-                    initialValue: set.reps == 0 ? '' : set.reps.toString(),
-                    onChanged: (v) => provider.updateSet(
-                      exerciseIndex,
-                      setIndex,
-                      reps: int.tryParse(v.trim()) ?? 0,
-                    ),
-                  ),
-          ),
-          SizedBox(
-            width: 40,
-            child: Checkbox(
-              value: set.completed,
-              onChanged: (v) {
-                if (v == true && !WorkoutProvider.canComplete(set)) {
-                  ScaffoldMessenger.of(context)
-                    ..hideCurrentSnackBar()
-                    ..showSnackBar(
-                      SnackBar(
-                        duration: const Duration(seconds: 2),
-                        content: Text(
-                          isTimed
-                              ? 'Preencha os segundos antes de marcar.'
-                              : 'Preencha as repetições antes de marcar.',
-                        ),
-                      ),
-                    );
-                  return;
-                }
-                final records = provider.updateSet(
-                  exerciseIndex,
-                  setIndex,
-                  completed: v ?? false,
-                );
-                if (records.isNotEmpty) {
-                  showRecordBanner(context, set, records);
-                }
-              },
-            ),
-          ),
         ],
       ),
     );
