@@ -1,3 +1,5 @@
+import 'plate_setup.dart';
+
 enum UserRole { student, instructor, nutritionist }
 
 String userRoleToString(UserRole role) {
@@ -42,6 +44,10 @@ class UserProfile {
   final String? inviteCode; // preenchido só para instrutores/nutricionistas
   final bool isPrivate;
 
+  /// Barra e anilhas da academia do aluno (calculadora de anilhas). Campo
+  /// opcional: perfis antigos não têm.
+  final PlateSetup? plateSetup;
+
   const UserProfile({
     required this.uid,
     required this.name,
@@ -55,6 +61,7 @@ class UserProfile {
     this.nutritionistId,
     this.inviteCode,
     this.isPrivate = false,
+    this.plateSetup,
   });
 
   factory UserProfile.fromMap(String uid, Map<String, dynamic> map) {
@@ -73,6 +80,11 @@ class UserProfile {
       nutritionistId: map['nutritionistId'] as String?,
       inviteCode: map['inviteCode'] as String?,
       isPrivate: map['isPrivate'] as bool? ?? false,
+      plateSetup: map['plateSetup'] is Map
+          ? PlateSetup.fromMap(
+              Map<String, dynamic>.from(map['plateSetup'] as Map),
+            )
+          : null,
     );
   }
 
@@ -89,6 +101,9 @@ class UserProfile {
       'nutritionistId': nutritionistId,
       'inviteCode': inviteCode,
       'isPrivate': isPrivate,
+      // Omitido quando nulo: a atualização do perfil (merge) não apaga o
+      // que o aluno configurou.
+      'plateSetup': ?plateSetup?.toMap(),
     };
   }
 
@@ -103,6 +118,7 @@ class UserProfile {
     String? nutritionistId,
     String? inviteCode,
     bool? isPrivate,
+    PlateSetup? plateSetup,
   }) {
     return UserProfile(
       uid: uid,
@@ -117,6 +133,7 @@ class UserProfile {
       nutritionistId: nutritionistId ?? this.nutritionistId,
       inviteCode: inviteCode ?? this.inviteCode,
       isPrivate: isPrivate ?? this.isPrivate,
+      plateSetup: plateSetup ?? this.plateSetup,
     );
   }
 }

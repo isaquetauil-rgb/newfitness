@@ -19,6 +19,7 @@ import '../models/nutrition_plan.dart';
 import '../models/physical_assessment.dart';
 import '../models/professional_request.dart';
 import '../models/plan_template.dart';
+import '../models/plate_setup.dart';
 import '../models/reminder.dart';
 import '../models/subscription.dart';
 import '../models/training_plan.dart';
@@ -119,6 +120,15 @@ class FirestoreService {
           .collection(FirestorePaths.users)
           .doc(profile.uid)
           .set(data, SetOptions(merge: true));
+    });
+  }
+
+  /// Grava só a barra e as anilhas da academia (`plateSetup`) no perfil.
+  Future<void> updatePlateSetup(String uid, PlateSetup setup) {
+    return _guard('updatePlateSetup', () {
+      return _db.collection(FirestorePaths.users).doc(uid).set({
+        'plateSetup': setup.toMap(),
+      }, SetOptions(merge: true));
     });
   }
 

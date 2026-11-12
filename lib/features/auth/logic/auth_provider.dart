@@ -9,6 +9,7 @@ import 'package:newfitness/core/error/app_exception.dart';
 import 'package:newfitness/core/logging/app_logger.dart';
 import 'package:newfitness/core/network/functions_client.dart';
 import 'package:newfitness/features/auth/data/auth_service.dart';
+import 'package:newfitness/shared/models/plate_setup.dart';
 import 'package:newfitness/shared/models/user_profile.dart';
 import 'package:newfitness/shared/services/firestore_service.dart';
 
@@ -302,6 +303,21 @@ class AuthProvider extends ChangeNotifier {
   Future<void> refreshProfile() async {
     final uid = _user?.uid;
     if (uid != null) await _loadProfile(uid);
+  }
+
+  /// Salva a barra e as anilhas da academia no perfil (calculadora de
+  /// anilhas). Atualiza o perfil local na hora; devolve `false` se falhar.
+  Future<bool> savePlateSetup(PlateSetup setup) async {
+    final profile = _profile;
+    if (profile == null) return false;
+    try {
+      await _firestoreService.updatePlateSetup(profile.uid, setup);
+      _profile = profile.copyWith(plateSetup: setup);
+      notifyListeners();
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<bool> resetPassword(String email) {

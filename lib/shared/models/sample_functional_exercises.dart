@@ -285,7 +285,7 @@ final List<Exercise> sampleFunctionalExercises = [
     video: 'l3-MUxW-aLs',
     name: 'Suspensão na barra',
     muscleGroup: 'Costas',
-    equipment: 'Barra',
+    equipment: 'Barra fixa',
     description: 'Fortalece a pegada e alivia os ombros.',
     pattern: 'Isometria de pegada',
     steps: const [

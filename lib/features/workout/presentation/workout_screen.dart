@@ -30,6 +30,7 @@ import 'package:newfitness/shared/models/workout.dart';
 import 'package:newfitness/shared/models/workout_set.dart';
 import 'package:newfitness/shared/models/workout_templates.dart';
 
+import 'plate_calculator_sheet.dart';
 import 'rest_timer_sheet.dart';
 
 class WorkoutScreen extends StatelessWidget {
@@ -496,6 +497,15 @@ class _ActiveWorkoutBodyState extends State<_ActiveWorkoutBody> {
       ])
         e.id: e,
     };
+    // Exercícios com barra e anilhas: ganham a calculadora no campo de peso.
+    final barbellIds = {
+      for (final e in library.values)
+        if (e.equipment.trim().toLowerCase() == 'barra' &&
+            e.loadUnit != 'peso do corpo' &&
+            !e.tracksDuration &&
+            !e.tracksDistance)
+          e.id,
+    };
     final unilateralIds = {
       for (final e in library.values)
         if (e.isUnilateral) e.id,
@@ -546,6 +556,7 @@ class _ActiveWorkoutBodyState extends State<_ActiveWorkoutBody> {
             suggestion: suggestions[i],
             superset: _supersetText(provider, i),
             isUnilateral: unilateralIds.contains(exercises[i].exerciseId),
+            isBarbell: barbellIds.contains(exercises[i].exerciseId),
             isTemplate:
                 provider.activeWorkout!.source?.planId.startsWith(
                   templatePlanPrefix,
@@ -590,6 +601,9 @@ class _ExerciseCard extends StatelessWidget {
   /// "Bi-set A · 1 de 2 — alterne; descanso depois do último", ou `null`.
   final String? superset;
 
+  /// Exercício com barra: mostra a calculadora de anilhas no peso.
+  final bool isBarbell;
+
   const _ExerciseCard({
     super.key,
     required this.exerciseIndex,
@@ -599,6 +613,7 @@ class _ExerciseCard extends StatelessWidget {
     this.record,
     this.suggestion,
     this.superset,
+    this.isBarbell = false,
   });
 
   void _generateWarmup(BuildContext context) {
@@ -785,6 +800,7 @@ class _ExerciseCard extends StatelessWidget {
                 key: ObjectKey(exercise.sets[s]),
                 exerciseIndex: exerciseIndex,
                 setIndex: s,
+                isBarbell: isBarbell,
                 // Numera só as séries de trabalho (aquecimento mostra "A").
                 setNumber: exercise.sets
                     .take(s + 1)
@@ -927,12 +943,14 @@ class _SetRow extends StatelessWidget {
   final int exerciseIndex;
   final int setIndex;
   final int setNumber;
+  final bool isBarbell;
 
   const _SetRow({
     super.key,
     required this.exerciseIndex,
     required this.setIndex,
     required this.setNumber,
+    this.isBarbell = false,
   });
 
   @override
@@ -985,6 +1003,24 @@ class _SetRow extends StatelessWidget {
           Expanded(
             child: _NumberField(
               suggested: set.suggested,
+              trailing: isBarbell && set.weightKg > 0
+                  ? IconButton(
+                      key: ValueKey('plates-$exerciseIndex-$setIndex'),
+                      tooltip: 'Anilhas de cada lado',
+                      icon: const Icon(Icons.calculate_outlined, size: 18),
+                      visualDensity: VisualDensity.compact,
+                      padding: EdgeInsets.zero,
+                      onPressed: () => showPlateCalculator(
+                        context,
+                        weightKg: set.weightKg,
+                        onUse: (kg) => provider.updateSet(
+                          exerciseIndex,
+                          setIndex,
+                          weightKg: kg,
+                        ),
+                      ),
+                    )
+                  : null,
               initialValue: set.weightKg == 0
                   ? ''
                   : set.weightKg
@@ -1043,10 +1079,14 @@ class _NumberField extends StatefulWidget {
   /// Valor ainda é só a sugestão: aparece mais apagado.
   final bool suggested;
 
+  /// Botão dentro do campo, à direita (ex.: calculadora de anilhas).
+  final Widget? trailing;
+
   const _NumberField({
     required this.initialValue,
     required this.onChanged,
     this.suggested = false,
+    this.trailing,
   });
 
   @override
@@ -1085,9 +1125,14 @@ class _NumberFieldState extends State<_NumberField> {
       style: widget.suggested
           ? TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)
           : null,
-      decoration: const InputDecoration(
+      decoration: InputDecoration(
         isDense: true,
-        contentPadding: EdgeInsets.symmetric(vertical: 8),
+        contentPadding: const EdgeInsets.symmetric(vertical: 8),
+        suffixIcon: widget.trailing,
+        suffixIconConstraints: const BoxConstraints(
+          minWidth: 32,
+          minHeight: 32,
+        ),
       ),
       onChanged: widget.onChanged,
     );
