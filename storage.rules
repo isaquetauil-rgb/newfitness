@@ -36,6 +36,14 @@ service firebase.storage {
         request.resource.contentType.matches('image/(jpeg|png|webp)');
       allow delete: if request.auth != null && request.auth.uid == userId;
     }
+    match /users/{userId}/exports/{allPaths=**} {
+      // "Exportar meus dados" (JSON + CSV). Pasta privada: só a Cloud
+      // Function `exportMyData` grava (Admin SDK, ignora estas regras) e
+      // entrega links assinados de 1 hora. O dono pode ler pelo SDK;
+      // ninguém mais lê, e nenhum cliente grava ou apaga.
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false;
+    }
     match /users/{userId}/exercise_videos/{fileName} {
       // Vídeo próprio de exercício, enviado pelo instrutor (userId). Leitura
       // também liberada pros alunos vinculados a ele — mesma checagem de

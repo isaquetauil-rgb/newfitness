@@ -20,3 +20,4 @@ export {
   chatWithAI,
   suggestTrainingPlan,
 } from "./ai";
+export { exportMyData } from "./export";

@@ -409,6 +409,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       const RestTimerSettingsTiles(),
                       const Divider(height: 1),
                       ListTile(
+                        leading: const Icon(Icons.privacy_tip_outlined),
+                        title: const Text('Privacidade'),
+                        subtitle: const Text('Exportar meus dados'),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => context.push(AppRoutes.privacy),
+                      ),
+                      const Divider(height: 1),
+                      ListTile(
                         leading: const Icon(Icons.gavel_outlined),
                         title: const Text('Licenças de software'),
                         trailing: const Icon(Icons.chevron_right),

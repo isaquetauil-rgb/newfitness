@@ -348,6 +348,13 @@ service cloud.firestore {
         allow read: if request.auth != null && request.auth.uid == userId;
         allow write: if false;
       }
+      match /data_exports/{day} {
+        // "Exportar meus dados": uma exportação por dia. Só o dono lê (para
+        // mostrar a última); só a Cloud Function `exportMyData` grava — se o
+        // cliente pudesse apagar, burlaria o limite diário.
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if false;
+      }
       match /appointments/{appointmentId} {
         // Aluno (dono do documento users/{userId}) só lê os próprios
         // compromissos; só o instrutor vinculado cria/edita/apaga — mesmo
