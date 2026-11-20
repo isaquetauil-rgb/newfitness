@@ -310,7 +310,8 @@ class _WorkoutHistoryTile extends StatelessWidget {
       child: ListTile(
         title: Text(workout.name),
         subtitle: Text(
-          '${DateFormat('dd/MM/yyyy').format(workout.date)} · ${workout.totalSets} séries',
+          '${DateFormat('dd/MM/yyyy').format(workout.date)} · ${workout.totalSets} séries'
+          '${workout.importLabel == null ? '' : ' · ${workout.importLabel}'}',
         ),
         trailing: Text(formatKg(workout.totalVolume)),
       ),

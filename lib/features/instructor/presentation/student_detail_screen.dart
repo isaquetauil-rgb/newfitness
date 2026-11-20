@@ -361,7 +361,8 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
                       child: ListTile(
                         title: Text(w.name),
                         subtitle: Text(
-                          '${DateFormat('dd/MM/yyyy').format(w.date)} · ${w.totalSets} séries',
+                          '${DateFormat('dd/MM/yyyy').format(w.date)} · ${w.totalSets} séries'
+                          '${w.importLabel == null ? '' : ' · ${w.importLabel}'}',
                         ),
                         trailing: Text(formatKg(w.totalVolume)),
                       ),

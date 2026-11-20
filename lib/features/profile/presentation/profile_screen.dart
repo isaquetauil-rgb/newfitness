@@ -409,6 +409,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       const RestTimerSettingsTiles(),
                       const Divider(height: 1),
                       ListTile(
+                        leading: const Icon(Icons.upload_file_outlined),
+                        title: const Text('Importar treinos'),
+                        subtitle: const Text('Do Hevy ou do Strong (CSV)'),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => context.push(AppRoutes.importWorkouts),
+                      ),
+                      const Divider(height: 1),
+                      ListTile(
                         leading: const Icon(Icons.privacy_tip_outlined),
                         title: const Text('Privacidade'),
                         subtitle: const Text('Exportar meus dados'),

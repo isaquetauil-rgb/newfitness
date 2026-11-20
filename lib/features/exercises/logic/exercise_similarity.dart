@@ -168,3 +168,137 @@ double _overlapRatio(List<String> a, List<String> b) {
 }
 
 String _normalized(String value) => value.trim().toLowerCase();
+
+// ---------- Casamento por NOME (importação do Hevy/Strong) ----------
+
+/// Um exercício da biblioteca que pode ser o [name] vindo de outro app.
+class ExerciseNameMatch {
+  const ExerciseNameMatch(this.exercise, this.score);
+  final Exercise exercise;
+
+  /// 0 a 1. A partir de [autoNameMatchScore] o app já escolhe sozinho.
+  final double score;
+}
+
+/// Pontuação a partir da qual o casamento é automático (o aluno ainda pode
+/// trocar na prévia).
+const double autoNameMatchScore = 0.75;
+
+const _stopWords = {
+  'de',
+  'da',
+  'do',
+  'das',
+  'dos',
+  'com',
+  'na',
+  'no',
+  'em',
+  'e',
+  'a',
+  'o',
+  'the',
+  'of',
+  'with',
+  'on',
+  'and',
+};
+
+/// Equipamento → palavra canônica. Vale para o texto entre parênteses do
+/// Hevy/Strong ("(Barbell)"), para o campo `equipment` da biblioteca e para
+/// palavras do id ("dumbbell_row").
+const _equipmentWords = {
+  'barbell': 'barbell',
+  'barra': 'barbell',
+  'bar': 'barbell',
+  'dumbbell': 'dumbbell',
+  'dumbbells': 'dumbbell',
+  'halteres': 'dumbbell',
+  'halter': 'dumbbell',
+  'cable': 'cable',
+  'polia': 'cable',
+  'cabo': 'cable',
+  'machine': 'machine',
+  'maquina': 'machine',
+  'smith': 'machine',
+  'bodyweight': 'bodyweight',
+  'band': 'band',
+  'elastico': 'band',
+  'kettlebell': 'kettlebell',
+};
+
+String _plain(String s) => s
+    .toLowerCase()
+    .replaceAll(RegExp('[áàâã]'), 'a')
+    .replaceAll(RegExp('[éê]'), 'e')
+    .replaceAll('í', 'i')
+    .replaceAll(RegExp('[óôõ]'), 'o')
+    .replaceAll('ú', 'u')
+    .replaceAll('ç', 'c');
+
+Set<String> _tokens(String s) => {
+  for (final t in _plain(s).split(RegExp('[^a-z0-9]+')))
+    if (t.isNotEmpty && !_stopWords.contains(t))
+      // "raises" ≈ "raise", "biceps" ≈ "bicep".
+      t.length > 4 && t.endsWith('s') ? t.substring(0, t.length - 1) : t,
+};
+
+String? _equipmentOf(Iterable<String> tokens) {
+  for (final t in tokens) {
+    final e = _equipmentWords[t];
+    if (e != null) return e;
+  }
+  return null;
+}
+
+/// Exercícios de [pool] cujo nome lembra [name] (ex.: "Bench Press
+/// (Barbell)" → Supino reto, id `bench_press`), do mais parecido para o
+/// menos. Compara as palavras com o id, o nome, o nome alternativo e as
+/// tags de busca, e usa o equipamento entre parênteses para desempatar.
+List<ExerciseNameMatch> matchExercisesByName(
+  String name,
+  List<Exercise> pool, {
+  int limit = 5,
+  double minScore = 0.3,
+}) {
+  final paren = RegExp(r'\(([^)]*)\)').allMatches(name);
+  final wantedEquipment = _equipmentOf({
+    for (final m in paren) ..._tokens(m.group(1)!),
+  });
+  final core = _tokens(name.replaceAll(RegExp(r'\([^)]*\)'), ' '))
+    ..removeWhere(_equipmentWords.containsKey);
+  if (core.isEmpty) return const [];
+
+  final results = <ExerciseNameMatch>[];
+  for (final e in pool) {
+    final idTokens = _tokens(e.id.replaceAll('_', ' '));
+    final candidates = [
+      idTokens,
+      _tokens(e.name),
+      if (e.alternateName.isNotEmpty) _tokens(e.alternateName),
+      for (final tag in e.searchTags) _tokens(tag),
+    ];
+    var best = 0.0;
+    for (final c in candidates) {
+      final words = c.where((t) => !_equipmentWords.containsKey(t)).toSet();
+      if (words.isEmpty) continue;
+      final inter = words.intersection(core).length;
+      if (inter == 0) continue;
+      final jaccard = inter / words.union(core).length;
+      if (jaccard > best) best = jaccard;
+    }
+    if (best == 0) continue;
+    if (wantedEquipment != null) {
+      final has = _equipmentOf(idTokens) ?? _equipmentOf(_tokens(e.equipment));
+      if (has == wantedEquipment) {
+        best += 0.1;
+      } else if (has != null) {
+        best -= 0.2;
+      }
+    }
+    final score = best.clamp(0.0, 1.0);
+    if (score >= minScore) results.add(ExerciseNameMatch(e, score));
+  }
+  results.sort((a, b) => b.score.compareTo(a.score));
+  return results.length > limit ? results.sublist(0, limit) : results;
+}

@@ -572,6 +572,60 @@ class FirestoreService {
     );
   }
 
+  /// Grava treinos importados (Hevy/Strong) em lotes de até 400 escritas
+  /// (limite do Firestore: 500). Cada treino tem id fixo, então gravar de
+  /// novo o mesmo treino não duplica.
+  Future<void> saveImportedWorkouts(List<Workout> workouts) {
+    return _guard('saveImportedWorkouts', () async {
+      for (var i = 0; i < workouts.length; i += 400) {
+        final batch = _db.batch();
+        for (final w in workouts.skip(i).take(400)) {
+          batch.set(_workoutsRef(w.userId).doc(w.id), w.toMap());
+        }
+        await batch.commit();
+      }
+    });
+  }
+
+  /// Rollup de evolução depois de uma importação: junta todos os treinos
+  /// importados, em ordem de data, em cima do registro atual de cada
+  /// exercício (uma leitura e uma escrita por exercício).
+  Future<void> recordImportedProgress(String uid, List<Workout> workouts) {
+    return _guard('recordImportedProgress', () async {
+      final ref = _db.collection(FirestorePaths.progressRecords(uid));
+      final ordered = [...workouts]..sort((a, b) => a.date.compareTo(b.date));
+      final records = <String, ExerciseProgressRecord?>{};
+      for (final workout in ordered) {
+        for (final entry in aggregateProgressInputs(
+          workout.exercises,
+        ).entries) {
+          if (!records.containsKey(entry.key)) {
+            final snap = await ref.doc(entry.key).get();
+            records[entry.key] = snap.exists
+                ? ExerciseProgressRecord.fromMap(entry.key, snap.data()!)
+                : null;
+          }
+          records[entry.key] = ExerciseProgressRecord.merge(
+            existing: records[entry.key],
+            exerciseId: entry.key,
+            exerciseName: entry.value.exerciseName,
+            date: workout.date,
+            topSetLoadKg: entry.value.topSetLoadKg,
+            totalVolume: entry.value.totalVolume,
+            e1rmKg: entry.value.bestE1rmKg,
+            seconds: entry.value.bestSeconds,
+            historyLimit: _progressHistoryLimit,
+          );
+        }
+      }
+      final batch = _db.batch();
+      records.forEach((id, record) {
+        if (record != null) batch.set(ref.doc(id), record.toMap());
+      });
+      await batch.commit();
+    });
+  }
+
   /// Atualiza (nunca recria do zero) o rollup de evolução de cada exercício
   /// presente em [workout] — chamado por `WorkoutProvider.finishWorkout`
   /// logo depois de `saveWorkout`. Ignora exercícios sem nenhuma carga/

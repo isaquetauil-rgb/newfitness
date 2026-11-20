@@ -1,0 +1,10 @@
+Date,Workout Name,Duration,Exercise Name,Set Order,Weight,Reps,Distance,Seconds,Notes,Workout Notes,RPE
+2026-01-10 09:15:00,"Treino B",1h 5m,"Deadlift (Barbell)",W,60,5,0,0,"","",
+2026-01-10 09:15:00,"Treino B",1h 5m,"Deadlift (Barbell)",1,120,5,0,0,"","",8
+2026-01-10 09:15:00,"Treino B",1h 5m,"Deadlift (Barbell)",2,120,5,0,0,"","",
+2026-01-10 09:15:00,"Treino B",1h 5m,"Deadlift (Barbell)",Rest Timer,0,0,0,180,"","",
+2026-01-10 09:15:00,"Treino B",1h 5m,"Lat Pulldown (Cable)",1,55,10,0,0,"","",
+2026-01-10 09:15:00,"Treino B",1h 5m,"Lat Pulldown (Cable)",2,55,9,0,0,"Pegada aberta, ""devagar""","",
+2026-01-10 09:15:00,"Treino B",1h 5m,"Bicep Curl (Dumbbell)",1,14,12,0,0,"","",
+2026-01-12 18:40:00,"Treino A",45m,"Bench Press (Barbell)",1,60,8,0,0,"","",
+2026-01-12 18:40:00,"Treino A",45m,"Bench Press (Barbell)",2,60,8,0,0,"","",

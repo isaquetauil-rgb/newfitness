@@ -40,6 +40,7 @@ import 'package:newfitness/features/nutrition/presentation/nutrition_screen.dart
 import 'package:newfitness/features/nutrition/presentation/nutrition_student_detail_screen.dart';
 import 'package:newfitness/features/nutrition/presentation/nutritionist_dashboard_screen.dart';
 import 'package:newfitness/features/professional/presentation/professional_request_screen.dart';
+import 'package:newfitness/features/import/presentation/import_workouts_screen.dart';
 import 'package:newfitness/features/profile/presentation/privacy_screen.dart';
 import 'package:newfitness/features/profile/presentation/profile_screen.dart';
 import 'package:newfitness/features/progress/presentation/body_progress_screen.dart';
@@ -143,6 +144,11 @@ GoRouter buildAppRouter(AuthProvider authProvider) {
           state,
           BodyMapScreen(args: state.extra as BodyMapArgs?),
         ),
+      ),
+      GoRoute(
+        path: AppRoutes.importWorkouts,
+        pageBuilder: (context, state) =>
+            _fadeThrough(state, const ImportWorkoutsScreen()),
       ),
       GoRoute(
         path: AppRoutes.privacy,

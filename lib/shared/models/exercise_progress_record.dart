@@ -206,6 +206,10 @@ class ExerciseProgressRecord {
   /// lógica pura (sem Firestore), usada por
   /// `FirestoreService.recordExerciseProgress` e diretamente testável.
   /// [existing] é `null` na primeira vez que o exercício é registrado.
+  ///
+  /// Treino mais ANTIGO que o último registrado (ex.: histórico importado do
+  /// Hevy/Strong): entra nas melhores marcas e no histórico (na posição da
+  /// data), mas não muda a "última carga" nem a data do último treino.
   static ExerciseProgressRecord merge({
     required ExerciseProgressRecord? existing,
     required String exerciseId,
@@ -218,6 +222,7 @@ class ExerciseProgressRecord {
     int historyLimit = 50,
   }) {
     final rounded = e1rmKg == null ? null : roundKg(e1rmKg);
+    final older = existing != null && date.isBefore(existing.lastPerformedAt);
     final history = [
       ...?existing?.history,
       ProgressPoint(
@@ -228,6 +233,7 @@ class ExerciseProgressRecord {
         seconds: seconds > 0 ? seconds : null,
       ),
     ];
+    if (older) history.sort((a, b) => a.date.compareTo(b.date));
     final trimmedHistory = history.length > historyLimit
         ? history.sublist(history.length - historyLimit)
         : history;
@@ -240,8 +246,8 @@ class ExerciseProgressRecord {
       bestLoadKg: existing == null || topSetLoadKg > existing.bestLoadKg
           ? topSetLoadKg
           : existing.bestLoadKg,
-      lastLoadKg: topSetLoadKg,
-      lastPerformedAt: date,
+      lastLoadKg: older ? existing.lastLoadKg : topSetLoadKg,
+      lastPerformedAt: older ? existing.lastPerformedAt : date,
       totalSessions: (existing?.totalSessions ?? 0) + 1,
       bestE1rmKg: rounded == null
           ? previousE1rm

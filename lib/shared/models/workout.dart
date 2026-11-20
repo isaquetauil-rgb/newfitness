@@ -45,6 +45,24 @@ class Workout {
   /// treino livre.
   final WorkoutSource? source;
 
+  /// Origem quando o treino veio de outro app: `'hevy'` ou `'strong'`.
+  /// `null` = registrado no NewFitness. Campo opcional.
+  final String? importedFrom;
+
+  /// Identidade do treino no arquivo importado (app + início + nome): evita
+  /// duplicar ao importar o mesmo arquivo de novo. Campo opcional.
+  final String? importKey;
+
+  bool get isImported => importedFrom != null;
+
+  /// "Importado do Hevy" / "Importado do Strong"; `null` se não importado.
+  String? get importLabel => switch (importedFrom) {
+    null => null,
+    'hevy' => 'Importado do Hevy',
+    'strong' => 'Importado do Strong',
+    _ => 'Importado',
+  };
+
   Workout({
     required this.id,
     required this.userId,
@@ -53,6 +71,8 @@ class Workout {
     List<LoggedExercise>? exercises,
     this.durationSeconds = 0,
     this.source,
+    this.importedFrom,
+    this.importKey,
   }) : exercises = exercises ?? [];
 
   /// Volume total do treino (soma de reps * peso de todas as séries).
@@ -81,6 +101,8 @@ class Workout {
       source: rawSource is Map
           ? WorkoutSource.fromMap(Map<String, dynamic>.from(rawSource))
           : null,
+      importedFrom: map['importedFrom'] as String?,
+      importKey: map['importKey'] as String?,
     );
   }
 
@@ -93,6 +115,8 @@ class Workout {
       'exercises': exercises.map((e) => e.toMap()).toList(),
       'durationSeconds': durationSeconds,
       'source': ?source?.toMap(),
+      'importedFrom': ?importedFrom,
+      'importKey': ?importKey,
     };
   }
 }

@@ -534,6 +534,19 @@ class WorkoutProvider extends ChangeNotifier {
     return _firestoreService.watchWorkouts(userId);
   }
 
+  /// Grava treinos importados (Hevy/Strong) e atualiza a evolução por
+  /// exercício. Falha no rollup não desfaz os treinos (como no fim do
+  /// treino, o treino é a fonte da verdade).
+  Future<void> importWorkouts(String userId, List<Workout> workouts) async {
+    if (workouts.isEmpty) return;
+    await _firestoreService.saveImportedWorkouts(workouts);
+    try {
+      await _firestoreService.recordImportedProgress(userId, workouts);
+    } catch (e, st) {
+      _log.warning('Falha ao registrar progresso importado', e, st);
+    }
+  }
+
   /// Séries que não foram realizadas: não concluídas, sem reps e sem
   /// carga (ex: as séries vazias criadas para representar a quantidade
   /// prescrita). Uma série concluída com 0 kg NÃO entra aqui (peso do

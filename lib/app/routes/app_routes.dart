@@ -49,6 +49,7 @@ class AppRoutes {
   static const myYear = '/my-year';
   static const achievements = '/achievements';
   static const privacy = '/privacy';
+  static const importWorkouts = '/import-workouts';
 
   // Itens do menu lateral inspirados no Next Fit — telas "em breve" até
   // termos backend real de agenda/pagamento/contrato.
