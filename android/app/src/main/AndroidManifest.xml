@@ -18,6 +18,12 @@
          aceita essa permissão em apps cuja função principal é despertador
          ou calendário, o que não é o caso de um app de treino. -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+
+    <!-- Health Connect (Perfil > Integrações, desligado por padrão): enviar
+         treinos (sessão de exercício) e ler/gravar o peso corporal. -->
+    <uses-permission android:name="android.permission.health.WRITE_EXERCISE"/>
+    <uses-permission android:name="android.permission.health.READ_WEIGHT"/>
+    <uses-permission android:name="android.permission.health.WRITE_WEIGHT"/>
     <application
         android:label="NewFitness"
         android:name="${applicationName}"
@@ -43,7 +49,24 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- Health Connect: tela que explica por que o app pede acesso
+                 (Android 13 ou anterior). -->
+            <intent-filter>
+                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE"/>
+            </intent-filter>
         </activity>
+        <!-- Health Connect no Android 14+: "por que este app usa seus dados"
+             abre o app (a tela de Integrações explica). -->
+        <activity-alias
+            android:name="ViewPermissionUsageActivity"
+            android:exported="true"
+            android:targetActivity=".MainActivity"
+            android:permission="android.permission.START_VIEW_PERMISSION_USAGE">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW_PERMISSION_USAGE"/>
+                <category android:name="android.intent.category.HEALTH_PERMISSIONS"/>
+            </intent-filter>
+        </activity-alias>
         <!-- Recebem o alarme agendado e mostram a notificação. Sem eles o
              zonedSchedule agendava, mas nada aparecia na hora marcada. -->
         <receiver
@@ -71,6 +94,8 @@
 
          In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
     <queries>
+        <!-- Saber se o Health Connect está instalado. -->
+        <package android:name="com.google.android.apps.healthdata"/>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>

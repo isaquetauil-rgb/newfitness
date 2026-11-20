@@ -32,7 +32,10 @@ android {
         applicationId = "com.newfitness.newfitness"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        // 26 (Android 8.0): exigido pelo pacote `health` (Health Connect).
+        // Autorizado pelo usuário em 2026-11-20; antes era o padrão do
+        // Flutter (24).
+        minSdk = 26
         targetSdk = flutter.targetSdkVersion
         // Uses the version code from pubspec.yaml. When using split APKs, 1000 * ABI_VERSION
         // is added automatically by Flutter. (https://developer.android.com/studio/build/configure-apk-splits#configure-APK-versions)

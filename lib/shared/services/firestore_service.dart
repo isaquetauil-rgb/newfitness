@@ -166,6 +166,15 @@ class FirestoreService {
     );
   }
 
+  /// Grava só o peso corporal (`weightKg`) no perfil.
+  Future<void> updateWeight(String uid, double kg) {
+    return _guard('updateWeight', () {
+      return _db.collection(FirestorePaths.users).doc(uid).set({
+        'weightKg': kg,
+      }, SetOptions(merge: true));
+    });
+  }
+
   /// Grava só a meta semanal de treinos (`weeklyGoal`) no perfil.
   Future<void> updateWeeklyGoal(String uid, int goal) {
     return _guard('updateWeeklyGoal', () {

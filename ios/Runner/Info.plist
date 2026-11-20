@@ -30,6 +30,10 @@
 	<string>Usamos a câmera para tirar fotos de progresso corporal e de refeições, e para gravar vídeos de exercícios.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Usamos o microfone para gravar o áudio dos vídeos de exercícios.</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>O NewFitness lê seu peso no Apple Saúde para atualizar o seu perfil, só quando você liga a integração em Perfil &gt; Integrações.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>O NewFitness grava no Apple Saúde os treinos que você finaliza e o peso que você registra, só quando você liga a integração em Perfil &gt; Integrações.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Usamos a galeria para escolher fotos de progresso corporal e de refeições.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>

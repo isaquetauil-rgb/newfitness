@@ -58,4 +58,11 @@ class LocalPrefs {
   static const _bodyMapFemaleKey = 'body_map_female';
   bool get bodyMapFemale => _prefs.getBool(_bodyMapFemaleKey) ?? false;
   Future<void> setBodyMapFemale(bool v) => _prefs.setBool(_bodyMapFemaleKey, v);
+
+  /// Integração com Health Connect / Apple Saúde neste aparelho. Desligada
+  /// por padrão.
+  static const _healthSyncKey = 'health_sync_enabled';
+  bool get healthSyncEnabled => _prefs.getBool(_healthSyncKey) ?? false;
+  Future<void> setHealthSyncEnabled(bool v) =>
+      _prefs.setBool(_healthSyncKey, v);
 }

@@ -354,6 +354,21 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  /// Salva só o peso corporal no perfil (ex.: trazido do Health Connect /
+  /// Apple Saúde).
+  Future<bool> saveWeight(double kg) async {
+    final profile = _profile;
+    if (profile == null || kg <= 0) return false;
+    try {
+      await _firestoreService.updateWeight(profile.uid, kg);
+      _profile = profile.copyWith(weightKg: kg);
+      notifyListeners();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// Salva a meta semanal de treinos (1 a 7).
   Future<bool> saveWeeklyGoal(int goal) async {
     final profile = _profile;

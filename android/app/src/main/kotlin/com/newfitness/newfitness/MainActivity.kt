@@ -1,5 +1,7 @@
 package com.newfitness.newfitness
 
-import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragmentActivity
 
-class MainActivity : FlutterActivity()
+// FlutterFragmentActivity: o pacote `health` usa registerForActivityResult
+// para pedir as permissões do Health Connect.
+class MainActivity : FlutterFragmentActivity()

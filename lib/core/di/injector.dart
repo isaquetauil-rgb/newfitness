@@ -4,6 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:newfitness/core/storage/local_prefs.dart';
 import 'package:newfitness/features/ai/data/ai_service.dart';
 import 'package:newfitness/features/auth/data/auth_service.dart';
+import 'package:newfitness/features/integrations/data/plugin_health_gateway.dart';
+import 'package:newfitness/features/integrations/logic/health_sync.dart';
 import 'package:newfitness/features/notifications/data/notification_service.dart';
 import 'package:newfitness/shared/services/firestore_service.dart';
 import 'package:newfitness/shared/services/storage_service.dart';
@@ -28,5 +30,16 @@ void setupInjector() {
     ..registerLazySingleton<AiService>(AiService.new)
     ..registerSingletonAsync<LocalPrefs>(
       () async => LocalPrefs(await SharedPreferences.getInstance()),
+    )
+    ..registerLazySingleton<HealthSync>(
+      () => HealthSync(gateway: PluginHealthGateway(), prefs: getIt()),
     );
 }
+
+/// Integração com o Saúde, se registrada (nos testes normalmente não está).
+HealthSync? get healthSyncOrNull =>
+    getIt.isRegistered<HealthSync>() &&
+        getIt.isRegistered<LocalPrefs>() &&
+        getIt.isReadySync<LocalPrefs>()
+    ? getIt<HealthSync>()
+    : null;

@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 
 import 'package:newfitness/app/routes/app_routes.dart';
 import 'package:newfitness/app/widgets/drawer_menu_button.dart';
+import 'package:newfitness/core/di/injector.dart';
 import 'package:newfitness/features/achievements/presentation/achievements_screen.dart';
 import 'package:newfitness/features/auth/logic/auth_provider.dart';
 import 'package:newfitness/features/exercises/logic/exercise_pool.dart';
@@ -138,6 +139,8 @@ class WorkoutScreen extends StatelessWidget {
     if (result == WorkoutFinishResult.saved) {
       final saved = provider.lastSaved!;
       final records = provider.lastSavedRecords;
+      // Health Connect / Apple Saúde (se ligado): cópia, não bloqueia.
+      unawaited(healthSyncOrNull?.onWorkoutFinished(saved));
       // Conquistas novas: grava no perfil e avisa antes do resumo.
       final earned = await syncAchievementsAfterWorkout(context, saved);
       if (!context.mounted) return;

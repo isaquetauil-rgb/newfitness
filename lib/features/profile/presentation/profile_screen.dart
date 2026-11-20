@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -11,6 +13,7 @@ import 'package:newfitness/core/constants/admin_config.dart';
 import 'package:newfitness/core/di/injector.dart';
 import 'package:newfitness/features/achievements/presentation/achievements_screen.dart';
 import 'package:newfitness/features/auth/logic/auth_provider.dart';
+import 'package:newfitness/features/integrations/presentation/integrations_screen.dart';
 import 'package:newfitness/features/auth/presentation/email_verification_notice.dart';
 import 'package:newfitness/features/body_map/data/muscle_map_license.dart';
 import 'package:newfitness/features/profile/presentation/manage_link_sheet.dart';
@@ -187,6 +190,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       await _firestoreService.updateUserProfile(updated);
       await authProvider.refreshProfile();
+      // Peso mudou: manda para o Health Connect / Apple Saúde (se ligado).
+      final kg = updated.weightKg;
+      if (kg != null && kg != current.weightKg) {
+        unawaited(healthSyncOrNull?.pushWeight(kg));
+      }
       messenger.showSnackBar(
         const SnackBar(content: Text('Perfil atualizado')),
       );
@@ -407,6 +415,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       const Divider(height: 1),
                       const RestTimerSettingsTiles(),
+                      const Divider(height: 1),
+                      ListTile(
+                        leading: const Icon(Icons.favorite_outline),
+                        title: const Text('Integrações'),
+                        subtitle: Text(healthAppName()),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => context.push(AppRoutes.integrations),
+                      ),
                       const Divider(height: 1),
                       ListTile(
                         leading: const Icon(Icons.upload_file_outlined),
