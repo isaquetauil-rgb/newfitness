@@ -14,18 +14,46 @@ class ImportChoice {
   ImportChoice.library(Exercise e)
     : exerciseId = e.id,
       exerciseName = e.name,
+      muscleGroup = null,
       own = false;
 
-  /// Exercício próprio do aluno (não está na biblioteca).
-  ImportChoice.own(String name)
+  /// Exercício próprio do aluno (não está na biblioteca). O
+  /// [muscleGroup] vai gravado no treino e coloca o exercício no mapa.
+  ImportChoice.own(String name, {required String this.muscleGroup})
     : exerciseId = ownExerciseId(name),
       exerciseName = name.trim(),
       own = true;
 
   final String exerciseId;
   final String exerciseName;
+
+  /// Só no exercício próprio.
+  final String? muscleGroup;
   final bool own;
 }
+
+/// Grupos para escolher ao criar um exercício próprio (os nomes que o mapa
+/// muscular entende).
+const List<String> ownExerciseMuscleGroups = [
+  'Peito',
+  'Costas',
+  'Ombro',
+  'Bíceps',
+  'Tríceps',
+  'Antebraço',
+  'Abdômen',
+  'Oblíquos',
+  'Lombar',
+  'Trapézio',
+  'Glúteos',
+  'Quadríceps',
+  'Posterior de coxa',
+  'Adutores',
+  'Panturrilha',
+  'Pernas',
+  'Braço',
+  'Corpo todo',
+];
 
 /// Id de exercício próprio: `own_` + nome sem acento/símbolo.
 String ownExerciseId(String name) {
@@ -128,6 +156,7 @@ ImportPlan buildImport(
             LoggedExercise(
               exerciseId: choices[e.name]!.exerciseId,
               exerciseName: choices[e.name]!.exerciseName,
+              muscleGroup: choices[e.name]!.muscleGroup,
               sets: [
                 for (final s in e.sets)
                   WorkoutSet(

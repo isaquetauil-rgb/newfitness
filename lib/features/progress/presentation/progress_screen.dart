@@ -263,7 +263,15 @@ class _VolumeChart extends StatelessWidget {
             sideTitles: SideTitles(showTitles: false),
           ),
           leftTitles: AxisTitles(
-            sideTitles: SideTitles(showTitles: true, reservedSize: 40),
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 48,
+              // Volume com ponto de milhar ("12.500"), como no resto do app.
+              getTitlesWidget: (value, meta) => Text(
+                formatKgNumber(value),
+                style: const TextStyle(fontSize: 10),
+              ),
+            ),
           ),
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(

@@ -43,10 +43,10 @@ class _AdminExerciseFormScreenState extends State<AdminExerciseFormScreen> {
   }
 
   Future<void> _save() async {
-    if (!_form.isValid) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Dê um nome ao exercício.')));
+    final problem = _form.validationError;
+    if (problem != null) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(problem)));
       return;
     }
     setState(() => _saving = true);

@@ -55,7 +55,7 @@ class ExerciseFormFields extends StatelessWidget {
                   child: _AutocompleteTextField(
                     controller: controller.muscleGroupCtrl,
                     focusNode: controller.muscleGroupFocusNode,
-                    label: 'Grupo muscular',
+                    label: 'Grupo muscular *',
                     options: muscleGroupOptions,
                   ),
                 ),

@@ -173,7 +173,19 @@ class ExerciseFormController extends ChangeNotifier {
   List<String> _splitLines(String text) =>
       text.split('\n').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
 
-  bool get isValid => nameCtrl.text.trim().isNotEmpty;
+  /// O que falta para salvar (mensagem pronta), ou `null` se está ok. O
+  /// grupo muscular é obrigatório: é ele que coloca o exercício no mapa
+  /// muscular.
+  String? get validationError {
+    if (nameCtrl.text.trim().isEmpty) return 'Dê um nome ao exercício.';
+    if (muscleGroupCtrl.text.trim().isEmpty) {
+      return 'Escolha o grupo muscular (é ele que coloca o exercício no '
+          'mapa muscular).';
+    }
+    return null;
+  }
+
+  bool get isValid => validationError == null;
 
   Exercise buildExercise({required String id, required String videoUrl}) {
     return Exercise(

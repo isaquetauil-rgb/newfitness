@@ -102,10 +102,10 @@ class _CustomExerciseFormScreenState extends State<CustomExerciseFormScreen> {
   Future<void> _save() async {
     final instructorUid = context.read<AuthProvider>().user?.uid;
     if (instructorUid == null) return;
-    if (!_form.isValid) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Dê um nome ao exercício.')));
+    final problem = _form.validationError;
+    if (problem != null) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(problem)));
       return;
     }
 

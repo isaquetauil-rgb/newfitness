@@ -285,7 +285,8 @@ class _ImportWorkoutsScreenState extends State<ImportWorkoutsScreen> {
             _choices[name] == null
                 ? 'Toque para escolher o exercício'
                 : _choices[name]!.own
-                ? 'Exercício próprio: ${_choices[name]!.exerciseName}'
+                ? 'Exercício próprio: ${_choices[name]!.exerciseName} '
+                      '(${_choices[name]!.muscleGroup})'
                 : '→ ${_choices[name]!.exerciseName}',
           ),
           trailing: const Icon(Icons.edit_outlined, size: 18),
@@ -433,16 +434,17 @@ class _ExerciseChoiceSheetState extends State<_ExerciseChoiceSheet> {
   }
 
   Future<void> _createOwn(BuildContext context) async {
-    final name = await showDialog<String>(
+    final choice = await showDialog<ImportChoice>(
       context: context,
       builder: (_) => _OwnNameDialog(initial: widget.name),
     );
-    if (name == null || name.isEmpty || !context.mounted) return;
-    Navigator.pop(context, ImportChoice.own(name));
+    if (choice == null || !context.mounted) return;
+    Navigator.pop(context, choice);
   }
 }
 
-/// Nome do exercício próprio (o diálogo cuida do próprio campo de texto).
+/// Nome e grupo muscular do exercício próprio (o grupo é obrigatório: é
+/// ele que coloca o exercício no mapa muscular).
 class _OwnNameDialog extends StatefulWidget {
   const _OwnNameDialog({required this.initial});
   final String initial;
@@ -453,6 +455,7 @@ class _OwnNameDialog extends StatefulWidget {
 
 class _OwnNameDialogState extends State<_OwnNameDialog> {
   late final _controller = TextEditingController(text: widget.initial);
+  String? _group;
 
   @override
   void dispose() {
@@ -463,10 +466,26 @@ class _OwnNameDialogState extends State<_OwnNameDialog> {
   @override
   Widget build(BuildContext context) => AlertDialog(
     title: const Text('Exercício próprio'),
-    content: TextField(
-      controller: _controller,
-      autofocus: true,
-      decoration: const InputDecoration(labelText: 'Nome'),
+    content: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        TextField(
+          controller: _controller,
+          autofocus: true,
+          decoration: const InputDecoration(labelText: 'Nome'),
+        ),
+        const SizedBox(height: 12),
+        DropdownButtonFormField<String>(
+          initialValue: _group,
+          isExpanded: true,
+          decoration: const InputDecoration(labelText: 'Grupo muscular *'),
+          items: [
+            for (final g in ownExerciseMuscleGroups)
+              DropdownMenuItem(value: g, child: Text(g)),
+          ],
+          onChanged: (g) => setState(() => _group = g),
+        ),
+      ],
     ),
     actions: [
       TextButton(
@@ -474,7 +493,12 @@ class _OwnNameDialogState extends State<_OwnNameDialog> {
         child: const Text('Cancelar'),
       ),
       FilledButton(
-        onPressed: () => Navigator.pop(context, _controller.text.trim()),
+        onPressed: _group == null || _controller.text.trim().isEmpty
+            ? null
+            : () => Navigator.pop(
+                context,
+                ImportChoice.own(_controller.text.trim(), muscleGroup: _group!),
+              ),
         child: const Text('Criar'),
       ),
     ],

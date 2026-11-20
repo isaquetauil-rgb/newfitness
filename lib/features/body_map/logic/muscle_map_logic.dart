@@ -4,6 +4,7 @@ library;
 
 import 'package:newfitness/features/home/logic/week_summary.dart';
 import 'package:newfitness/shared/models/exercise.dart';
+import 'package:newfitness/shared/models/logged_exercise.dart';
 import 'package:newfitness/shared/models/workout.dart';
 import 'package:newfitness/shared/models/workout_set.dart';
 
@@ -78,6 +79,13 @@ String _norm(String s) => s
     .replaceAll('ú', 'u')
     .replaceAll('ç', 'c');
 
+const _legRegion = [
+  MuscleRegion.quadriceps,
+  MuscleRegion.hamstring,
+  MuscleRegion.gluteal,
+  MuscleRegion.calves,
+];
+
 /// Nome de grupo muscular (como está na biblioteca) → regiões do desenho.
 const Map<String, List<MuscleRegion>> _groupRegions = {
   'peito': [MuscleRegion.chest],
@@ -107,8 +115,11 @@ const Map<String, List<MuscleRegion>> _groupRegions = {
   'adutores': [MuscleRegion.adductors],
   'panturrilha': [MuscleRegion.calves],
   'panturrilhas': [MuscleRegion.calves],
-  'pernas': [MuscleRegion.quadriceps],
-  'perna': [MuscleRegion.quadriceps],
+  // Grupo genérico: se espalha pelos músculos da região (o 1 da série é
+  // dividido entre eles), em vez de cair num músculo só.
+  'pernas': _legRegion,
+  'perna': _legRegion,
+  'membros inferiores': _legRegion,
   'corpo todo': [
     MuscleRegion.quadriceps,
     MuscleRegion.gluteal,
@@ -122,6 +133,30 @@ const Map<String, List<MuscleRegion>> _groupRegions = {
 /// Exercícios cujo grupo da biblioteca é genérico ("Pernas", "Braço",
 /// "Corpo todo"...): aqui está a região principal de verdade.
 const Map<String, List<MuscleRegion>> _exerciseRegions = {
+  // "Pernas" da biblioteca com o músculo certo (sem espalhar à toa).
+  'squat': [MuscleRegion.quadriceps, MuscleRegion.gluteal],
+  'lunge': [MuscleRegion.quadriceps, MuscleRegion.gluteal],
+  'leg_press': [MuscleRegion.quadriceps, MuscleRegion.gluteal],
+  'leg_extension': [MuscleRegion.quadriceps],
+  'hack_squat': [MuscleRegion.quadriceps],
+  'bulgarian_split_squat': [MuscleRegion.quadriceps, MuscleRegion.gluteal],
+  'sit_to_stand': [MuscleRegion.quadriceps, MuscleRegion.gluteal],
+  'step_up': [MuscleRegion.quadriceps, MuscleRegion.gluteal],
+  'squat_jump': [
+    MuscleRegion.quadriceps,
+    MuscleRegion.gluteal,
+    MuscleRegion.calves,
+  ],
+  'box_jump': [
+    MuscleRegion.quadriceps,
+    MuscleRegion.gluteal,
+    MuscleRegion.calves,
+  ],
+  'lateral_bound': [
+    MuscleRegion.gluteal,
+    MuscleRegion.quadriceps,
+    MuscleRegion.calves,
+  ],
   'leg_curl': [MuscleRegion.hamstring],
   'nordic_curl': [MuscleRegion.hamstring],
   'romanian_deadlift': [MuscleRegion.hamstring],
@@ -238,6 +273,21 @@ class MuscleMapData {
   }
 }
 
+/// Exercício próprio (fora da biblioteca) com grupo muscular gravado no
+/// treino: vira um exercício só com o grupo, para entrar no mapa.
+Exercise? _ownExercise(LoggedExercise logged) {
+  final group = logged.muscleGroup?.trim() ?? '';
+  if (group.isEmpty) return null;
+  return Exercise(
+    id: logged.exerciseId,
+    name: logged.exerciseName,
+    muscleGroup: group,
+    equipment: '',
+    description: '',
+    videoUrl: '',
+  );
+}
+
 /// A série entra no mapa? Aquecimento não; série vazia (sem reps nem tempo)
 /// ou só sugerida também não.
 bool countsForMap(WorkoutSet set) =>
@@ -260,7 +310,7 @@ MuscleMapData computeMuscleMap(
     final inWeek =
         !workout.date.isBefore(weekStart) && !workout.date.isAfter(now);
     for (final logged in workout.exercises) {
-      final exercise = exerciseById(logged.exerciseId);
+      final exercise = exerciseById(logged.exerciseId) ?? _ownExercise(logged);
       if (exercise == null) continue;
       final sets = logged.sets.where(countsForMap).length;
       if (sets == 0) continue;

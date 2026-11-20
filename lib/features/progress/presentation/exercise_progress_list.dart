@@ -230,7 +230,10 @@ class E1rmChart extends StatelessWidget {
               getTitlesWidget: (value, meta) =>
                   value == meta.min || value == meta.max
                   ? const SizedBox.shrink()
-                  : Text(value.toStringAsFixed(0), style: labelStyle),
+                  : Text(
+                      formatKgNumber(value.roundToDouble()),
+                      style: labelStyle,
+                    ),
             ),
           ),
           bottomTitles: AxisTitles(

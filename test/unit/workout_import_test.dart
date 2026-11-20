@@ -162,6 +162,7 @@ void main() {
       final c = suggestChoices(parsed.exerciseNames, _pool);
       c['Zercher Carry Esquisito'] = ImportChoice.own(
         'Zercher Carry Esquisito',
+        muscleGroup: 'Pernas',
       );
       return c;
     }
@@ -191,6 +192,9 @@ void main() {
       final own = plan.toSave[1].exercises.last;
       expect(own.exerciseId, 'own_zercher_carry_esquisito');
       expect(own.exerciseName, 'Zercher Carry Esquisito');
+      expect(own.muscleGroup, 'Pernas');
+      // Exercício da biblioteca não grava grupo no treino.
+      expect(w.exercises.first.muscleGroup, isNull);
       // Volume ignora o aquecimento, como no resto do app.
       expect(w.exercises.first.totalVolume, 62.5 * 8 + 62.5 * 6);
     });

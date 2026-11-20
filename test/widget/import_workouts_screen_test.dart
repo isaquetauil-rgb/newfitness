@@ -107,11 +107,22 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Criar como exercício próprio'));
     await tester.pumpAndSettle();
+    // Sem grupo muscular, "Criar" fica desligado.
+    expect(
+      tester
+          .widget<FilledButton>(find.widgetWithText(FilledButton, 'Criar'))
+          .onPressed,
+      isNull,
+    );
+    await tester.tap(find.text('Grupo muscular *'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Costas').last);
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Criar'));
     await tester.pumpAndSettle();
 
     expect(
-      find.text('Exercício próprio: Zercher Carry Esquisito'),
+      find.text('Exercício próprio: Zercher Carry Esquisito (Costas)'),
       findsOneWidget,
     );
     await tester.scrollUntilVisible(find.text('Importar 2 treinos'), 100);
@@ -120,6 +131,7 @@ void main() {
 
     expect(find.text('2 treinos importados!'), findsOneWidget);
     expect(saved, hasLength(2));
+    expect(saved[1].exercises.last.muscleGroup, 'Costas');
     expect(
       saved.every((w) => w.importedFrom == 'hevy' && w.userId == 'u1'),
       isTrue,
@@ -133,7 +145,10 @@ void main() {
     final parsed = parseWorkoutCsv(csv);
     final pool = [...sampleExercises, ...sampleFunctionalExercises];
     final choices = suggestChoices(parsed.exerciseNames, pool)
-      ..['Zercher Carry Esquisito'] = ImportChoice.own('Zercher');
+      ..['Zercher Carry Esquisito'] = ImportChoice.own(
+        'Zercher',
+        muscleGroup: 'Pernas',
+      );
     final already = buildImport(
       parsed,
       choices,
@@ -154,6 +169,17 @@ void main() {
     await tester.tap(find.text('Zercher Carry Esquisito'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Criar como exercício próprio'));
+    await tester.pumpAndSettle();
+    // Sem grupo muscular, "Criar" fica desligado.
+    expect(
+      tester
+          .widget<FilledButton>(find.widgetWithText(FilledButton, 'Criar'))
+          .onPressed,
+      isNull,
+    );
+    await tester.tap(find.text('Grupo muscular *'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Costas').last);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Criar'));
     await tester.pumpAndSettle();

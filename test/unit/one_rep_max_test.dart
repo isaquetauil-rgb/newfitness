@@ -42,7 +42,11 @@ void main() {
       expect(formatKg(19), '19 kg');
       expect(formatKg(60.0), '60 kg');
       expect(formatKg(1.25), '1,25 kg');
-      expect(formatKg(1100), '1100 kg');
+      expect(formatKg(1100), '1.100 kg');
+      expect(formatKg(52340), '52.340 kg');
+      expect(formatKg(1234567.5), '1.234.567,5 kg');
+      expect(formatKg(999), '999 kg');
+      expect(formatKg(-1500.25), '-1.500,25 kg');
       expect(formatKgNumber(0), '0');
       expect(formatSeconds(45), '45 s');
       expect(formatSeconds(90), '1 min 30 s');

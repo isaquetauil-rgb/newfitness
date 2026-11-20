@@ -32,6 +32,11 @@ class LoggedExercise {
   /// histórico fiel mesmo se o plano for editado ou apagado depois.
   final PlanExercise? prescription;
 
+  /// Grupo muscular de um exercício PRÓPRIO do aluno (fora da biblioteca,
+  /// ex.: criado na importação do Hevy/Strong). É o que coloca esse
+  /// exercício no mapa muscular. Campo opcional; `null` nos demais.
+  final String? muscleGroup;
+
   LoggedExercise({
     required this.exerciseId,
     required this.exerciseName,
@@ -39,6 +44,7 @@ class LoggedExercise {
     this.replacedExerciseId,
     this.replacedExerciseName,
     this.prescription,
+    this.muscleGroup,
   }) : sets = sets ?? [WorkoutSet()];
 
   /// Reps × peso das séries que contam (aquecimento fica de fora).
@@ -61,6 +67,7 @@ class LoggedExercise {
       replacedExerciseId: replacedExerciseId,
       replacedExerciseName: replacedExerciseName,
       prescription: prescription,
+      muscleGroup: muscleGroup,
     );
   }
 
@@ -79,6 +86,7 @@ class LoggedExercise {
       prescription: rawPrescription is Map
           ? PlanExercise.fromMap(Map<String, dynamic>.from(rawPrescription))
           : null,
+      muscleGroup: map['muscleGroup'] as String?,
     );
   }
 
@@ -91,6 +99,7 @@ class LoggedExercise {
       'replacedExerciseId': replacedExerciseId,
       'replacedExerciseName': replacedExerciseName,
       'prescription': ?prescription?.toMap(),
+      'muscleGroup': ?muscleGroup,
     };
   }
 }

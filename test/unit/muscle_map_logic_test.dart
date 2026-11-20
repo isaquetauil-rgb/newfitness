@@ -58,6 +58,52 @@ void main() {
       expect(w[MuscleRegion.triceps], 0.5);
     });
 
+    test('"Pernas" se espalha pela região (não cai num músculo só)', () {
+      final w = regionWeights(_ex('meu_exercicio', 'Pernas'));
+      expect(w, {
+        MuscleRegion.quadriceps: 0.25,
+        MuscleRegion.hamstring: 0.25,
+        MuscleRegion.gluteal: 0.25,
+        MuscleRegion.calves: 0.25,
+      });
+    });
+
+    test('agachamento da biblioteca usa os músculos certos', () {
+      final w = regionWeights(_ex('squat', 'Pernas'));
+      expect(w, {MuscleRegion.quadriceps: 0.5, MuscleRegion.gluteal: 0.5});
+      expect(regionWeights(_ex('leg_extension', 'Pernas')), {
+        MuscleRegion.quadriceps: 1.0,
+      });
+    });
+
+    test('exercício próprio entra no mapa pelo grupo gravado no treino', () {
+      final data = computeMuscleMap(
+        [
+          Workout(
+            id: 'w',
+            userId: 'u',
+            date: DateTime(2026, 11, 17),
+            exercises: [
+              LoggedExercise(
+                exerciseId: 'own_zercher',
+                exerciseName: 'Zercher',
+                muscleGroup: 'Posterior de coxa',
+                sets: [_set(), _set()],
+              ),
+              LoggedExercise(
+                exerciseId: 'own_sem_grupo',
+                exerciseName: 'Sem grupo',
+                sets: [_set()],
+              ),
+            ],
+          ),
+        ],
+        DateTime(2026, 11, 19, 18),
+        (_) => null,
+      );
+      expect(data.weekSets, {MuscleRegion.hamstring: 2.0});
+    });
+
     test('exercício conhecido usa a região certa, não o grupo genérico', () {
       expect(regionWeights(_curl), {MuscleRegion.biceps: 1.0});
       expect(regionWeights(_ex('leg_curl', 'Pernas')), {
@@ -157,7 +203,8 @@ void main() {
         _lookup,
       );
       expect(data.weekSets[MuscleRegion.chest], isNull);
-      expect(data.weekSets[MuscleRegion.quadriceps], 1);
+      // Agachamento: quadríceps e glúteos dividem o 1; core é secundário.
+      expect(data.weekSets[MuscleRegion.quadriceps], 0.5);
       expect(data.weekSets[MuscleRegion.gluteal], 0.5);
       expect(data.weekSets[MuscleRegion.abs], 0.5);
     });
