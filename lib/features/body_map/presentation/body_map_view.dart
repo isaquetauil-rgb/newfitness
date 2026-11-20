@@ -48,11 +48,18 @@ class BodyMapView extends StatelessWidget {
     required this.intensities,
     required this.color,
     this.female = false,
+    this.baseColor,
+    this.skinColor,
   });
 
   final Map<MuscleRegion, double> intensities;
   final Color color;
   final bool female;
+
+  /// Cor dos músculos sem treino e das partes sem músculo (cabeça, mãos...).
+  /// Padrão: cores do tema.
+  final Color? baseColor;
+  final Color? skinColor;
 
   @override
   Widget build(BuildContext context) {
@@ -70,8 +77,8 @@ class BodyMapView extends StatelessWidget {
           sides: [front, back],
           intensities: intensities,
           color: color,
-          base: scheme.surfaceContainerHighest,
-          skin: scheme.outlineVariant,
+          base: baseColor ?? scheme.surfaceContainerHighest,
+          skin: skinColor ?? scheme.outlineVariant,
           outline: scheme.outline.withValues(alpha: 0.5),
         ),
         child: const SizedBox.expand(),

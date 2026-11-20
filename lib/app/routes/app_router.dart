@@ -17,6 +17,8 @@ import 'package:newfitness/features/ai/presentation/ai_hub_screen.dart';
 import 'package:newfitness/features/health/presentation/parq_screen.dart';
 import 'package:newfitness/features/auth/logic/auth_provider.dart';
 import 'package:newfitness/features/body_map/presentation/body_map_screen.dart';
+import 'package:newfitness/features/stats/logic/period_stats.dart';
+import 'package:newfitness/features/stats/presentation/share_screens.dart';
 import 'package:newfitness/features/auth/presentation/forgot_password_screen.dart';
 import 'package:newfitness/features/auth/presentation/login_screen.dart';
 import 'package:newfitness/features/auth/presentation/register_screen.dart';
@@ -138,6 +140,20 @@ GoRouter buildAppRouter(AuthProvider authProvider) {
         pageBuilder: (context, state) => _fadeThrough(
           state,
           BodyMapScreen(args: state.extra as BodyMapArgs?),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.myMonth,
+        pageBuilder: (context, state) => _fadeThrough(
+          state,
+          const PeriodSummaryScreen(kind: PeriodKind.month),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.myYear,
+        pageBuilder: (context, state) => _fadeThrough(
+          state,
+          const PeriodSummaryScreen(kind: PeriodKind.year),
         ),
       ),
       GoRoute(

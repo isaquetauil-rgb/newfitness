@@ -14,6 +14,7 @@ import 'package:newfitness/features/exercises/presentation/exercise_alternatives
 import 'package:newfitness/features/health/presentation/free_workout_gate.dart';
 import 'package:newfitness/features/instructor/logic/custom_exercise_provider.dart';
 import 'package:newfitness/features/progress/logic/progress_record_provider.dart';
+import 'package:newfitness/features/stats/presentation/share_screens.dart';
 import 'package:newfitness/features/workout/logic/prescription_format.dart';
 import 'package:newfitness/shared/utils/one_rep_max.dart';
 import 'package:newfitness/features/workout/logic/progression/suggest_next.dart';
@@ -204,6 +205,14 @@ class WorkoutScreen extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: const Text('Fechar'),
+          ),
+          TextButton.icon(
+            onPressed: () {
+              Navigator.pop(ctx);
+              openWorkoutShare(context, saved, records);
+            },
+            icon: const Icon(Icons.share, size: 18),
+            label: const Text('Compartilhar'),
           ),
           FilledButton(
             onPressed: () {

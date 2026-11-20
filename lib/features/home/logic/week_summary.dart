@@ -24,26 +24,20 @@ class WeekSummary {
     final days = List<bool>.filled(7, false);
     var count = 0;
     var volume = 0.0;
-    final weeks = <DateTime>{};
 
     for (final workout in workouts) {
-      final week = _weekStart(workout.date);
-      weeks.add(week);
-      if (week == currentWeek) {
+      if (_weekStart(workout.date) == currentWeek) {
         days[workout.date.weekday - 1] = true;
         count++;
         volume += workout.totalVolume;
       }
     }
 
-    var cursor = weeks.contains(currentWeek)
-        ? currentWeek
-        : _previousWeek(currentWeek);
-    var streak = 0;
-    while (weeks.contains(cursor)) {
-      streak++;
-      cursor = _previousWeek(cursor);
-    }
+    final weeks = trainedWeeks(workouts);
+    final streak = streakEndingAt(
+      weeks,
+      weeks.contains(currentWeek) ? currentWeek : _previousWeek(currentWeek),
+    );
 
     return WeekSummary(
       trainedDays: days,
@@ -51,6 +45,38 @@ class WeekSummary {
       volumeThisWeek: volume,
       weekStreak: streak,
     );
+  }
+
+  /// Semanas (segunda-feira) em que houve treino.
+  static Set<DateTime> trainedWeeks(Iterable<Workout> workouts) => {
+    for (final w in workouts) _weekStart(w.date),
+  };
+
+  /// Quantas semanas seguidas, de [week] para trás, estão em [weeks].
+  static int streakEndingAt(Set<DateTime> weeks, DateTime week) {
+    var cursor = _weekStart(week);
+    var streak = 0;
+    while (weeks.contains(cursor)) {
+      streak++;
+      cursor = _previousWeek(cursor);
+    }
+    return streak;
+  }
+
+  /// Maior sequência de semanas seguidas com treino entre [from] e [to]
+  /// (só conta as semanas que começam dentro do intervalo).
+  static int longestStreak(Set<DateTime> weeks, DateTime from, DateTime to) {
+    final inRange = weeks
+        .where((w) => !w.isBefore(_weekStart(from)) && w.isBefore(to))
+        .toSet();
+    var best = 0;
+    for (final w in inRange) {
+      final next = DateTime(w.year, w.month, w.day + 7);
+      if (inRange.contains(next)) continue; // não é o fim de uma sequência
+      final run = streakEndingAt(inRange, w);
+      if (run > best) best = run;
+    }
+    return best;
   }
 
   static DateTime _weekStart(DateTime date) => weekStartOf(date);

@@ -2,6 +2,8 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
+import 'package:newfitness/app/routes/app_routes.dart';
 
 import 'package:newfitness/app/widgets/drawer_menu_button.dart';
 import 'package:newfitness/app/widgets/tab_switch_signal.dart';
@@ -140,6 +142,26 @@ class _WorkoutProgressTab extends StatelessWidget {
                 padding: const EdgeInsets.all(16),
                 children: [
                   _SummaryRow(workouts: workouts),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => context.push(AppRoutes.myMonth),
+                          icon: const Icon(Icons.calendar_view_month),
+                          label: const Text('Meu mês'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => context.push(AppRoutes.myYear),
+                          icon: const Icon(Icons.calendar_today),
+                          label: const Text('Meu ano'),
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 24),
                   const Text(
                     'Volume por treino (kg)',
