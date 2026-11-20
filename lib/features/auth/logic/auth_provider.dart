@@ -354,6 +354,41 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  /// Salva a meta semanal de treinos (1 a 7).
+  Future<bool> saveWeeklyGoal(int goal) async {
+    final profile = _profile;
+    if (profile == null || goal < 1 || goal > 7) return false;
+    try {
+      await _firestoreService.updateWeeklyGoal(profile.uid, goal);
+      _profile = profile.copyWith(weeklyGoal: goal);
+      notifyListeners();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Grava no perfil as conquistas de [earned] que ainda não estavam lá.
+  /// Não faz nada se não houver novidade.
+  Future<bool> saveAchievements(Map<String, int> earned) async {
+    final profile = _profile;
+    if (profile == null) return false;
+    final stored = profile.achievements ?? const <String, int>{};
+    final missing = {
+      for (final e in earned.entries)
+        if (stored[e.key] != e.value) e.key: e.value,
+    };
+    if (missing.isEmpty) return true;
+    try {
+      await _firestoreService.mergeAchievements(profile.uid, missing);
+      _profile = profile.copyWith(achievements: {...stored, ...missing});
+      notifyListeners();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<bool> resetPassword(String email) {
     return _run(() => _authService.sendPasswordResetEmail(email));
   }

@@ -113,6 +113,8 @@ void main() {
         .thenAnswer((_) async => 'w2');
     when(() => firestoreService.recordExerciseProgress(any()))
         .thenAnswer((_) async {});
+    when(() => firestoreService.mergeAchievements(any(), any()))
+        .thenAnswer((_) async {});
     // Tela inicial do treino, depois de finalizar.
     when(() => firestoreService.watchTrainingPlans(any()))
         .thenAnswer((_) => Stream.value(const []));
@@ -321,6 +323,11 @@ void main() {
 
     workoutProvider.skipRest();
     await tester.tap(find.text('Finalizar treino'));
+    await tester.pumpAndSettle();
+    // Primeiro recorde do histórico: aviso de conquista antes do resumo.
+    expect(find.text('Conquista desbloqueada!'), findsOneWidget);
+    expect(find.text('Primeiro recorde'), findsOneWidget);
+    await tester.tap(find.text('Boa!'));
     await tester.pumpAndSettle();
     expect(find.text('Treino salvo!'), findsOneWidget);
     expect(find.text('Recorde de hoje'), findsOneWidget);

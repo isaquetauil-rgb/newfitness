@@ -107,3 +107,22 @@ test('perfil não nasce com freeWorkoutDisabled', async () => {
   );
   await assertSucceeds(setDoc(doc(asUser('novo2'), 'users/novo2'), { role: 'student' }));
 });
+
+// Prompt 3 etapa 3: meta semanal e resumo de conquistas no perfil.
+test('aluno grava a meta semanal e as conquistas no próprio perfil', async () => {
+  await assertSucceeds(
+    setDoc(
+      aluno(asUser('aluno')),
+      { weeklyGoal: 4, achievements: { firstWorkout: 1, workouts10: 2 } },
+      { merge: true },
+    ),
+  );
+});
+
+test('personal NÃO grava meta nem conquistas no perfil do aluno', async () => {
+  await assertFails(updateDoc(aluno(asUser('personal')), { weeklyGoal: 7 }));
+  await assertFails(
+    updateDoc(aluno(asUser('personal')), { achievements: { weeks26: 1 } }),
+  );
+  await assertFails(updateDoc(aluno(asUser('outro-personal')), { weeklyGoal: 1 }));
+});

@@ -8,6 +8,7 @@ import 'package:newfitness/features/stats/logic/period_stats.dart';
 import 'package:newfitness/features/stats/presentation/share_card.dart';
 import 'package:newfitness/features/workout/logic/workout_provider.dart';
 import 'package:newfitness/shared/models/exercise.dart';
+import 'package:newfitness/shared/models/user_profile.dart';
 import 'package:newfitness/shared/models/workout.dart';
 import 'package:newfitness/shared/utils/one_rep_max.dart';
 
@@ -126,7 +127,14 @@ class _PeriodSummaryScreenState extends State<PeriodSummaryScreen> {
             if (!snap.hasData) {
               return const Center(child: CircularProgressIndicator());
             }
-            final stats = PeriodStats.from(snap.data!, _period);
+            final goal =
+                context.watch<AuthProvider>().profile?.effectiveWeeklyGoal ??
+                defaultWeeklyGoal;
+            final stats = PeriodStats.from(
+              snap.data!,
+              _period,
+              weeklyGoal: goal,
+            );
             return Padding(
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
               child: Column(

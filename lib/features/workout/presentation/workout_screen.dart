@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 
 import 'package:newfitness/app/routes/app_routes.dart';
 import 'package:newfitness/app/widgets/drawer_menu_button.dart';
+import 'package:newfitness/features/achievements/presentation/achievements_screen.dart';
 import 'package:newfitness/features/auth/logic/auth_provider.dart';
 import 'package:newfitness/features/exercises/logic/exercise_pool.dart';
 import 'package:newfitness/features/exercises/logic/exercise_provider.dart';
@@ -135,11 +136,14 @@ class WorkoutScreen extends StatelessWidget {
     final result = await provider.finishWorkout();
     if (!context.mounted) return;
     if (result == WorkoutFinishResult.saved) {
-      _showSavedSummary(
-        context,
-        provider.lastSaved!,
-        provider.lastSavedRecords,
-      );
+      final saved = provider.lastSaved!;
+      final records = provider.lastSavedRecords;
+      // Conquistas novas: grava no perfil e avisa antes do resumo.
+      final earned = await syncAchievementsAfterWorkout(context, saved);
+      if (!context.mounted) return;
+      if (earned.isNotEmpty) await showAchievementsEarned(context, earned);
+      if (!context.mounted) return;
+      _showSavedSummary(context, saved, records);
     } else if (result == WorkoutFinishResult.failed) {
       messenger.showSnackBar(
         const SnackBar(

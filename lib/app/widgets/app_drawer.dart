@@ -151,6 +151,11 @@ class AppDrawer extends StatelessWidget {
                     onTap: () => _pushRoute(context, AppRoutes.nutrition),
                   ),
                   _DrawerTile(
+                    icon: Icons.military_tech_outlined,
+                    label: 'Conquistas',
+                    onTap: () => _pushRoute(context, AppRoutes.achievements),
+                  ),
+                  _DrawerTile(
                     icon: Icons.auto_awesome_outlined,
                     label: 'Treinos prontos',
                     color: AppTheme.trainingAccent,

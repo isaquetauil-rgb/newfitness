@@ -166,6 +166,25 @@ class FirestoreService {
     );
   }
 
+  /// Grava só a meta semanal de treinos (`weeklyGoal`) no perfil.
+  Future<void> updateWeeklyGoal(String uid, int goal) {
+    return _guard('updateWeeklyGoal', () {
+      return _db.collection(FirestorePaths.users).doc(uid).set({
+        'weeklyGoal': goal,
+      }, SetOptions(merge: true));
+    });
+  }
+
+  /// Junta conquistas ao resumo do perfil (`achievements`, id → ms). O merge
+  /// do Firestore mantém as que já estavam lá.
+  Future<void> mergeAchievements(String uid, Map<String, int> achievements) {
+    return _guard('mergeAchievements', () {
+      return _db.collection(FirestorePaths.users).doc(uid).set({
+        'achievements': achievements,
+      }, SetOptions(merge: true));
+    });
+  }
+
   /// Grava só a barra e as anilhas da academia (`plateSetup`) no perfil.
   Future<void> updatePlateSetup(String uid, PlateSetup setup) {
     return _guard('updatePlateSetup', () {

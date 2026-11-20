@@ -9,6 +9,7 @@ import 'package:newfitness/app/theme/theme_provider.dart';
 import 'package:newfitness/app/widgets/drawer_menu_button.dart';
 import 'package:newfitness/core/constants/admin_config.dart';
 import 'package:newfitness/core/di/injector.dart';
+import 'package:newfitness/features/achievements/presentation/achievements_screen.dart';
 import 'package:newfitness/features/auth/logic/auth_provider.dart';
 import 'package:newfitness/features/auth/presentation/email_verification_notice.dart';
 import 'package:newfitness/features/body_map/data/muscle_map_license.dart';
@@ -377,6 +378,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         title: const Text('Documentos'),
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () => context.push(AppRoutes.documents),
+                      ),
+                      const Divider(height: 1),
+                      ListTile(
+                        leading: const Icon(Icons.flag_outlined),
+                        title: const Text('Meta semanal'),
+                        subtitle: Text(
+                          profile.effectiveWeeklyGoal == 1
+                              ? '1 treino por semana'
+                              : '${profile.effectiveWeeklyGoal} treinos por semana',
+                        ),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => showWeeklyGoalDialog(context),
+                      ),
+                      const Divider(height: 1),
+                      ListTile(
+                        leading: const Icon(Icons.military_tech_outlined),
+                        title: const Text('Conquistas'),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => context.push(AppRoutes.achievements),
                       ),
                       const Divider(height: 1),
                       SwitchListTile(

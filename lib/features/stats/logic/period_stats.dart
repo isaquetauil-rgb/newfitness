@@ -71,14 +71,19 @@ class PeriodStats {
   /// (o maior), do mais recente para o mais antigo.
   final List<PersonalRecord> records;
 
-  /// Maior sequência de semanas seguidas com treino dentro do período.
+  /// Maior sequência de semanas seguidas que bateram a meta semanal,
+  /// dentro do período.
   final int consecutiveWeeks;
 
   bool get isEmpty => workouts == 0;
 
   /// [history] é o histórico inteiro (os recordes dependem do que veio
   /// antes do período).
-  factory PeriodStats.from(Iterable<Workout> history, Period period) {
+  factory PeriodStats.from(
+    Iterable<Workout> history,
+    Period period, {
+    int weeklyGoal = 1,
+  }) {
     final all = history.toList();
     final inPeriod = all.where((w) => period.contains(w.date)).toList();
 
@@ -132,7 +137,7 @@ class PeriodStats {
       topExercise: top,
       records: latest.values.toList(),
       consecutiveWeeks: WeekSummary.longestStreak(
-        WeekSummary.trainedWeeks(inPeriod),
+        WeekSummary.goalWeeks(inPeriod, goal: weeklyGoal),
         period.start,
         period.end,
       ),

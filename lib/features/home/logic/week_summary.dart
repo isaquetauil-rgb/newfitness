@@ -2,14 +2,22 @@ import 'package:newfitness/shared/models/workout.dart';
 
 /// Resumo da semana (segunda a domingo) mostrado na tela inicial, calculado
 /// a partir do histórico já ordenado do mais recente para o mais antigo.
+///
+/// Este é o ÚNICO lugar com a regra de "semanas seguidas" (tela inicial,
+/// Meu mês/Meu ano e conquistas usam as funções daqui).
 class WeekSummary {
   /// Sete posições, de segunda a domingo: houve treino nesse dia?
   final List<bool> trainedDays;
   final int workoutsThisWeek;
   final double volumeThisWeek;
 
-  /// Semanas seguidas com treino. A semana atual só encerra a sequência
-  /// depois que acaba: sem treino nela ainda, conta a partir da anterior.
+  /// Treinos por semana que contam para a sequência.
+  final int weeklyGoal;
+
+  /// Semanas seguidas em que a meta foi atingida. Dias de descanso não
+  /// quebram nada: só importa a semana bater a meta. A semana atual só
+  /// encerra a sequência depois que acaba: enquanto a meta não foi batida
+  /// nela, conta a partir da anterior.
   final int weekStreak;
 
   const WeekSummary({
@@ -17,9 +25,18 @@ class WeekSummary {
     required this.workoutsThisWeek,
     required this.volumeThisWeek,
     required this.weekStreak,
+    this.weeklyGoal = 1,
   });
 
-  factory WeekSummary.from(List<Workout> workouts, DateTime now) {
+  /// A meta desta semana já foi batida?
+  bool get goalMetThisWeek => workoutsThisWeek >= weeklyGoal;
+
+  /// [weeklyGoal] padrão 1 = "semana com pelo menos um treino".
+  factory WeekSummary.from(
+    List<Workout> workouts,
+    DateTime now, {
+    int weeklyGoal = 1,
+  }) {
     final currentWeek = _weekStart(now);
     final days = List<bool>.filled(7, false);
     var count = 0;
@@ -33,7 +50,7 @@ class WeekSummary {
       }
     }
 
-    final weeks = trainedWeeks(workouts);
+    final weeks = goalWeeks(workouts, goal: weeklyGoal);
     final streak = streakEndingAt(
       weeks,
       weeks.contains(currentWeek) ? currentWeek : _previousWeek(currentWeek),
@@ -44,13 +61,33 @@ class WeekSummary {
       workoutsThisWeek: count,
       volumeThisWeek: volume,
       weekStreak: streak,
+      weeklyGoal: weeklyGoal,
     );
   }
 
-  /// Semanas (segunda-feira) em que houve treino.
-  static Set<DateTime> trainedWeeks(Iterable<Workout> workouts) => {
-    for (final w in workouts) _weekStart(w.date),
-  };
+  /// Semanas (segunda-feira) com pelo menos [goal] treinos.
+  static Set<DateTime> goalWeeks(Iterable<Workout> workouts, {int goal = 1}) =>
+      goalHitDates(workouts, goal: goal).keys.toSet();
+
+  /// Para cada semana que bateu a meta: o momento do treino que bateu
+  /// (o [goal]-ésimo da semana, em ordem de data).
+  static Map<DateTime, DateTime> goalHitDates(
+    Iterable<Workout> workouts, {
+    int goal = 1,
+  }) {
+    final need = goal < 1 ? 1 : goal;
+    final byWeek = <DateTime, List<DateTime>>{};
+    for (final w in workouts) {
+      (byWeek[_weekStart(w.date)] ??= []).add(w.date);
+    }
+    final out = <DateTime, DateTime>{};
+    byWeek.forEach((week, dates) {
+      if (dates.length < need) return;
+      dates.sort();
+      out[week] = dates[need - 1];
+    });
+    return out;
+  }
 
   /// Quantas semanas seguidas, de [week] para trás, estão em [weeks].
   static int streakEndingAt(Set<DateTime> weeks, DateTime week) {
@@ -63,7 +100,7 @@ class WeekSummary {
     return streak;
   }
 
-  /// Maior sequência de semanas seguidas com treino entre [from] e [to]
+  /// Maior sequência de semanas seguidas em [weeks] entre [from] e [to]
   /// (só conta as semanas que começam dentro do intervalo).
   static int longestStreak(Set<DateTime> weeks, DateTime from, DateTime to) {
     final inRange = weeks
@@ -71,8 +108,7 @@ class WeekSummary {
         .toSet();
     var best = 0;
     for (final w in inRange) {
-      final next = DateTime(w.year, w.month, w.day + 7);
-      if (inRange.contains(next)) continue; // não é o fim de uma sequência
+      if (inRange.contains(nextWeek(w))) continue; // não é o fim da sequência
       final run = streakEndingAt(inRange, w);
       if (run > best) best = run;
     }
@@ -85,6 +121,9 @@ class WeekSummary {
   /// muscular, para "semana" significar a mesma coisa no app todo.
   static DateTime weekStartOf(DateTime date) =>
       DateTime(date.year, date.month, date.day - (date.weekday - 1));
+
+  static DateTime nextWeek(DateTime week) =>
+      DateTime(week.year, week.month, week.day + 7);
 
   static DateTime _previousWeek(DateTime week) =>
       DateTime(week.year, week.month, week.day - 7);

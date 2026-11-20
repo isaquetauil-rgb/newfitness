@@ -1,6 +1,9 @@
 import 'parq.dart';
 import 'plate_setup.dart';
 
+/// Meta semanal de treinos quando o aluno ainda não escolheu a dele.
+const int defaultWeeklyGoal = 3;
+
 enum UserRole { student, instructor, nutritionist }
 
 String userRoleToString(UserRole role) {
@@ -61,6 +64,22 @@ class UserProfile {
   /// enquanto há personal vinculado ([freeWorkoutBlocked]).
   final bool? freeWorkoutDisabled;
 
+  /// Meta semanal de treinos escolhida pelo aluno (campo opcional; sem ela
+  /// vale [defaultWeeklyGoal]). A sequência de semanas conta as semanas que
+  /// bateram a meta.
+  final int? weeklyGoal;
+
+  /// Resumo das conquistas já ganhas: id da conquista → quando (ms). Campo
+  /// opcional, recalculado do histórico (ver `achievements.dart`); fica
+  /// gravado para não "perder" uma conquista se a meta mudar depois.
+  final Map<String, int>? achievements;
+
+  /// Meta semanal em uso (a do aluno ou a padrão).
+  int get effectiveWeeklyGoal =>
+      (weeklyGoal != null && weeklyGoal! >= 1 && weeklyGoal! <= 7)
+      ? weeklyGoal!
+      : defaultWeeklyGoal;
+
   const UserProfile({
     required this.uid,
     required this.name,
@@ -78,6 +97,8 @@ class UserProfile {
     this.parq,
     this.freeWorkoutTermsAcceptedAt,
     this.freeWorkoutDisabled,
+    this.weeklyGoal,
+    this.achievements,
   });
 
   /// Treino livre bloqueado agora: o personal desativou e ainda está
@@ -110,6 +131,13 @@ class UserProfile {
       freeWorkoutTermsAcceptedAt: (map['freeWorkoutTermsAcceptedAt'] as num?)
           ?.toInt(),
       freeWorkoutDisabled: map['freeWorkoutDisabled'] as bool?,
+      weeklyGoal: (map['weeklyGoal'] as num?)?.toInt(),
+      achievements: map['achievements'] is Map
+          ? {
+              for (final e in (map['achievements'] as Map).entries)
+                if (e.value is num) '${e.key}': (e.value as num).toInt(),
+            }
+          : null,
     );
   }
 
@@ -132,6 +160,8 @@ class UserProfile {
       'parq': ?parq?.toMap(),
       'freeWorkoutTermsAcceptedAt': ?freeWorkoutTermsAcceptedAt,
       'freeWorkoutDisabled': ?freeWorkoutDisabled,
+      'weeklyGoal': ?weeklyGoal,
+      'achievements': ?achievements,
     };
   }
 
@@ -150,6 +180,8 @@ class UserProfile {
     ParQ? parq,
     int? freeWorkoutTermsAcceptedAt,
     bool? freeWorkoutDisabled,
+    int? weeklyGoal,
+    Map<String, int>? achievements,
   }) {
     return UserProfile(
       uid: uid,
@@ -169,6 +201,8 @@ class UserProfile {
       freeWorkoutTermsAcceptedAt:
           freeWorkoutTermsAcceptedAt ?? this.freeWorkoutTermsAcceptedAt,
       freeWorkoutDisabled: freeWorkoutDisabled ?? this.freeWorkoutDisabled,
+      weeklyGoal: weeklyGoal ?? this.weeklyGoal,
+      achievements: achievements ?? this.achievements,
     );
   }
 }

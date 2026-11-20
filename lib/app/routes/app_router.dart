@@ -15,6 +15,7 @@ import 'package:newfitness/features/admin/presentation/admin_users_screen.dart';
 import 'package:newfitness/features/agenda/presentation/agenda_screen.dart';
 import 'package:newfitness/features/ai/presentation/ai_hub_screen.dart';
 import 'package:newfitness/features/health/presentation/parq_screen.dart';
+import 'package:newfitness/features/achievements/presentation/achievements_screen.dart';
 import 'package:newfitness/features/auth/logic/auth_provider.dart';
 import 'package:newfitness/features/body_map/presentation/body_map_screen.dart';
 import 'package:newfitness/features/stats/logic/period_stats.dart';
@@ -141,6 +142,11 @@ GoRouter buildAppRouter(AuthProvider authProvider) {
           state,
           BodyMapScreen(args: state.extra as BodyMapArgs?),
         ),
+      ),
+      GoRoute(
+        path: AppRoutes.achievements,
+        pageBuilder: (context, state) =>
+            _fadeThrough(state, const AchievementsScreen()),
       ),
       GoRoute(
         path: AppRoutes.myMonth,

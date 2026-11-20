@@ -139,7 +139,11 @@ class _StudentHomeBodyState extends State<_StudentHomeBody> {
       builder: (context, historySnapshot) {
         final workouts = historySnapshot.data ?? const <Workout>[];
         final loaded = historySnapshot.hasData;
-        final week = WeekSummary.from(workouts, DateTime.now());
+        final week = WeekSummary.from(
+          workouts,
+          DateTime.now(),
+          weeklyGoal: widget.profile?.effectiveWeeklyGoal ?? defaultWeeklyGoal,
+        );
 
         return ListView(
           padding: const EdgeInsets.all(16),
@@ -377,9 +381,45 @@ class _WeekCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Sua semana',
-                style: TextStyle(fontWeight: FontWeight.w700),
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Sua semana',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                  // Meta semanal: toque leva às conquistas (onde muda a meta).
+                  InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () => context.push(AppRoutes.achievements),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            week.goalMetThisWeek
+                                ? Icons.check_circle
+                                : Icons.flag_outlined,
+                            size: 16,
+                            color: week.goalMetThisWeek
+                                ? colors.primary
+                                : colors.onSurfaceVariant,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Meta: ${week.workoutsThisWeek}/${week.weeklyGoal}',
+                            style: TextStyle(color: colors.onSurfaceVariant),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 12),
               Row(
@@ -412,7 +452,7 @@ class _WeekCard extends StatelessWidget {
               const SizedBox(height: 12),
               Text(
                 streak >= 2
-                    ? '$streak semanas seguidas treinando · '
+                    ? '🔥 $streak semanas seguidas na meta · '
                           '${formatKg(week.volumeThisWeek)} nesta semana'
                     : '${week.workoutsThisWeek} treino(s) · '
                           '${formatKg(week.volumeThisWeek)} nesta semana',
