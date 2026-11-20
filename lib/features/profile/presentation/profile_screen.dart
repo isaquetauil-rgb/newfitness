@@ -11,6 +11,7 @@ import 'package:newfitness/core/constants/admin_config.dart';
 import 'package:newfitness/core/di/injector.dart';
 import 'package:newfitness/features/auth/logic/auth_provider.dart';
 import 'package:newfitness/features/auth/presentation/email_verification_notice.dart';
+import 'package:newfitness/features/body_map/data/muscle_map_license.dart';
 import 'package:newfitness/features/profile/presentation/manage_link_sheet.dart';
 import 'package:newfitness/features/workout/logic/workout_provider.dart';
 import 'package:newfitness/features/workout/presentation/rest_timer_sheet.dart';
@@ -386,6 +387,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       const Divider(height: 1),
                       const RestTimerSettingsTiles(),
+                      const Divider(height: 1),
+                      ListTile(
+                        leading: const Icon(Icons.gavel_outlined),
+                        title: const Text('Licenças de software'),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () {
+                          registerMuscleMapLicense();
+                          showLicensePage(
+                            context: context,
+                            applicationName: 'NewFitness',
+                          );
+                        },
+                      ),
                     ],
                   ),
                 ),

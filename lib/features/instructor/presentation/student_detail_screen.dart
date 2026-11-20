@@ -7,6 +7,7 @@ import 'package:newfitness/app/routes/app_router.dart';
 import 'package:newfitness/app/routes/app_routes.dart';
 import 'package:newfitness/core/di/injector.dart';
 import 'package:newfitness/features/auth/logic/auth_provider.dart';
+import 'package:newfitness/features/body_map/presentation/body_map_screen.dart';
 import 'package:newfitness/features/instructor/presentation/ai_suggestion_sheet.dart';
 import 'package:newfitness/features/instructor/presentation/plan_editor_screen.dart';
 import 'package:newfitness/features/progress/presentation/exercise_progress_list.dart';
@@ -216,6 +217,18 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
             onPressed: () => _openAiSheet(instructorUid),
             icon: const Icon(Icons.smart_toy_outlined),
             label: const Text('Pedir sugestão de treino com IA'),
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: () => context.push(
+              AppRoutes.bodyMap,
+              extra: BodyMapArgs(
+                studentUid: widget.studentUid,
+                studentName: widget.studentName,
+              ),
+            ),
+            icon: const Icon(Icons.accessibility_new),
+            label: const Text('Ver mapa muscular do aluno'),
           ),
           const SizedBox(height: 8),
           EvolutionOverviewCard(

@@ -53,7 +53,11 @@ class WeekSummary {
     );
   }
 
-  static DateTime _weekStart(DateTime date) =>
+  static DateTime _weekStart(DateTime date) => weekStartOf(date);
+
+  /// Segunda-feira (meia-noite) da semana de [date]. Usado também pelo mapa
+  /// muscular, para "semana" significar a mesma coisa no app todo.
+  static DateTime weekStartOf(DateTime date) =>
       DateTime(date.year, date.month, date.day - (date.weekday - 1));
 
   static DateTime _previousWeek(DateTime week) =>

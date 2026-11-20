@@ -72,6 +72,7 @@ dependencies:
   # YouTube continua usando youtube_player_iframe acima.
   video_player: ^2.9.5
   wakelock_plus: ^1.8.0
+  path_drawing: ^1.0.1
 
 dev_dependencies:
   flutter_test:

@@ -8,6 +8,7 @@ import 'package:newfitness/app/widgets/drawer_menu_button.dart';
 import 'package:newfitness/core/di/injector.dart';
 import 'package:newfitness/core/storage/local_prefs.dart';
 import 'package:newfitness/features/auth/logic/auth_provider.dart';
+import 'package:newfitness/features/body_map/presentation/body_map_card.dart';
 import 'package:newfitness/features/health/presentation/free_workout_gate.dart';
 import 'package:newfitness/features/home/logic/week_summary.dart';
 import 'package:newfitness/features/instructor/presentation/ai_suggestion_sheet.dart';
@@ -175,6 +176,10 @@ class _StudentHomeBodyState extends State<_StudentHomeBody> {
             ],
             const SizedBox(height: 12),
             _WeekCard(week: week),
+            if (loaded) ...[
+              const SizedBox(height: 12),
+              BodyMapCard(workouts: workouts),
+            ],
             if (loaded && workouts.isEmpty) ...[
               const SizedBox(height: 12),
               _GettingStartedCard(hasReminders: enabledReminders > 0),

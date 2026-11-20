@@ -10,6 +10,7 @@ import 'core/error/error_handler.dart';
 import 'core/firebase/local_emulators.dart';
 import 'core/logging/app_logger.dart';
 import 'core/system/system_bars.dart';
+import 'features/body_map/data/muscle_map_license.dart';
 import 'firebase_options.dart';
 
 void main() {
@@ -19,6 +20,7 @@ void main() {
 
       AppLogger.init();
       ErrorHandler.init();
+      registerMuscleMapLicense();
 
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,

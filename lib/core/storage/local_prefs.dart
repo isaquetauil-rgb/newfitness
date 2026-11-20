@@ -53,4 +53,9 @@ class LocalPrefs {
   Future<void> setRestAutoStart(bool v) => _prefs.setBool(_restAutoStartKey, v);
   Future<void> setRestSound(bool v) => _prefs.setBool(_restSoundKey, v);
   Future<void> setRestVibration(bool v) => _prefs.setBool(_restVibrationKey, v);
+
+  /// Mapa muscular com o desenho feminino (padrão: masculino).
+  static const _bodyMapFemaleKey = 'body_map_female';
+  bool get bodyMapFemale => _prefs.getBool(_bodyMapFemaleKey) ?? false;
+  Future<void> setBodyMapFemale(bool v) => _prefs.setBool(_bodyMapFemaleKey, v);
 }

@@ -44,6 +44,7 @@ class AppRoutes {
   static const parq = '/parq';
   static const profile = '/profile';
   static const progressCalendar = '/progress-calendar';
+  static const bodyMap = '/body-map';
 
   // Itens do menu lateral inspirados no Next Fit — telas "em breve" até
   // termos backend real de agenda/pagamento/contrato.
