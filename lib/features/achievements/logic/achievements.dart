@@ -77,6 +77,7 @@ enum Achievement {
 Map<Achievement, DateTime> computeAchievements(
   Iterable<Workout> workouts, {
   required int weeklyGoal,
+  GoalForWeek? goalForWeek,
 }) {
   final out = <Achievement, DateTime>{};
   final ordered = workouts.toList()..sort((a, b) => a.date.compareTo(b.date));
@@ -95,7 +96,11 @@ Map<Achievement, DateTime> computeAchievements(
   // Sequências: percorre as semanas que bateram a meta, em ordem; quando
   // uma sequência chega a N, a conquista é do treino que bateu a meta
   // daquela semana.
-  final hits = WeekSummary.goalHitDates(ordered, goal: weeklyGoal);
+  final hits = WeekSummary.goalHitDates(
+    ordered,
+    goal: weeklyGoal,
+    goalForWeek: goalForWeek,
+  );
   final weeks = hits.keys.toList()..sort();
   var run = 0;
   DateTime? previous;
@@ -145,15 +150,18 @@ List<Achievement> newlyEarned(
   List<Workout> historyWithLatest,
   Workout latest, {
   required int weeklyGoal,
+  GoalForWeek? goalForWeek,
 }) {
   final before = computeAchievements(
     historyWithLatest.where((w) => w.id != latest.id),
     weeklyGoal: weeklyGoal,
+    goalForWeek: goalForWeek,
   );
-  final after = computeAchievements([
-    ...historyWithLatest.where((w) => w.id != latest.id),
-    latest,
-  ], weeklyGoal: weeklyGoal);
+  final after = computeAchievements(
+    [...historyWithLatest.where((w) => w.id != latest.id), latest],
+    weeklyGoal: weeklyGoal,
+    goalForWeek: goalForWeek,
+  );
   return [
     for (final a in Achievement.values)
       if (after.containsKey(a) && !before.containsKey(a)) a,

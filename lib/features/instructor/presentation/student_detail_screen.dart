@@ -11,6 +11,7 @@ import 'package:newfitness/features/body_map/presentation/body_map_screen.dart';
 import 'package:newfitness/features/instructor/presentation/ai_suggestion_sheet.dart';
 import 'package:newfitness/features/instructor/presentation/plan_editor_screen.dart';
 import 'package:newfitness/features/progress/presentation/exercise_progress_list.dart';
+import 'package:newfitness/features/progress/presentation/workout_details.dart';
 import 'package:newfitness/features/progress/presentation/physical_assessment_screen.dart';
 import 'package:newfitness/features/workout/data/health_screening_service.dart';
 import 'package:newfitness/features/workout/logic/training_plan_provider.dart';
@@ -358,13 +359,17 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
                   for (final w in workouts)
                     Card(
                       margin: const EdgeInsets.only(bottom: 8),
-                      child: ListTile(
+                      clipBehavior: Clip.antiAlias,
+                      child: ExpansionTile(
+                        shape: const Border(),
                         title: Text(w.name),
                         subtitle: Text(
                           '${DateFormat('dd/MM/yyyy').format(w.date)} · ${w.totalSets} séries'
                           '${w.importLabel == null ? '' : ' · ${w.importLabel}'}',
                         ),
                         trailing: Text(formatKg(w.totalVolume)),
+                        expandedCrossAxisAlignment: CrossAxisAlignment.start,
+                        children: [WorkoutDetails(workout: w)],
                       ),
                     ),
                 ],

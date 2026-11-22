@@ -110,13 +110,13 @@ void main() {
     );
     when(() => firestoreService.seedExercise(exercise))
         .thenAnswer((_) async {});
-    when(() => firestoreService.deleteExercise('e1')).thenAnswer((_) async {});
+    when(() => firestoreService.archiveExercise('e1')).thenAnswer((_) async {});
 
     await provider.saveExercise(exercise);
     await provider.deleteExercise('e1');
 
     verify(() => firestoreService.seedExercise(exercise)).called(1);
-    verify(() => firestoreService.deleteExercise('e1')).called(1);
+    verify(() => firestoreService.archiveExercise('e1')).called(1);
   });
 
   test(

@@ -151,6 +151,7 @@ ImportPlan buildImport(
         durationSeconds: w.durationSeconds,
         importedFrom: w.source.name,
         importKey: w.key,
+        notes: w.notes,
         exercises: [
           for (final e in w.exercises)
             LoggedExercise(
@@ -163,6 +164,9 @@ ImportPlan buildImport(
                     reps: s.reps,
                     weightKg: s.weightKg,
                     seconds: s.seconds,
+                    distanceMeters: s.distanceMeters,
+                    rpe: s.rpe,
+                    notes: s.notes,
                     type: s.type,
                     completed: true,
                   ),

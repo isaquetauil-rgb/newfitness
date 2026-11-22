@@ -8,25 +8,42 @@ import 'package:newfitness/core/network/functions_client.dart';
 /// Resultado da Cloud Function `exportMyData`.
 class DataExport {
   const DataExport({
-    required this.jsonUrl,
-    required this.csvUrl,
+    required this.zipUrl,
     required this.expiresAt,
     required this.workouts,
+    this.photos = 0,
+    this.photosOmitted = 0,
+    this.sizeBytes = 0,
   });
 
   factory DataExport.fromMap(Map<String, dynamic> map) => DataExport(
-    jsonUrl: map['jsonUrl'] as String? ?? '',
-    csvUrl: map['csvUrl'] as String? ?? '',
+    zipUrl: map['zipUrl'] as String? ?? '',
     expiresAt: DateTime.fromMillisecondsSinceEpoch(
       (map['expiresAt'] as num?)?.toInt() ?? 0,
     ),
     workouts: (map['workouts'] as num?)?.toInt() ?? 0,
+    photos: (map['photos'] as num?)?.toInt() ?? 0,
+    photosOmitted: (map['photosOmitted'] as num?)?.toInt() ?? 0,
+    sizeBytes: (map['sizeBytes'] as num?)?.toInt() ?? 0,
   );
 
-  final String jsonUrl;
-  final String csvUrl;
+  /// Link do ZIP (dados.json + treinos.csv + fotos/). Vale 1 hora, só para
+  /// baixar; o conteúdo baixado não expira.
+  final String zipUrl;
   final DateTime expiresAt;
   final int workouts;
+  final int photos;
+
+  /// Fotos que não couberam no limite de tamanho do ZIP.
+  final int photosOmitted;
+  final int sizeBytes;
+}
+
+/// "850 KB", "12,4 MB".
+String formatFileSize(int bytes) {
+  if (bytes < 1024 * 1024) return '${(bytes / 1024).ceil()} KB';
+  final mb = bytes / (1024 * 1024);
+  return '${mb.toStringAsFixed(1).replaceAll('.', ',')} MB';
 }
 
 typedef DataExporter = Future<DataExport> Function();
@@ -109,14 +126,14 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
           const Text(
             'Gera uma cópia dos seus dados: perfil (com o questionário de '
             'saúde e os aceites), treinos e recordes, avaliações físicas, '
-            'refeições, planos de treino e de nutrição e os links das suas '
-            'fotos.',
+            'refeições, planos de treino e de nutrição e as suas fotos.',
           ),
           const SizedBox(height: 8),
           Text(
-            'Você recebe dois arquivos: um completo (JSON) e uma planilha dos '
-            'treinos (CSV, uma linha por série). Os links valem 1 hora. Dá '
-            'para exportar uma vez por dia.',
+            'Você recebe um arquivo ZIP com tudo: os dados completos (JSON), '
+            'uma planilha dos treinos (CSV, uma linha por série) e a pasta '
+            'fotos. O link para baixar vale 1 hora. Dá para exportar uma vez '
+            'por dia.',
             style: TextStyle(color: scheme.onSurfaceVariant),
           ),
           const SizedBox(height: 20),
@@ -157,21 +174,41 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                     Text(
                       '${result.workouts} '
                       '${result.workouts == 1 ? 'treino' : 'treinos'} · '
-                      'links válidos até '
+                      '${result.photos} '
+                      '${result.photos == 1 ? 'foto' : 'fotos'}'
+                      '${result.sizeBytes > 0 ? ' · ${formatFileSize(result.sizeBytes)}' : ''}'
+                      ' · link válido até '
                       '${DateFormat('HH:mm').format(result.expiresAt)}',
                       style: TextStyle(color: scheme.onSurfaceVariant),
                     ),
+                    if (result.photosOmitted > 0) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.warning_amber_rounded,
+                            size: 20,
+                            color: Colors.amber.shade800,
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              '${result.photosOmitted} '
+                              '${result.photosOmitted == 1 ? 'foto ficou' : 'fotos ficaram'} '
+                              'de fora porque o arquivo passaria do limite '
+                              'de 100 MB. Elas continuam no app; os dados '
+                              'delas estão no JSON.',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                     const SizedBox(height: 12),
-                    OutlinedButton.icon(
-                      onPressed: () => _open(result.jsonUrl),
-                      icon: const Icon(Icons.data_object),
-                      label: const Text('Baixar todos os dados (JSON)'),
-                    ),
-                    const SizedBox(height: 8),
-                    OutlinedButton.icon(
-                      onPressed: () => _open(result.csvUrl),
-                      icon: const Icon(Icons.table_chart_outlined),
-                      label: const Text('Baixar planilha de treinos (CSV)'),
+                    FilledButton.icon(
+                      onPressed: () => _open(result.zipUrl),
+                      icon: const Icon(Icons.folder_zip_outlined),
+                      label: const Text('Baixar meus dados (ZIP)'),
                     ),
                   ],
                 ),

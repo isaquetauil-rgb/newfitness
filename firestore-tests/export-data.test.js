@@ -29,7 +29,10 @@ const {
   workoutsCsv,
   CSV_HEADER,
   EXPORT_LINK_MS,
+  setExportPhotosLimit,
+  photoStoragePath,
 } = require('../functions/lib/export.js');
+const JSZip = require('../functions/node_modules/jszip');
 const { periodKey } = require('../functions/lib/ai_guard.js');
 
 const { initializeTestEnvironment, assertSucceeds, assertFails } = require('@firebase/rules-unit-testing');
@@ -115,7 +118,16 @@ beforeEach(async () => {
     createdAt: admin.firestore.Timestamp.fromMillis(Date.UTC(2026, 0, 1)),
   });
   await adminDb.doc('users/aluno/health_screenings/h1').set({ answers: [false] });
-  await adminDb.doc('users/aluno/meal_photos/m1').set({ mealType: 'lunch', imageUrl: 'https://x/m1.jpg' });
+  // Foto de refeição: o caminho vem do link de download do Storage.
+  await adminDb.doc('users/aluno/meal_photos/m1').set({
+    mealType: 'lunch',
+    imageUrl: `https://firebasestorage.googleapis.com/v0/b/${BUCKET}/o/users%2Faluno%2Fmeal_photos%2Fm1.jpg?alt=media&token=t`,
+  });
+  await bucket.file('users/aluno/meal_photos/m1.jpg').save(Buffer.from('FOTO-REFEICAO'), { contentType: 'image/jpeg' });
+  await bucket.file('users/aluno/body_photos/b1.jpg').save(Buffer.from('FOTO-CORPO'), { contentType: 'image/jpeg' });
+  // Foto de OUTRO usuário citada no documento: não pode entrar no ZIP.
+  await bucket.file('users/outro/body_photos/x.jpg').save(Buffer.from('FOTO-DO-OUTRO'), { contentType: 'image/jpeg' });
+  await adminDb.doc('users/aluno/body_photos/b2').set({ storagePath: 'users/outro/body_photos/x.jpg' });
   await adminDb.doc('users/aluno/training_plans/p1').set({ title: 'Plano A' });
   await adminDb.doc('users/aluno/nutrition_plans/n1').set({ title: 'Dieta' });
   await adminDb.doc('users/aluno/body_photos/b1').set({ storagePath: 'users/aluno/body_photos/b1.jpg', position: 'front' });
@@ -134,12 +146,19 @@ async function rejectsWith(promise, code, messagePart) {
   });
 }
 
-async function readExport(uid, name) {
+async function openZip(uid) {
   const [files] = await bucket.getFiles({ prefix: `users/${uid}/exports/` });
-  const file = files.find((f) => f.name.endsWith(name));
-  assert.ok(file, `arquivo ${name} não encontrado`);
+  const file = files.find((f) => f.name.endsWith('.zip'));
+  assert.ok(file, 'ZIP não encontrado');
   const [buf] = await file.download();
-  return buf.toString('utf8');
+  return JSZip.loadAsync(buf);
+}
+
+async function readExport(uid, name) {
+  const zip = await openZip(uid);
+  const entry = zip.file(name);
+  assert.ok(entry, `arquivo ${name} não está no ZIP`);
+  return entry.async('string');
 }
 
 describe('exportMyData', () => {
@@ -147,12 +166,16 @@ describe('exportMyData', () => {
     await rejectsWith(call(null), 'unauthenticated');
   });
 
-  test('exporta só os dados do próprio usuário, com links de 1 hora', async () => {
+  test('exporta só os dados do próprio usuário num ZIP, link de 1 hora', async () => {
     const before = Date.now();
     const res = await call('aluno');
     assert.equal(res.workouts, 2);
-    assert.match(res.jsonUrl, /^https:\/\/assinado\.test\/users\/aluno\/exports\/.+\/dados\.json/);
-    assert.match(res.csvUrl, /treinos\.csv/);
+    assert.match(res.zipUrl, /^https:\/\/assinado\.test\/users\/aluno\/exports\/.+\/meus-dados-newfitness\.zip/);
+    assert.equal(res.photos, 2);
+    assert.equal(res.photosOmitted, 0);
+    assert.ok(res.sizeBytes > 0);
+    // Só UM link assinado (o do ZIP): as fotos vão dentro dele.
+    assert.equal(signed.length, 1);
     assert.ok(res.expiresAt - before >= EXPORT_LINK_MS - 5_000);
     assert.ok(res.expiresAt - before <= EXPORT_LINK_MS + 60_000);
 
@@ -166,10 +189,21 @@ describe('exportMyData', () => {
     assert.equal(json.recordes[0].bestLoadKg, 62.5);
     assert.equal(json.avaliacoesFisicas[0].createdAt, '2026-01-01T00:00:00.000Z');
     assert.equal(json.triagensDeSaude.length, 1);
-    assert.equal(json.refeicoes[0].imageUrl, 'https://x/m1.jpg');
+    assert.equal(json.refeicoes[0].arquivo, 'fotos/refeicoes/m1.jpg');
     assert.equal(json.planosDeTreino[0].title, 'Plano A');
     assert.equal(json.planosDeNutricao[0].title, 'Dieta');
-    assert.match(json.fotosCorporais[0].link, /body_photos\/b1\.jpg/);
+    const b1 = json.fotosCorporais.find((f) => f.id === 'b1');
+    assert.equal(b1.arquivo, 'fotos/corporais/b1.jpg');
+    assert.equal(b1.link, undefined, 'sem link que expira');
+    const b2 = json.fotosCorporais.find((f) => f.id === 'b2');
+    assert.equal(b2.arquivo, undefined, 'foto de outro usuário não entra');
+    const zip = await openZip('aluno');
+    assert.equal(await zip.file('fotos/corporais/b1.jpg').async('string'), 'FOTO-CORPO');
+    assert.equal(await zip.file('fotos/refeicoes/m1.jpg').async('string'), 'FOTO-REFEICAO');
+    for (const name of Object.keys(zip.files)) {
+      const content = zip.files[name].dir ? '' : await zip.files[name].async('string');
+      assert.ok(!content.includes('FOTO-DO-OUTRO'), `vazou foto de outro usuário em ${name}`);
+    }
     const text = JSON.stringify(json);
     assert.ok(!text.includes('SEGREDO'), 'vazou treino de outro usuário');
     assert.ok(!text.includes('não exporta'), 'conversa não faz parte da exportação');
@@ -214,11 +248,36 @@ describe('exportMyData', () => {
     await call('outro');
   });
 
+  test('fotos acima do limite ficam de fora, com aviso', async () => {
+    setExportPhotosLimit(12); // cabe só a foto do corpo (10 bytes)
+    try {
+      const res = await call('aluno');
+      assert.equal(res.photos, 1);
+      assert.equal(res.photosOmitted, 1);
+      const json = JSON.parse(await readExport('aluno', 'dados.json'));
+      assert.equal(json.fotosCorporais.find((f) => f.id === 'b1').arquivo, 'fotos/corporais/b1.jpg');
+      assert.equal(json.refeicoes[0].foraDoZip, true);
+    } finally {
+      setExportPhotosLimit();
+    }
+  });
+
+  test('photoStoragePath só aceita a pasta do próprio usuário', () => {
+    assert.equal(photoStoragePath('a', { storagePath: 'users/a/body_photos/1.jpg' }), 'users/a/body_photos/1.jpg');
+    assert.equal(photoStoragePath('a', { storagePath: 'users/b/body_photos/1.jpg' }), null);
+    assert.equal(photoStoragePath('a', { storagePath: 'users/a/../b/x.jpg' }), null);
+    assert.equal(
+      photoStoragePath('a', { imageUrl: 'https://x/v0/b/bk/o/users%2Fa%2Fmeal_photos%2Fm.png?alt=media' }),
+      'users/a/meal_photos/m.png'
+    );
+    assert.equal(photoStoragePath('a', { imageUrl: 'https://outro-site/foto.jpg' }), null);
+  });
+
   test('guarda só a exportação mais recente', async () => {
-    await bucket.file('users/aluno/exports/2026-01-01/dados.json').save('{}');
+    await bucket.file('users/aluno/exports/2026-01-01/meus-dados-newfitness.zip').save('velho');
     await call('aluno');
     const [files] = await bucket.getFiles({ prefix: 'users/aluno/exports/' });
-    assert.equal(files.length, 2);
+    assert.equal(files.length, 1);
     assert.ok(files.every((f) => f.name.includes(periodKey('day'))));
   });
 

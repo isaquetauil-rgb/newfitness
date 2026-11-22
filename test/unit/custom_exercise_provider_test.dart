@@ -70,12 +70,12 @@ void main() {
   });
 
   test('deleteExercise delega ao FirestoreService', () async {
-    when(() => firestoreService.deleteCustomExercise('instructor1', 'e1'))
+    when(() => firestoreService.archiveCustomExercise('instructor1', 'e1'))
         .thenAnswer((_) async {});
 
     await provider.deleteExercise('instructor1', 'e1');
 
-    verify(() => firestoreService.deleteCustomExercise('instructor1', 'e1'))
+    verify(() => firestoreService.archiveCustomExercise('instructor1', 'e1'))
         .called(1);
   });
 

@@ -127,13 +127,12 @@ class _PeriodSummaryScreenState extends State<PeriodSummaryScreen> {
             if (!snap.hasData) {
               return const Center(child: CircularProgressIndicator());
             }
-            final goal =
-                context.watch<AuthProvider>().profile?.effectiveWeeklyGoal ??
-                defaultWeeklyGoal;
+            final profile = context.watch<AuthProvider>().profile;
             final stats = PeriodStats.from(
               snap.data!,
               _period,
-              weeklyGoal: goal,
+              weeklyGoal: profile?.effectiveWeeklyGoal ?? defaultWeeklyGoal,
+              goalForWeek: profile?.goalSchedule.goalFor,
             );
             return Padding(
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),

@@ -14,6 +14,7 @@ import 'package:newfitness/shared/utils/format.dart';
 
 import 'body_progress_screen.dart';
 import 'exercise_progress_list.dart';
+import 'workout_details.dart';
 
 class ProgressScreen extends StatefulWidget {
   const ProgressScreen({super.key});
@@ -313,15 +314,20 @@ class _WorkoutHistoryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Toque abre os detalhes (séries, distância, tempo, RPE, anotações).
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
+      clipBehavior: Clip.antiAlias,
+      child: ExpansionTile(
+        shape: const Border(),
         title: Text(workout.name),
         subtitle: Text(
           '${DateFormat('dd/MM/yyyy').format(workout.date)} · ${workout.totalSets} séries'
           '${workout.importLabel == null ? '' : ' · ${workout.importLabel}'}',
         ),
         trailing: Text(formatKg(workout.totalVolume)),
+        expandedCrossAxisAlignment: CrossAxisAlignment.start,
+        children: [WorkoutDetails(workout: workout)],
       ),
     );
   }

@@ -53,6 +53,9 @@ class Workout {
   /// duplicar ao importar o mesmo arquivo de novo. Campo opcional.
   final String? importKey;
 
+  /// Anotação do treino (ex.: descrição vinda do Hevy/Strong). Opcional.
+  final String? notes;
+
   bool get isImported => importedFrom != null;
 
   /// "Importado do Hevy" / "Importado do Strong"; `null` se não importado.
@@ -73,6 +76,7 @@ class Workout {
     this.source,
     this.importedFrom,
     this.importKey,
+    this.notes,
   }) : exercises = exercises ?? [];
 
   /// Volume total do treino (soma de reps * peso de todas as séries).
@@ -103,6 +107,7 @@ class Workout {
           : null,
       importedFrom: map['importedFrom'] as String?,
       importKey: map['importKey'] as String?,
+      notes: map['notes'] as String?,
     );
   }
 
@@ -117,6 +122,7 @@ class Workout {
       'source': ?source?.toMap(),
       'importedFrom': ?importedFrom,
       'importKey': ?importKey,
+      if (notes != null && notes!.trim().isNotEmpty) 'notes': notes,
     };
   }
 }

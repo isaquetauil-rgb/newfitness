@@ -186,6 +186,12 @@ class Exercise {
   /// normalmente do cálculo automático baseado nos campos acima.
   final List<String> alternativeExerciseIds;
 
+  /// Arquivado: "apagar" na biblioteca não remove o documento, só tira o
+  /// exercício da biblioteca e dos seletores. Treinos antigos continuam
+  /// achando o exercício (nome, músculos). Campo opcional, só gravado quando
+  /// `true`.
+  final bool archived;
+
   const Exercise({
     required this.id,
     required this.name,
@@ -221,6 +227,7 @@ class Exercise {
     this.objectives = const [],
     this.variationExerciseIds = const [],
     this.alternativeExerciseIds = const [],
+    this.archived = false,
   });
 
   factory Exercise.fromMap(String id, Map<String, dynamic> map) {
@@ -264,6 +271,7 @@ class Exercise {
       objectives: stringList('objectives'),
       variationExerciseIds: stringList('variationExerciseIds'),
       alternativeExerciseIds: stringList('alternativeExerciseIds'),
+      archived: map['archived'] == true,
     );
   }
 
@@ -302,6 +310,7 @@ class Exercise {
       'objectives': objectives,
       'variationExerciseIds': variationExerciseIds,
       'alternativeExerciseIds': alternativeExerciseIds,
+      if (archived) 'archived': true,
     };
   }
 }

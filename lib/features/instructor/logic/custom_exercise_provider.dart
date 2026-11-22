@@ -23,16 +23,30 @@ class CustomExerciseProvider extends ChangeNotifier {
   bool _uploadingVideo = false;
   bool get isUploadingVideo => _uploadingVideo;
 
-  Stream<List<Exercise>> watchExercises(String instructorUid) {
-    return _firestoreService.watchCustomExercises(instructorUid);
+  /// Exercícios do instrutor. Arquivados ficam de fora, a não ser com
+  /// [includeArchived] (para achar exercícios de treinos antigos).
+  Stream<List<Exercise>> watchExercises(
+    String instructorUid, {
+    bool includeArchived = false,
+  }) {
+    final all = _firestoreService.watchCustomExercises(instructorUid);
+    if (includeArchived) return all;
+    return all.map(
+      (list) => [
+        for (final e in list)
+          if (!e.archived) e,
+      ],
+    );
   }
 
   Future<void> saveExercise(String instructorUid, Exercise exercise) {
     return _firestoreService.saveCustomExercise(instructorUid, exercise);
   }
 
+  /// "Apagar" = ARQUIVAR: some da biblioteca e dos seletores, mas treinos
+  /// antigos continuam achando o exercício.
   Future<void> deleteExercise(String instructorUid, String exerciseId) {
-    return _firestoreService.deleteCustomExercise(instructorUid, exerciseId);
+    return _firestoreService.archiveCustomExercise(instructorUid, exerciseId);
   }
 
   /// Envia o vídeo gravado/selecionado pelo instrutor e devolve a URL de

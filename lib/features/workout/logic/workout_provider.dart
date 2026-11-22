@@ -472,9 +472,38 @@ class WorkoutProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<WorkoutFinishResult> finishWorkout() async {
+  /// Grava em cada exercício o retrato dos músculos (grupo + secundários)
+  /// tirado da biblioteca via [lookup]. Exercício que o [lookup] não acha
+  /// (ex.: próprio do aluno) mantém o que já tinha.
+  static List<LoggedExercise> withMuscleSnapshot(
+    List<LoggedExercise> exercises,
+    Exercise? Function(String exerciseId)? lookup,
+  ) {
+    if (lookup == null) return exercises;
+    return [
+      for (final e in exercises)
+        if (lookup(e.exerciseId) case final found?
+            when found.muscleGroup.trim().isNotEmpty)
+          e.copyWith(
+            muscleGroup: found.muscleGroup,
+            secondaryMuscles: found.secondaryMuscles,
+          )
+        else
+          e,
+    ];
+  }
+
+  /// [lookup] acha o exercício na biblioteca (para o retrato dos músculos;
+  /// ver [withMuscleSnapshot]). Sem ele, o treino é salvo sem retrato e o
+  /// mapa usa a biblioteca, como nos treinos antigos.
+  Future<WorkoutFinishResult> finishWorkout({
+    Exercise? Function(String exerciseId)? lookup,
+  }) async {
     if (_activeWorkout == null) return WorkoutFinishResult.failed;
-    final realized = withoutEmptySets(_activeWorkout!.exercises);
+    final realized = withMuscleSnapshot(
+      withoutEmptySets(_activeWorkout!.exercises),
+      lookup,
+    );
     // Regra do produto: um treino só vira sessão concluída se tiver ao
     // menos UMA série realizada (mesma regra de série vazia da limpeza
     // abaixo) — vale para treino de plano e livre. Sem nenhuma, não grava
@@ -532,6 +561,13 @@ class WorkoutProvider extends ChangeNotifier {
 
   Stream<List<Workout>> watchHistory(String userId) {
     return _firestoreService.watchWorkouts(userId);
+  }
+
+  /// Grava os treinos que ganharam grupo muscular num exercício (ver
+  /// `missing_muscle_groups.dart`).
+  Future<void> saveWorkoutExercises(List<Workout> workouts) async {
+    if (workouts.isEmpty) return;
+    await _firestoreService.updateWorkoutsExercises(workouts);
   }
 
   /// Grava treinos importados (Hevy/Strong) e atualiza a evolução por

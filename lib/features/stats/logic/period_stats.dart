@@ -83,6 +83,7 @@ class PeriodStats {
     Iterable<Workout> history,
     Period period, {
     int weeklyGoal = 1,
+    GoalForWeek? goalForWeek,
   }) {
     final all = history.toList();
     final inPeriod = all.where((w) => period.contains(w.date)).toList();
@@ -137,7 +138,11 @@ class PeriodStats {
       topExercise: top,
       records: latest.values.toList(),
       consecutiveWeeks: WeekSummary.longestStreak(
-        WeekSummary.goalWeeks(inPeriod, goal: weeklyGoal),
+        WeekSummary.goalWeeks(
+          inPeriod,
+          goal: weeklyGoal,
+          goalForWeek: goalForWeek,
+        ),
         period.start,
         period.end,
       ),

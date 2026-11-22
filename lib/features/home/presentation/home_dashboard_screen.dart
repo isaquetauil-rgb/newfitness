@@ -143,6 +143,7 @@ class _StudentHomeBodyState extends State<_StudentHomeBody> {
           workouts,
           DateTime.now(),
           weeklyGoal: widget.profile?.effectiveWeeklyGoal ?? defaultWeeklyGoal,
+          goalForWeek: widget.profile?.goalSchedule.goalFor,
         );
 
         return ListView(

@@ -301,4 +301,98 @@ void main() {
     expect(withOld.totalSessions, 2);
     expect(withOld.history.first.date, DateTime(2025, 1, 1));
   });
+
+  group('não descarta dados (distância, tempo, RPE, anotações)', () {
+    test('Hevy: RPE, anotações do exercício e do treino, distância', () {
+      final r = parseWorkoutCsv(_fixture('hevy_exemplo.csv'));
+      final push = r.workouts.first;
+      final bench = push.exercises.first.sets;
+      expect(bench[1].rpe, 8);
+      expect(bench[2].rpe, 10);
+      expect(bench[0].rpe, isNull);
+
+      final pernas = r.workouts[1];
+      expect(pernas.notes, 'Sábado cedo');
+      final squat = pernas.exercises.first;
+      expect(squat.sets.first.notes, 'Descer bem'); // só na 1ª série
+      expect(squat.sets[1].notes, isNull);
+      final farmer = pernas.exercises.firstWhere(
+        (e) => e.name == 'Farmer Walk (Dumbbell)',
+      );
+      expect(farmer.sets.single.distanceMeters, 40);
+      expect(farmer.sets.single.seconds, 60);
+      expect(farmer.sets.single.weightKg, 24);
+      expect(farmer.sets.single.notes, 'Pegada firme');
+    });
+
+    test('Strong: anotação da série, do treino, RPE e distância', () {
+      final r = parseWorkoutCsv(_fixture('strong_exemplo.csv'));
+      final b = r.workouts.first;
+      expect(b.notes, 'Dia bom');
+      expect(b.exercises.first.sets[1].rpe, 8);
+      final pulldown = b.exercises[1].sets;
+      expect(pulldown[1].notes, 'Pegada aberta, "devagar"');
+      final a = r.workouts[1];
+      final farmer = a.exercises.last.sets.single;
+      expect(farmer.distanceMeters, 40);
+      expect(farmer.seconds, 60);
+      expect(farmer.rpe, 7.5);
+    });
+
+    test('Hevy em milhas', () {
+      const csv =
+          'title,start_time,end_time,exercise_title,set_type,distance_miles,duration_seconds\n'
+          'Corrida,1 Jan 2026 10:00,1 Jan 2026 10:30,Running,normal,1,600\n';
+      final s = parseWorkoutCsv(csv).workouts.single.exercises.single.sets;
+      expect(s.single.distanceMeters, 1609.3);
+    });
+
+    test('série só com distância não é descartada', () {
+      const csv =
+          'title,start_time,end_time,exercise_title,set_type,distance_km\n'
+          'Remo,1 Jan 2026 10:00,1 Jan 2026 10:30,Rowing,normal,2\n';
+      final s = parseWorkoutCsv(csv).workouts.single.exercises.single.sets;
+      expect(s.single.distanceMeters, 2000);
+    });
+
+    test('RPE fora de 1 a 10 é ignorado', () {
+      const csv =
+          'title,start_time,end_time,exercise_title,set_type,weight_kg,reps,rpe\n'
+          'A,1 Jan 2026 10:00,1 Jan 2026 11:00,Squat (Barbell),normal,100,5,42\n';
+      final s = parseWorkoutCsv(csv).workouts.single.exercises.single.sets;
+      expect(s.single.rpe, isNull);
+    });
+
+    test('vai para o treino salvo e volta do Firestore', () {
+      final parsed = parseWorkoutCsv(_fixture('hevy_exemplo.csv'));
+      final c = suggestChoices(parsed.exerciseNames, _pool)
+        ..['Zercher Carry Esquisito'] = ImportChoice.own(
+          'Zercher Carry Esquisito',
+          muscleGroup: 'Pernas',
+        );
+      final plan = buildImport(parsed, c, userId: 'u', history: const []);
+      final pernas = plan.toSave[1];
+      expect(pernas.notes, 'Sábado cedo');
+      final farmer = pernas.exercises.firstWhere(
+        (e) => e.exerciseId == 'farmer_walk',
+      );
+      expect(farmer.sets.single.distanceMeters, 40);
+      expect(plan.toSave.first.exercises.first.sets[1].rpe, 8);
+
+      final back = Workout.fromMap(pernas.id, pernas.toMap());
+      expect(back.notes, 'Sábado cedo');
+      final set = back.exercises
+          .firstWhere((e) => e.exerciseId == 'farmer_walk')
+          .sets
+          .single;
+      expect(set.distanceMeters, 40);
+      expect(set.notes, 'Pegada firme');
+
+      // Série comum continua sem os campos novos no Firestore.
+      final plain = WorkoutSet(reps: 8, weightKg: 40).toMap();
+      expect(plain.containsKey('rpe'), isFalse);
+      expect(plain.containsKey('notes'), isFalse);
+      expect(plain.containsKey('distanceMeters'), isFalse);
+    });
+  });
 }

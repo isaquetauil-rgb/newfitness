@@ -1,19 +1,53 @@
 // Exportar meus dados (LGPD): o usuário logado baixa uma cópia dos PRÓPRIOS
 // dados — perfil (com PAR-Q e aceites), treinos e recordes, avaliações
-// físicas, triagens de saúde, refeições, planos de treino e de nutrição e os
-// links das fotos.
+// físicas, triagens de saúde, refeições, planos de treino e de nutrição e as
+// fotos.
 //
-// Saída: `dados.json` (tudo) e `treinos.csv` (uma linha por série), gravados
-// em `users/{uid}/exports/` no Storage (pasta privada: o cliente não lê nem
-// grava, ver storage.rules). Devolve links assinados que valem 1 hora.
+// Saída: UM arquivo ZIP com `dados.json` (tudo), `treinos.csv` (uma linha por
+// série) e a pasta `fotos/` com os arquivos das fotos (até
+// [EXPORT_PHOTOS_LIMIT_BYTES]; o que passar fica de fora e o app avisa).
+// Gravado em `users/{uid}/exports/` no Storage (pasta privada, ver
+// storage.rules). Devolve um link assinado do ZIP, que vale 1 hora (é só
+// para baixar: o conteúdo do ZIP não expira).
 // Limite: 1 exportação por dia (fuso de São Paulo), controlado em
 // `users/{uid}/data_exports/{yyyy-MM-dd}` (só a Function grava).
 import * as admin from "firebase-admin";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
+import JSZip from "jszip";
 import { periodKey } from "./ai_guard";
 
-/** Validade dos links devolvidos. */
+/** Validade do link de download do ZIP. */
 export const EXPORT_LINK_MS = 60 * 60 * 1000;
+
+/** Soma máxima das fotos dentro do ZIP (o resto fica de fora, com aviso). */
+export const EXPORT_PHOTOS_LIMIT_BYTES = 100 * 1024 * 1024;
+let photosLimitBytes = EXPORT_PHOTOS_LIMIT_BYTES;
+
+/** Só para testes: troca o limite de tamanho das fotos. */
+export function setExportPhotosLimit(bytes?: number): void {
+  photosLimitBytes = bytes ?? EXPORT_PHOTOS_LIMIT_BYTES;
+}
+
+/**
+ * Caminho no Storage de uma foto do usuário: o `storagePath` do documento
+ * ou, nas refeições, o caminho dentro do link de download
+ * (`.../o/<caminho codificado>?...`). Só aceita a pasta do próprio usuário.
+ */
+export function photoStoragePath(uid: string, doc: Record<string, unknown>): string | null {
+  let path: string | null = null;
+  if (typeof doc.storagePath === "string") path = doc.storagePath;
+  else if (typeof doc.imageUrl === "string") {
+    const m = /\/o\/([^?]+)/.exec(doc.imageUrl);
+    if (m) {
+      try {
+        path = decodeURIComponent(m[1]);
+      } catch {
+        path = null;
+      }
+    }
+  }
+  return path && path.startsWith(`users/${uid}/`) && !path.includes("..") ? path : null;
+}
 
 /** Subcoleções do usuário que entram na exportação (nome no JSON → coleção). */
 export const EXPORTED_COLLECTIONS: Record<string, string> = {
@@ -166,7 +200,7 @@ async function reserveToday(uid: string, now: Date): Promise<FirebaseFirestore.D
   return ref;
 }
 
-export const exportMyData = onCall({ timeoutSeconds: 300, memory: "512MiB" }, async (request) => {
+export const exportMyData = onCall({ timeoutSeconds: 540, memory: "1GiB" }, async (request) => {
   const uid = request.auth?.uid;
   if (!uid) {
     throw new HttpsError("unauthenticated", "É preciso estar logado.");
@@ -193,45 +227,80 @@ export const exportMyData = onCall({ timeoutSeconds: 300, memory: "512MiB" }, as
 
     const bucket = admin.storage().bucket();
     const expiresAt = now.getTime() + EXPORT_LINK_MS;
+    const zip = new JSZip();
 
-    // Fotos corporais: link assinado (1 h) do arquivo privado.
-    const photos = result.fotosCorporais as Array<Record<string, unknown>>;
-    for (const photo of photos) {
-      const storagePath = photo.storagePath;
-      if (typeof storagePath === "string" && storagePath.startsWith(`users/${uid}/`)) {
+    // Fotos (corporais e de refeição) dentro do ZIP, até o limite de tamanho.
+    // Cada registro no JSON ganha `arquivo` (caminho dentro do ZIP) ou
+    // `foraDoZip: true` (passou do limite) / `arquivoIndisponivel: true`.
+    let photosBytes = 0;
+    let photosIncluded = 0;
+    let photosOmitted = 0;
+    const photoGroups: Array<[string, string]> = [
+      ["fotosCorporais", "fotos/corporais"],
+      ["refeicoes", "fotos/refeicoes"],
+    ];
+    for (const [key, folderInZip] of photoGroups) {
+      for (const photo of result[key] as Array<Record<string, unknown>>) {
+        const path = photoStoragePath(uid, photo);
+        if (!path) continue;
+        const file = bucket.file(path);
         try {
-          photo.link = await signUrl(bucket.file(storagePath), expiresAt);
+          const [meta] = await file.getMetadata();
+          const size = Number(meta.size ?? 0);
+          if (photosBytes + size > photosLimitBytes) {
+            photo.foraDoZip = true;
+            photosOmitted++;
+            continue;
+          }
+          const [bytes] = await file.download();
+          const ext = (path.match(/\.([a-zA-Z0-9]{2,5})$/)?.[1] ?? "jpg").toLowerCase();
+          const name = `${folderInZip}/${String(photo.id)}.${ext}`;
+          zip.file(name, bytes, { compression: "STORE" });
+          photo.arquivo = name;
+          photosBytes += size;
+          photosIncluded++;
         } catch {
-          photo.link = null;
+          photo.arquivoIndisponivel = true;
         }
       }
     }
+
+    zip.file("dados.json", JSON.stringify(result, null, 2));
+    zip.file("treinos.csv", workoutsCsv(raw.treinos));
+    const content = await zip.generateAsync({
+      type: "nodebuffer",
+      compression: "DEFLATE",
+      compressionOptions: { level: 6 },
+    });
 
     // Só uma exportação guardada por usuário: apaga as anteriores.
     const folder = `users/${uid}/exports/`;
     await bucket.deleteFiles({ prefix: folder }).catch(() => undefined);
 
     const stamp = periodKey("day", now);
-    const jsonFile = bucket.file(`${folder}${stamp}/dados.json`);
-    const csvFile = bucket.file(`${folder}${stamp}/treinos.csv`);
-    await jsonFile.save(JSON.stringify(result, null, 2), {
-      contentType: "application/json; charset=utf-8",
-      resumable: false,
-    });
-    await csvFile.save(workoutsCsv(raw.treinos), {
-      contentType: "text/csv; charset=utf-8",
-      resumable: false,
-    });
+    const zipFile = bucket.file(`${folder}${stamp}/meus-dados-newfitness.zip`);
+    await zipFile.save(content, { contentType: "application/zip", resumable: false });
+    const zipUrl = await signUrl(zipFile, expiresAt);
 
-    const [jsonUrl, csvUrl] = await Promise.all([
-      signUrl(jsonFile, expiresAt),
-      signUrl(csvFile, expiresAt),
-    ]);
     await reservation.set(
-      { status: "done", finishedAt: Date.now(), workouts: raw.treinos.length },
+      {
+        status: "done",
+        finishedAt: Date.now(),
+        workouts: raw.treinos.length,
+        photos: photosIncluded,
+        photosOmitted,
+        sizeBytes: content.length,
+      },
       { merge: true }
     );
-    return { jsonUrl, csvUrl, expiresAt, workouts: raw.treinos.length };
+    return {
+      zipUrl,
+      expiresAt,
+      workouts: raw.treinos.length,
+      photos: photosIncluded,
+      photosOmitted,
+      sizeBytes: content.length,
+    };
   } catch (error) {
     // Falhou: libera o dia para tentar de novo.
     await reservation.delete().catch(() => undefined);

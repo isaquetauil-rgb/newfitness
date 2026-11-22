@@ -124,10 +124,16 @@ Future<List<Achievement>> syncAchievementsAfterWorkout(
         .first
         .timeout(const Duration(seconds: 5));
     final goal = profile.effectiveWeeklyGoal;
+    final perWeek = profile.goalSchedule.goalFor;
     final all = [...history.where((w) => w.id != saved.id), saved];
-    final fresh = newlyEarned(all, saved, weeklyGoal: goal);
+    final fresh = newlyEarned(
+      all,
+      saved,
+      weeklyGoal: goal,
+      goalForWeek: perWeek,
+    );
     final merged = mergeAchievements(
-      computeAchievements(all, weeklyGoal: goal),
+      computeAchievements(all, weeklyGoal: goal, goalForWeek: perWeek),
       profile.achievements,
     );
     await auth.saveAchievements(achievementsToMap(merged));
@@ -193,13 +199,28 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
           }
           final workouts = snap.data!;
           final now = DateTime.now();
+          // Cada semana pela meta que valia nela.
+          final perWeek = profile?.goalSchedule.goalFor;
           final earned = mergeAchievements(
-            computeAchievements(workouts, weeklyGoal: goal),
+            computeAchievements(
+              workouts,
+              weeklyGoal: goal,
+              goalForWeek: perWeek,
+            ),
             profile?.achievements,
           );
           _syncOnce(earned);
-          final week = WeekSummary.from(workouts, now, weeklyGoal: goal);
-          final weeks = WeekSummary.goalWeeks(workouts, goal: goal);
+          final week = WeekSummary.from(
+            workouts,
+            now,
+            weeklyGoal: goal,
+            goalForWeek: perWeek,
+          );
+          final weeks = WeekSummary.goalWeeks(
+            workouts,
+            goal: goal,
+            goalForWeek: perWeek,
+          );
           final best = WeekSummary.longestStreak(
             weeks,
             DateTime(1970),

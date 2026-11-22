@@ -58,6 +58,16 @@ class WorkoutSet {
   /// quando há tempo.
   int seconds;
 
+  /// Distância em metros (corrida, remo, caminhada...). Campo opcional: só é
+  /// gravado quando há distância (ex.: treino importado do Hevy/Strong).
+  double distanceMeters;
+
+  /// Esforço percebido (RPE, 1 a 10). Campo opcional.
+  double? rpe;
+
+  /// Anotação da série. Campo opcional.
+  String? notes;
+
   WorkoutSet({
     this.reps = 0,
     this.weightKg = 0,
@@ -65,6 +75,9 @@ class WorkoutSet {
     this.suggested = false,
     this.type = SetType.normal,
     this.seconds = 0,
+    this.distanceMeters = 0,
+    this.rpe,
+    this.notes,
   });
 
   bool get isWarmup => type == SetType.warmup;
@@ -84,6 +97,9 @@ class WorkoutSet {
       suggested: map['suggested'] as bool? ?? false,
       type: setTypeFromString(map['type'] as String?),
       seconds: (map['seconds'] as num?)?.toInt() ?? 0,
+      distanceMeters: (map['distanceMeters'] as num?)?.toDouble() ?? 0,
+      rpe: (map['rpe'] as num?)?.toDouble(),
+      notes: map['notes'] as String?,
     );
   }
 
@@ -96,6 +112,9 @@ class WorkoutSet {
       if (suggested) 'suggested': true,
       if (type != SetType.normal) 'type': type.name,
       if (seconds > 0) 'seconds': seconds,
+      if (distanceMeters > 0) 'distanceMeters': distanceMeters,
+      'rpe': ?rpe,
+      if (notes != null && notes!.trim().isNotEmpty) 'notes': notes,
     };
   }
 
@@ -106,5 +125,8 @@ class WorkoutSet {
     suggested: suggested,
     type: type,
     seconds: seconds,
+    distanceMeters: distanceMeters,
+    rpe: rpe,
+    notes: notes,
   );
 }

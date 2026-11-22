@@ -6,6 +6,7 @@ import '../../core/constants/firestore_paths.dart';
 import '../../core/error/app_exception.dart';
 import '../../core/logging/app_logger.dart';
 import '../models/body_photo.dart';
+import '../models/weekly_goal.dart';
 import '../models/chat_message.dart';
 import '../models/equipment_item.dart';
 import '../models/exercise.dart';
@@ -175,11 +176,17 @@ class FirestoreService {
     });
   }
 
-  /// Grava só a meta semanal de treinos (`weeklyGoal`) no perfil.
-  Future<void> updateWeeklyGoal(String uid, int goal) {
+  /// Grava a meta semanal (`weeklyGoal`) e o histórico dela
+  /// (`weeklyGoalHistory`) no perfil.
+  Future<void> updateWeeklyGoal(
+    String uid,
+    int goal,
+    List<WeeklyGoalChange> history,
+  ) {
     return _guard('updateWeeklyGoal', () {
       return _db.collection(FirestorePaths.users).doc(uid).set({
         'weeklyGoal': goal,
+        'weeklyGoalHistory': [for (final c in history) c.toMap()],
       }, SetOptions(merge: true));
     });
   }
@@ -429,10 +436,15 @@ class FirestoreService {
     });
   }
 
-  Future<void> deleteExercise(String id) {
+  /// Arquiva um exercício da biblioteca global: some das telas, mas o
+  /// documento fica para os treinos antigos (nome e músculos).
+  Future<void> archiveExercise(String id) {
     return _guard(
-      'deleteExercise',
-      () => _db.collection(FirestorePaths.exercises).doc(id).delete(),
+      'archiveExercise',
+      () => _db.collection(FirestorePaths.exercises).doc(id).set({
+        'archived': true,
+        'archivedAt': DateTime.now().millisecondsSinceEpoch,
+      }, SetOptions(merge: true)),
     );
   }
 
@@ -467,10 +479,14 @@ class FirestoreService {
     });
   }
 
-  Future<void> deleteCustomExercise(String instructorUid, String exerciseId) {
+  /// Arquiva um exercício próprio do instrutor (ver [archiveExercise]).
+  Future<void> archiveCustomExercise(String instructorUid, String exerciseId) {
     return _guard(
-      'deleteCustomExercise',
-      () => _customExercisesRef(instructorUid).doc(exerciseId).delete(),
+      'archiveCustomExercise',
+      () => _customExercisesRef(instructorUid).doc(exerciseId).set({
+        'archived': true,
+        'archivedAt': DateTime.now().millisecondsSinceEpoch,
+      }, SetOptions(merge: true)),
     );
   }
 
@@ -579,6 +595,22 @@ class FirestoreService {
                 : null,
           ),
     );
+  }
+
+  /// Regrava só a lista de exercícios de [workouts] (ex.: grupo muscular
+  /// completado depois). Em lotes de até 400.
+  Future<void> updateWorkoutsExercises(List<Workout> workouts) {
+    return _guard('updateWorkoutsExercises', () async {
+      for (var i = 0; i < workouts.length; i += 400) {
+        final batch = _db.batch();
+        for (final w in workouts.skip(i).take(400)) {
+          batch.set(_workoutsRef(w.userId).doc(w.id), {
+            'exercises': [for (final e in w.exercises) e.toMap()],
+          }, SetOptions(merge: true));
+        }
+        await batch.commit();
+      }
+    });
   }
 
   /// Grava treinos importados (Hevy/Strong) em lotes de até 400 escritas

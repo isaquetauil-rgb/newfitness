@@ -27,6 +27,16 @@ String formatKgNumber(double kg) {
 /// Peso com a unidade: "19 kg", "13,3 kg", "62,5 kg", "52.340 kg".
 String formatKg(double kg) => '${formatKgNumber(kg)} kg';
 
+/// Distância: "800 m", "1,2 km", "10 km".
+String formatDistance(double meters) {
+  if (meters < 1000) return '${meters.round()} m';
+  final km = (meters / 100).round() / 10;
+  return '${formatKgNumber(km)} km';
+}
+
+/// RPE: "RPE 8", "RPE 7,5".
+String formatRpe(double rpe) => 'RPE ${formatKgNumber(rpe)}';
+
 /// Segundos de exercício por tempo: "45 s", "1 min 30 s".
 String formatSeconds(int seconds) {
   if (seconds < 60) return '$seconds s';

@@ -1,5 +1,10 @@
 import 'package:newfitness/shared/models/workout.dart';
 
+/// Meta de treinos da semana que começa em `weekStart` (ver
+/// `WeeklyGoalSchedule.goalFor`). Cada semana é avaliada pela meta que
+/// valia nela.
+typedef GoalForWeek = int Function(DateTime weekStart);
+
 /// Resumo da semana (segunda a domingo) mostrado na tela inicial, calculado
 /// a partir do histórico já ordenado do mais recente para o mais antigo.
 ///
@@ -36,6 +41,7 @@ class WeekSummary {
     List<Workout> workouts,
     DateTime now, {
     int weeklyGoal = 1,
+    GoalForWeek? goalForWeek,
   }) {
     final currentWeek = _weekStart(now);
     final days = List<bool>.filled(7, false);
@@ -50,7 +56,11 @@ class WeekSummary {
       }
     }
 
-    final weeks = goalWeeks(workouts, goal: weeklyGoal);
+    final weeks = goalWeeks(
+      workouts,
+      goal: weeklyGoal,
+      goalForWeek: goalForWeek,
+    );
     final streak = streakEndingAt(
       weeks,
       weeks.contains(currentWeek) ? currentWeek : _previousWeek(currentWeek),
@@ -61,27 +71,34 @@ class WeekSummary {
       workoutsThisWeek: count,
       volumeThisWeek: volume,
       weekStreak: streak,
-      weeklyGoal: weeklyGoal,
+      weeklyGoal: goalForWeek?.call(currentWeek) ?? weeklyGoal,
     );
   }
 
   /// Semanas (segunda-feira) com pelo menos [goal] treinos.
-  static Set<DateTime> goalWeeks(Iterable<Workout> workouts, {int goal = 1}) =>
-      goalHitDates(workouts, goal: goal).keys.toSet();
+  /// Com [goalForWeek], cada semana usa a meta que valia nela.
+  static Set<DateTime> goalWeeks(
+    Iterable<Workout> workouts, {
+    int goal = 1,
+    GoalForWeek? goalForWeek,
+  }) =>
+      goalHitDates(workouts, goal: goal, goalForWeek: goalForWeek).keys.toSet();
 
   /// Para cada semana que bateu a meta: o momento do treino que bateu
   /// (o [goal]-ésimo da semana, em ordem de data).
   static Map<DateTime, DateTime> goalHitDates(
     Iterable<Workout> workouts, {
     int goal = 1,
+    GoalForWeek? goalForWeek,
   }) {
-    final need = goal < 1 ? 1 : goal;
     final byWeek = <DateTime, List<DateTime>>{};
     for (final w in workouts) {
       (byWeek[_weekStart(w.date)] ??= []).add(w.date);
     }
     final out = <DateTime, DateTime>{};
     byWeek.forEach((week, dates) {
+      final raw = goalForWeek?.call(week) ?? goal;
+      final need = raw < 1 ? 1 : raw;
       if (dates.length < need) return;
       dates.sort();
       out[week] = dates[need - 1];

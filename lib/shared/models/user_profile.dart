@@ -1,5 +1,6 @@
 import 'parq.dart';
 import 'plate_setup.dart';
+import 'weekly_goal.dart';
 
 /// Meta semanal de treinos quando o aluno ainda não escolheu a dele.
 const int defaultWeeklyGoal = 3;
@@ -74,6 +75,16 @@ class UserProfile {
   /// gravado para não "perder" uma conquista se a meta mudar depois.
   final Map<String, int>? achievements;
 
+  /// Histórico da meta semanal (cada mudança e a semana em que passou a
+  /// valer). Campo opcional: perfil antigo usa [weeklyGoal] para tudo.
+  final List<WeeklyGoalChange>? weeklyGoalHistory;
+
+  /// Meta de cada semana (para sequência, conquistas e Meu mês/ano).
+  WeeklyGoalSchedule get goalSchedule => WeeklyGoalSchedule(
+    weeklyGoalHistory ?? const [],
+    fallback: effectiveWeeklyGoal,
+  );
+
   /// Meta semanal em uso (a do aluno ou a padrão).
   int get effectiveWeeklyGoal =>
       (weeklyGoal != null && weeklyGoal! >= 1 && weeklyGoal! <= 7)
@@ -99,6 +110,7 @@ class UserProfile {
     this.freeWorkoutDisabled,
     this.weeklyGoal,
     this.achievements,
+    this.weeklyGoalHistory,
   });
 
   /// Treino livre bloqueado agora: o personal desativou e ainda está
@@ -138,6 +150,12 @@ class UserProfile {
                 if (e.value is num) '${e.key}': (e.value as num).toInt(),
             }
           : null,
+      weeklyGoalHistory: map['weeklyGoalHistory'] is List
+          ? [
+              for (final raw in map['weeklyGoalHistory'] as List)
+                ?WeeklyGoalChange.fromMap(raw),
+            ]
+          : null,
     );
   }
 
@@ -162,6 +180,7 @@ class UserProfile {
       'freeWorkoutDisabled': ?freeWorkoutDisabled,
       'weeklyGoal': ?weeklyGoal,
       'achievements': ?achievements,
+      'weeklyGoalHistory': ?weeklyGoalHistory?.map((c) => c.toMap()).toList(),
     };
   }
 
@@ -182,6 +201,7 @@ class UserProfile {
     bool? freeWorkoutDisabled,
     int? weeklyGoal,
     Map<String, int>? achievements,
+    List<WeeklyGoalChange>? weeklyGoalHistory,
   }) {
     return UserProfile(
       uid: uid,
@@ -203,6 +223,7 @@ class UserProfile {
       freeWorkoutDisabled: freeWorkoutDisabled ?? this.freeWorkoutDisabled,
       weeklyGoal: weeklyGoal ?? this.weeklyGoal,
       achievements: achievements ?? this.achievements,
+      weeklyGoalHistory: weeklyGoalHistory ?? this.weeklyGoalHistory,
     );
   }
 }

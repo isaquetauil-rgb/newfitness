@@ -51,7 +51,15 @@ class ExerciseProvider extends ChangeNotifier {
   }
 
   List<Exercise> _exercises = [];
-  List<Exercise> get exercises => _exercises;
+
+  /// Biblioteca ativa (sem os arquivados): telas e seletores.
+  List<Exercise> get exercises => [
+    for (final e in _exercises)
+      if (!e.archived) e,
+  ];
+
+  /// Todos, inclusive arquivados: para achar exercícios do histórico.
+  List<Exercise> get allExercises => _exercises;
 
   /// Semeia a coleção `exercises` com [sampleExercises] só quando ela está
   /// vazia — mesmo padrão de `ExerciseTaxonomyProvider`. Antes a

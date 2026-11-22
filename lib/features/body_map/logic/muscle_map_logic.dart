@@ -273,15 +273,16 @@ class MuscleMapData {
   }
 }
 
-/// Exercício próprio (fora da biblioteca) com grupo muscular gravado no
-/// treino: vira um exercício só com o grupo, para entrar no mapa.
-Exercise? _ownExercise(LoggedExercise logged) {
+/// Retrato dos músculos gravado no treino (grupo + secundários): vira um
+/// exercício só com isso, para o mapa não depender da biblioteca.
+Exercise? _snapshotExercise(LoggedExercise logged) {
   final group = logged.muscleGroup?.trim() ?? '';
   if (group.isEmpty) return null;
   return Exercise(
     id: logged.exerciseId,
     name: logged.exerciseName,
     muscleGroup: group,
+    secondaryMuscles: logged.secondaryMuscles ?? const [],
     equipment: '',
     description: '',
     videoUrl: '',
@@ -310,7 +311,10 @@ MuscleMapData computeMuscleMap(
     final inWeek =
         !workout.date.isBefore(weekStart) && !workout.date.isAfter(now);
     for (final logged in workout.exercises) {
-      final exercise = exerciseById(logged.exerciseId) ?? _ownExercise(logged);
+      // Retrato gravado no treino primeiro; treino antigo sem retrato busca
+      // na biblioteca (que inclui os arquivados).
+      final exercise =
+          _snapshotExercise(logged) ?? exerciseById(logged.exerciseId);
       if (exercise == null) continue;
       final sets = logged.sets.where(countsForMap).length;
       if (sets == 0) continue;

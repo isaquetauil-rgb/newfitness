@@ -25,12 +25,18 @@ class ImportedSet {
     this.reps = 0,
     this.weightKg = 0,
     this.seconds = 0,
+    this.distanceMeters = 0,
+    this.rpe,
+    this.notes,
   });
 
   final SetType type;
   final int reps;
   final double weightKg;
   final int seconds;
+  final double distanceMeters;
+  final double? rpe;
+  final String? notes;
 }
 
 class ImportedExercise {
@@ -51,6 +57,9 @@ class ImportedWorkout {
   final String title;
   final DateTime start;
   int durationSeconds;
+
+  /// Anotação do treino (descrição no Hevy, "Workout Notes" no Strong).
+  String? notes;
   final List<ImportedExercise> exercises = [];
 
   /// Identidade estável no arquivo: o mesmo treino exportado de novo tem a
@@ -116,6 +125,8 @@ CsvImportResult parseWorkoutCsv(
 CsvImportResult _parseHevy(List<String> header, Iterable<List<String>> rows) {
   final col = _columns(header);
   final inLb = !header.contains('weight_kg') && header.contains('weight_lbs');
+  final inMiles =
+      !header.contains('distance_km') && header.contains('distance_miles');
   final workouts = <String, ImportedWorkout>{};
   var skipped = 0;
 
@@ -139,7 +150,14 @@ CsvImportResult _parseHevy(List<String> header, Iterable<List<String>> rows) {
     if (end != null && end.isAfter(start)) {
       w.durationSeconds = end.difference(start).inSeconds;
     }
+    w.notes ??= _text(_get(r, col['description']));
     final rawWeight = _num(_get(r, col[inLb ? 'weight_lbs' : 'weight_kg']));
+    final rawDistance = _num(
+      _get(r, col[inMiles ? 'distance_miles' : 'distance_km']),
+    );
+    // A anotação do exercício se repete em todas as linhas dele: vai só na
+    // primeira série.
+    final newExercise = w.exercises.isEmpty || w.exercises.last.name != name;
     final set = ImportedSet(
       type: switch (_get(r, col['set_type']).trim().toLowerCase()) {
         'warmup' => SetType.warmup,
@@ -150,6 +168,9 @@ CsvImportResult _parseHevy(List<String> header, Iterable<List<String>> rows) {
       reps: _num(_get(r, col['reps'])).round(),
       weightKg: roundKg(inLb ? rawWeight * _lbToKg : rawWeight),
       seconds: _num(_get(r, col['duration_seconds'])).round(),
+      distanceMeters: _round1(rawDistance * (inMiles ? 1609.344 : 1000)),
+      rpe: _rpe(_get(r, col['rpe'])),
+      notes: newExercise ? _text(_get(r, col['exercise_notes'])) : null,
     );
     if (!_addSet(w, name, set)) skipped++;
   }
@@ -242,6 +263,7 @@ CsvImportResult _parseStrong(
         durationSeconds: parseStrongDuration(_get(r, col['duration'])),
       ),
     );
+    w.notes ??= _text(_get(r, col['workout notes']));
     final rowUnit = _get(r, unitCol).trim().toLowerCase();
     final inLb = rowUnit.isNotEmpty
         ? rowUnit.startsWith('lb')
@@ -252,6 +274,12 @@ CsvImportResult _parseStrong(
       reps: _num(_get(r, col['reps'])).round(),
       weightKg: roundKg(inLb ? rawWeight * _lbToKg : rawWeight),
       seconds: _num(_get(r, col['seconds'])).round(),
+      distanceMeters: _strongDistance(
+        _num(_get(r, col['distance'])),
+        _get(r, col['distance unit']),
+      ),
+      rpe: _rpe(_get(r, col['rpe'])),
+      notes: _text(_get(r, col['notes'])),
     );
     if (!_addSet(w, name, set)) skipped++;
   }
@@ -282,7 +310,12 @@ int parseStrongDuration(String raw) {
 /// Junta a série ao exercício (o mesmo nome seguido vira um exercício só).
 /// Série sem reps, sem carga e sem tempo é ignorada.
 bool _addSet(ImportedWorkout w, String name, ImportedSet set) {
-  if (set.reps <= 0 && set.weightKg <= 0 && set.seconds <= 0) return false;
+  if (set.reps <= 0 &&
+      set.weightKg <= 0 &&
+      set.seconds <= 0 &&
+      set.distanceMeters <= 0) {
+    return false;
+  }
   var exercise = w.exercises.isEmpty ? null : w.exercises.last;
   if (exercise == null || exercise.name != name) {
     exercise = ImportedExercise(name);
@@ -302,6 +335,32 @@ Map<String, int> _columns(List<String> header) => {
 
 String _get(List<String> row, int? i) =>
     i == null || i >= row.length ? '' : row[i];
+
+/// Texto sem espaços nas pontas; vazio vira `null`.
+String? _text(String raw) {
+  final t = raw.trim();
+  return t.isEmpty ? null : t;
+}
+
+double _round1(double v) => (v * 10).round() / 10;
+
+/// RPE entre 1 e 10 (fora disso ou vazio: `null`).
+double? _rpe(String raw) {
+  final v = double.tryParse(raw.trim().replaceAll(',', '.'));
+  return v == null || v < 1 || v > 10 ? null : v;
+}
+
+/// Distância do Strong em metros. Sem coluna de unidade, o Strong usa
+/// quilômetros (ou milhas no app em libras: a coluna "Distance Unit" diz).
+double _strongDistance(double value, String unit) {
+  if (value <= 0) return 0;
+  final u = unit.trim().toLowerCase();
+  if (u.startsWith('mi')) return _round1(value * 1609.344);
+  if (u == 'm' || u.startsWith('meter') || u.startsWith('metro')) {
+    return _round1(value);
+  }
+  return _round1(value * 1000);
+}
 
 /// "62.5", "62,5" ou vazio (= 0).
 double _num(String raw) =>

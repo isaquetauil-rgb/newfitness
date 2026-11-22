@@ -13,11 +13,19 @@ import 'package:newfitness/shared/models/user_profile.dart';
 /// instrutor) — mesmo critério de visibilidade usado em
 /// `ExercisePickerScreen`, reaproveitado aqui para alimentar a busca de
 /// exercícios alternativos (ver `exercise_similarity.dart`).
-Future<List<Exercise>> loadExercisePool(BuildContext context) async {
+///
+/// [includeArchived]: inclui os exercícios arquivados (para achar o que já
+/// está no histórico, ex.: mapa muscular). Para escolher exercício novo,
+/// deixe `false`.
+Future<List<Exercise>> loadExercisePool(
+  BuildContext context, {
+  bool includeArchived = false,
+}) async {
   final exerciseProvider = context.read<ExerciseProvider>();
-  final global = exerciseProvider.exercises.isNotEmpty
-      ? exerciseProvider.exercises
-      : sampleExercises;
+  final source = includeArchived
+      ? exerciseProvider.allExercises
+      : exerciseProvider.exercises;
+  final global = source.isNotEmpty ? source : sampleExercises;
 
   final profile = context.read<AuthProvider>().profile;
   final customLibraryUid = profile == null
@@ -29,7 +37,7 @@ Future<List<Exercise>> loadExercisePool(BuildContext context) async {
 
   final custom = await context
       .read<CustomExerciseProvider>()
-      .watchExercises(customLibraryUid)
+      .watchExercises(customLibraryUid, includeArchived: includeArchived)
       .first;
   return [...custom, ...global];
 }

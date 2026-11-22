@@ -85,7 +85,8 @@ class AdminProvider extends ChangeNotifier {
   }
 
   Future<void> deleteExercise(String id) {
-    return _firestoreService.deleteExercise(id);
+    // "Apagar" = ARQUIVAR (o histórico continua achando o exercício).
+    return _firestoreService.archiveExercise(id);
   }
 
   /// Estatísticas do painel, calculadas no servidor pela Cloud Function

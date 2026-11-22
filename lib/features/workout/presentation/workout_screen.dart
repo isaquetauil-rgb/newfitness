@@ -10,6 +10,7 @@ import 'package:newfitness/app/widgets/drawer_menu_button.dart';
 import 'package:newfitness/core/di/injector.dart';
 import 'package:newfitness/features/achievements/presentation/achievements_screen.dart';
 import 'package:newfitness/features/auth/logic/auth_provider.dart';
+import 'package:newfitness/features/body_map/presentation/body_map_screen.dart';
 import 'package:newfitness/features/exercises/logic/exercise_pool.dart';
 import 'package:newfitness/features/exercises/logic/exercise_provider.dart';
 import 'package:newfitness/features/exercises/presentation/exercise_alternatives_sheet.dart';
@@ -134,7 +135,16 @@ class WorkoutScreen extends StatelessWidget {
       return;
     }
 
-    final result = await provider.finishWorkout();
+    // Biblioteca (com arquivados) para gravar o retrato dos músculos. Se não
+    // carregar a tempo, o treino é salvo sem retrato (o mapa usa a
+    // biblioteca, como nos treinos antigos).
+    Exercise? Function(String)? lookup;
+    try {
+      lookup = await loadExerciseLookup(context)
+          .timeout(const Duration(seconds: 5));
+    } catch (_) {}
+    if (!context.mounted) return;
+    final result = await provider.finishWorkout(lookup: lookup);
     if (!context.mounted) return;
     if (result == WorkoutFinishResult.saved) {
       final saved = provider.lastSaved!;

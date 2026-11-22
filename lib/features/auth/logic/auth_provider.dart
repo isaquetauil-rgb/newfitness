@@ -374,8 +374,17 @@ class AuthProvider extends ChangeNotifier {
     final profile = _profile;
     if (profile == null || goal < 1 || goal > 7) return false;
     try {
-      await _firestoreService.updateWeeklyGoal(profile.uid, goal);
-      _profile = profile.copyWith(weeklyGoal: goal);
+      // A meta nova vale a partir desta semana; o passado mantém a dele.
+      final history = profile.goalSchedule.withChange(goal, DateTime.now());
+      await _firestoreService.updateWeeklyGoal(
+        profile.uid,
+        goal,
+        history.changes,
+      );
+      _profile = profile.copyWith(
+        weeklyGoal: goal,
+        weeklyGoalHistory: history.changes,
+      );
       notifyListeners();
       return true;
     } catch (_) {

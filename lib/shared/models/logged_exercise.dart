@@ -32,10 +32,13 @@ class LoggedExercise {
   /// histórico fiel mesmo se o plano for editado ou apagado depois.
   final PlanExercise? prescription;
 
-  /// Grupo muscular de um exercício PRÓPRIO do aluno (fora da biblioteca,
-  /// ex.: criado na importação do Hevy/Strong). É o que coloca esse
-  /// exercício no mapa muscular. Campo opcional; `null` nos demais.
+  /// Retrato dos músculos do exercício, gravado ao finalizar o treino (ou
+  /// escolhido para um exercício próprio do aluno). O mapa muscular usa
+  /// este retrato; treinos antigos sem ele continuam buscando na
+  /// biblioteca. Assim, exercício arquivado/apagado ou editado depois não
+  /// muda o passado. Campos opcionais.
   final String? muscleGroup;
+  final List<String>? secondaryMuscles;
 
   LoggedExercise({
     required this.exerciseId,
@@ -45,6 +48,7 @@ class LoggedExercise {
     this.replacedExerciseName,
     this.prescription,
     this.muscleGroup,
+    this.secondaryMuscles,
   }) : sets = sets ?? [WorkoutSet()];
 
   /// Reps × peso das séries que contam (aquecimento fica de fora).
@@ -59,7 +63,11 @@ class LoggedExercise {
 
   /// Cópia com [sets] no lugar das séries atuais — o resto (inclusive a
   /// prescrição) é mantido.
-  LoggedExercise copyWith({List<WorkoutSet>? sets}) {
+  LoggedExercise copyWith({
+    List<WorkoutSet>? sets,
+    String? muscleGroup,
+    List<String>? secondaryMuscles,
+  }) {
     return LoggedExercise(
       exerciseId: exerciseId,
       exerciseName: exerciseName,
@@ -67,7 +75,8 @@ class LoggedExercise {
       replacedExerciseId: replacedExerciseId,
       replacedExerciseName: replacedExerciseName,
       prescription: prescription,
-      muscleGroup: muscleGroup,
+      muscleGroup: muscleGroup ?? this.muscleGroup,
+      secondaryMuscles: secondaryMuscles ?? this.secondaryMuscles,
     );
   }
 
@@ -87,6 +96,9 @@ class LoggedExercise {
           ? PlanExercise.fromMap(Map<String, dynamic>.from(rawPrescription))
           : null,
       muscleGroup: map['muscleGroup'] as String?,
+      secondaryMuscles: (map['secondaryMuscles'] as List<dynamic>?)
+          ?.map((e) => e.toString())
+          .toList(),
     );
   }
 
@@ -100,6 +112,7 @@ class LoggedExercise {
       'replacedExerciseName': replacedExerciseName,
       'prescription': ?prescription?.toMap(),
       'muscleGroup': ?muscleGroup,
+      'secondaryMuscles': ?secondaryMuscles,
     };
   }
 }

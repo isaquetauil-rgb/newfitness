@@ -302,3 +302,15 @@ List<ExerciseNameMatch> matchExercisesByName(
   results.sort((a, b) => b.score.compareTo(a.score));
   return results.length > limit ? results.sublist(0, limit) : results;
 }
+
+/// Grupo muscular sugerido para um exercício sem grupo, pelo nome: o grupo
+/// do exercício da biblioteca mais parecido ([matchExercisesByName]).
+/// `null` se nada parecer com o nome.
+String? suggestMuscleGroup(String name, List<Exercise> pool) {
+  final matches = matchExercisesByName(name, pool, limit: 3);
+  for (final m in matches) {
+    final group = m.exercise.muscleGroup.trim();
+    if (group.isNotEmpty) return group;
+  }
+  return null;
+}

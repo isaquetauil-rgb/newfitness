@@ -4,9 +4,12 @@ import 'package:provider/provider.dart';
 import 'package:newfitness/core/di/injector.dart';
 import 'package:newfitness/core/storage/local_prefs.dart';
 import 'package:newfitness/features/auth/logic/auth_provider.dart';
+import 'package:newfitness/features/body_map/logic/missing_muscle_groups.dart';
 import 'package:newfitness/features/body_map/logic/muscle_map_logic.dart';
+import 'package:newfitness/features/body_map/presentation/complete_muscle_groups_screen.dart';
 import 'package:newfitness/features/body_map/presentation/body_map_view.dart';
 import 'package:newfitness/features/exercises/logic/exercise_pool.dart';
+import 'package:newfitness/features/exercises/logic/exercise_similarity.dart';
 import 'package:newfitness/features/workout/logic/workout_provider.dart';
 import 'package:newfitness/shared/models/exercise.dart';
 import 'package:newfitness/shared/models/sample_exercises.dart';
@@ -25,7 +28,7 @@ class BodyMapArgs {
 Future<Exercise? Function(String)> loadExerciseLookup(
   BuildContext context,
 ) async {
-  final pool = await loadExercisePool(context);
+  final pool = await loadExercisePool(context, includeArchived: true);
   final byId = {
     for (final e in [...sampleFunctionalExercises, ...sampleExercises]) e.id: e,
     for (final e in pool) e.id: e,
@@ -118,9 +121,20 @@ class _BodyMapScreenState extends State<BodyMapScreen> {
             final now = DateTime.now();
             final data = computeMuscleMap(snap.data!, now, lookupSnap.data!);
             final color = bodyMapColor(_mode, scheme);
+            // Só o dono completa (o personal vendo o aluno não mexe).
+            final missing = widget.args == null
+                ? exercisesWithoutGroup(snap.data!, lookupSnap.data!)
+                : const <ExerciseWithoutGroup>[];
             return ListView(
               padding: const EdgeInsets.all(16),
               children: [
+                if (missing.isNotEmpty) ...[
+                  MissingGroupsBanner(
+                    count: missing.length,
+                    onComplete: () => _completeMissing(missing, snap.data!),
+                  ),
+                  const SizedBox(height: 12),
+                ],
                 SegmentedButton<BodyMapMode>(
                   segments: [
                     for (final m in BodyMapMode.values)
@@ -157,6 +171,35 @@ class _BodyMapScreenState extends State<BodyMapScreen> {
               ],
             );
           },
+        ),
+      ),
+    );
+  }
+
+  Future<void> _completeMissing(
+    List<ExerciseWithoutGroup> missing,
+    List<Workout> history,
+  ) async {
+    final pool = await loadExercisePool(context);
+    if (!mounted) return;
+    final provider = context.read<WorkoutProvider>();
+    await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => CompleteMuscleGroupsScreen(
+          items: [
+            for (final m in missing)
+              MissingGroupItem(
+                id: m.exerciseId,
+                name: m.name,
+                subtitle: m.workouts == 1
+                    ? 'Em 1 treino'
+                    : 'Em ${m.workouts} treinos',
+                suggestion: suggestMuscleGroup(m.name, pool),
+              ),
+          ],
+          onSave: (id, group) => provider.saveWorkoutExercises(
+            withMuscleGroup(history, id, group),
+          ),
         ),
       ),
     );

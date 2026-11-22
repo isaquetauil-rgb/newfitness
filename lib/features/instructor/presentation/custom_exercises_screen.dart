@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import 'package:newfitness/features/body_map/logic/missing_muscle_groups.dart';
+import 'package:newfitness/features/body_map/presentation/complete_muscle_groups_screen.dart';
+import 'package:newfitness/features/exercises/logic/exercise_pool.dart';
+import 'package:newfitness/features/exercises/logic/exercise_similarity.dart';
 import 'package:newfitness/app/routes/app_routes.dart';
 import 'package:newfitness/features/auth/logic/auth_provider.dart';
 import 'package:newfitness/features/instructor/logic/custom_exercise_provider.dart';
@@ -23,7 +27,11 @@ class CustomExercisesScreen extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Remover exercício?'),
-        content: Text('"${exercise.name}" será removido da sua biblioteca.'),
+        content: Text(
+          '"${exercise.name}" sai da sua biblioteca e não aparece mais para '
+          'escolher. Os treinos que já usaram o exercício continuam com ele '
+          'no histórico e no mapa muscular.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -39,6 +47,36 @@ class CustomExercisesScreen extends StatelessWidget {
     if (confirmed == true) {
       await provider.deleteExercise(instructorUid, exercise.id);
     }
+  }
+
+  Future<void> _completeMissing(
+    BuildContext context,
+    String instructorUid,
+    List<Exercise> missing,
+  ) async {
+    final provider = context.read<CustomExerciseProvider>();
+    final navigator = Navigator.of(context);
+    final pool = await loadExercisePool(context);
+    final byId = {for (final e in missing) e.id: e};
+    await navigator.push<bool>(
+      MaterialPageRoute(
+        builder: (_) => CompleteMuscleGroupsScreen(
+          items: [
+            for (final e in missing)
+              MissingGroupItem(
+                id: e.id,
+                name: e.name,
+                subtitle: e.equipment.isEmpty ? null : e.equipment,
+                suggestion: suggestMuscleGroup(e.name, pool),
+              ),
+          ],
+          onSave: (id, group) => provider.saveExercise(
+            instructorUid,
+            withExerciseGroup(byId[id]!, group),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -72,11 +110,23 @@ class CustomExercisesScreen extends StatelessWidget {
               ),
             );
           }
+          final missing = customWithoutGroup(exercises);
+          final offset = missing.isEmpty ? 0 : 1;
           return ListView.builder(
             padding: const EdgeInsets.all(16),
-            itemCount: exercises.length,
-            itemBuilder: (context, i) {
-              final exercise = exercises[i];
+            itemCount: exercises.length + offset,
+            itemBuilder: (context, index) {
+              if (index < offset) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: MissingGroupsBanner(
+                    count: missing.length,
+                    onComplete: () =>
+                        _completeMissing(context, instructorUid, missing),
+                  ),
+                );
+              }
+              final exercise = exercises[index - offset];
               return Card(
                 margin: const EdgeInsets.only(bottom: 8),
                 child: ListTile(

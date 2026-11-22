@@ -18,7 +18,11 @@ class AdminExercisesScreen extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Remover exercício?'),
-        content: Text('"${exercise.name}" será removido da biblioteca.'),
+        content: Text(
+          '"${exercise.name}" sai da biblioteca e não aparece mais para '
+          'escolher. Os treinos que já usaram o exercício continuam com ele '
+          'no histórico e no mapa muscular.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
