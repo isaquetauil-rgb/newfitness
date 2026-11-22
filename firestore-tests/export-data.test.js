@@ -29,6 +29,8 @@ const {
   workoutsCsv,
   CSV_HEADER,
   EXPORT_LINK_MS,
+  effectiveDurationSeconds,
+  LEGACY_MAX_DURATION_SECONDS,
   setExportPhotosLimit,
   photoStoragePath,
 } = require('../functions/lib/export.js');
@@ -279,6 +281,31 @@ describe('exportMyData', () => {
     const [files] = await bucket.getFiles({ prefix: 'users/aluno/exports/' });
     assert.equal(files.length, 1);
     assert.ok(files.every((f) => f.name.includes(periodKey('day'))));
+  });
+
+  test('duração: mesma regra do app (fim real; antigos até 3 h)', () => {
+    const set = (extra = {}) => ({ reps: 8, weightKg: 60, completed: true, ...extra });
+    const legacy10days = { date: 0, name: 'Antigo esquecido', durationSeconds: 10 * 24 * 3600, exercises: [{ exerciseName: 'Supino', sets: [set()] }] };
+    const legacy1h = { date: 0, name: 'Antigo normal', durationSeconds: 3600, exercises: [{ exerciseName: 'Supino', sets: [set()] }] };
+    // Treino novo: a duração gravada já vai até a última série + descanso.
+    const withTimes = { date: 0, name: 'Novo', durationSeconds: 4 * 3600, exercises: [{ exerciseName: 'Supino', sets: [set({ completedAt: 123 })] }] };
+
+    assert.equal(LEGACY_MAX_DURATION_SECONDS, 3 * 3600);
+    assert.equal(effectiveDurationSeconds(legacy10days), 3 * 3600);
+    assert.equal(effectiveDurationSeconds(legacy1h), 3600);
+    assert.equal(effectiveDurationSeconds(withTimes), 4 * 3600);
+    assert.equal(effectiveDurationSeconds({ durationSeconds: 0 }), 0);
+    assert.equal(effectiveDurationSeconds({}), 0);
+
+    const lines = workoutsCsv([
+      { id: 'a', data: legacy10days },
+      { id: 'b', data: legacy1h },
+      { id: 'c', data: withTimes },
+    ]).slice(1).trim().split('\r\n');
+    const minutes = (line) => line.split(';')[2];
+    assert.equal(minutes(lines[1]), '180');
+    assert.equal(minutes(lines[2]), '60');
+    assert.equal(minutes(lines[3]), '240');
   });
 
   test('workoutsCsv aguenta treino sem exercícios e campos faltando', () => {

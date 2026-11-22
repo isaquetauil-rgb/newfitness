@@ -120,6 +120,31 @@ function cell(value: string): string {
   return /[";\n\r]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
 }
 
+/** Duração máxima de treinos antigos (gravados sem a hora das séries). */
+export const LEGACY_MAX_DURATION_SECONDS = 3 * 60 * 60;
+
+/**
+ * Duração do treino, com a MESMA regra do app
+ * (`effectiveDurationSeconds` em lib/features/workout/logic/workout_timing.dart):
+ * treinos novos já gravam a duração até a última série concluída (+ o
+ * descanso dela); treinos antigos, sem a hora das séries (`completedAt`),
+ * ficam limitados a 3 horas — um treino esquecido aberto não vira uma
+ * sessão de dias na planilha.
+ */
+export function effectiveDurationSeconds(data: Record<string, unknown>): number {
+  const raw = typeof data.durationSeconds === "number" ? data.durationSeconds : 0;
+  if (!(raw > 0)) return 0;
+  const exercises = Array.isArray(data.exercises) ? data.exercises : [];
+  const hasTimes = exercises.some((e) => {
+    const sets = (e as Record<string, unknown> | null)?.sets;
+    return (
+      Array.isArray(sets) &&
+      sets.some((s) => typeof (s as Record<string, unknown> | null)?.completedAt === "number")
+    );
+  });
+  return hasTimes ? raw : Math.min(raw, LEGACY_MAX_DURATION_SECONDS);
+}
+
 export const CSV_HEADER = [
   "data",
   "treino",
@@ -148,10 +173,8 @@ export function workoutsCsv(workouts: Array<{ id: string; data: Record<string, u
   for (const { id, data } of ordered) {
     const date = typeof data.date === "number" ? localDateTime(data.date) : "";
     const name = typeof data.name === "string" ? data.name : "Treino";
-    const minutes =
-      typeof data.durationSeconds === "number" && data.durationSeconds > 0
-        ? String(Math.round(data.durationSeconds / 60))
-        : "";
+    const seconds = effectiveDurationSeconds(data);
+    const minutes = seconds > 0 ? String(Math.round(seconds / 60)) : "";
     const exercises = Array.isArray(data.exercises) ? data.exercises : [];
     for (const raw of exercises) {
       const ex = (raw ?? {}) as Record<string, unknown>;
