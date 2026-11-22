@@ -8,6 +8,7 @@ library;
 
 import 'package:newfitness/core/logging/app_logger.dart';
 import 'package:newfitness/core/storage/local_prefs.dart';
+import 'package:newfitness/features/workout/logic/workout_timing.dart';
 import 'package:newfitness/shared/models/workout.dart';
 
 final _log = AppLogger.of('HealthSync');
@@ -48,7 +49,8 @@ abstract class HealthGateway {
 /// Intervalo do treino a enviar. Sem duração registrada, conta 1 minuto
 /// (o Saúde não aceita sessão de duração zero).
 ({DateTime start, DateTime end}) workoutWindow(Workout w) {
-  final seconds = w.durationSeconds > 60 ? w.durationSeconds : 60;
+  final real = effectiveDurationSeconds(w);
+  final seconds = real > 60 ? real : 60;
   return (start: w.date, end: w.date.add(Duration(seconds: seconds)));
 }
 

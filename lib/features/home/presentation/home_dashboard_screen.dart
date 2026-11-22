@@ -16,6 +16,7 @@ import 'package:newfitness/features/notifications/logic/reminder_provider.dart';
 import 'package:newfitness/features/workout/logic/training_plan_provider.dart';
 import 'package:newfitness/features/workout/logic/workout_provider.dart';
 import 'package:newfitness/features/workout/presentation/workout_templates_screen.dart';
+import 'package:newfitness/features/workout/presentation/stale_workout_prompt.dart';
 import 'package:newfitness/shared/models/training_plan.dart';
 import 'package:newfitness/shared/models/user_profile.dart';
 import 'package:newfitness/shared/models/workout.dart';
@@ -130,6 +131,8 @@ class _StudentHomeBodyState extends State<_StudentHomeBody> {
   @override
   Widget build(BuildContext context) {
     final hasActive = context.watch<WorkoutProvider>().hasActiveWorkout;
+    // Treino esquecido aberto há mais de 3 h: pergunta (uma vez por abertura).
+    if (hasActive) scheduleStaleWorkoutCheck(context);
     final reminders = context.watch<ReminderProvider>();
     final enabledReminders = reminders.reminders.where((r) => r.enabled).length;
     final name = widget.profile?.name.split(' ').first ?? 'atleta';

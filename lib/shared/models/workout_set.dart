@@ -68,6 +68,10 @@ class WorkoutSet {
   /// Anotação da série. Campo opcional.
   String? notes;
 
+  /// Quando a série foi marcada como concluída. Campo opcional (treinos
+  /// antigos não têm); é dele que sai o fim real do treino.
+  DateTime? completedAt;
+
   WorkoutSet({
     this.reps = 0,
     this.weightKg = 0,
@@ -78,6 +82,7 @@ class WorkoutSet {
     this.distanceMeters = 0,
     this.rpe,
     this.notes,
+    this.completedAt,
   });
 
   bool get isWarmup => type == SetType.warmup;
@@ -100,6 +105,11 @@ class WorkoutSet {
       distanceMeters: (map['distanceMeters'] as num?)?.toDouble() ?? 0,
       rpe: (map['rpe'] as num?)?.toDouble(),
       notes: map['notes'] as String?,
+      completedAt: map['completedAt'] is num
+          ? DateTime.fromMillisecondsSinceEpoch(
+              (map['completedAt'] as num).toInt(),
+            )
+          : null,
     );
   }
 
@@ -115,6 +125,7 @@ class WorkoutSet {
       if (distanceMeters > 0) 'distanceMeters': distanceMeters,
       'rpe': ?rpe,
       if (notes != null && notes!.trim().isNotEmpty) 'notes': notes,
+      'completedAt': ?completedAt?.millisecondsSinceEpoch,
     };
   }
 
@@ -128,5 +139,6 @@ class WorkoutSet {
     distanceMeters: distanceMeters,
     rpe: rpe,
     notes: notes,
+    completedAt: completedAt,
   );
 }

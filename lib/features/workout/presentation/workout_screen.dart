@@ -78,7 +78,9 @@ class WorkoutScreen extends StatelessWidget {
           : const _StartWorkoutBody(),
       floatingActionButton: workout.hasActiveWorkout
           ? FloatingActionButton.extended(
-              onPressed: workout.isSaving ? null : () => _finish(context),
+              onPressed: workout.isSaving
+                  ? null
+                  : () => finishActiveWorkout(context),
               icon: workout.isSaving
                   ? const SizedBox(
                       height: 16,
@@ -92,154 +94,6 @@ class WorkoutScreen extends StatelessWidget {
               label: const Text('Finalizar treino'),
             )
           : null,
-    );
-  }
-
-  Future<void> _finish(BuildContext context) async {
-    final provider = context.read<WorkoutProvider>();
-    final messenger = ScaffoldMessenger.of(context);
-    final exercises = provider.activeWorkout!.exercises;
-    if (exercises.isEmpty) {
-      messenger.showSnackBar(
-        const SnackBar(
-          content: Text('Adicione ao menos um exercício antes de finalizar.'),
-        ),
-      );
-      return;
-    }
-
-    // Sem séries o treino não é salvo: avisa antes de ele sumir.
-    if (!WorkoutProvider.hasRealizedSets(exercises)) {
-      final discard = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Nenhuma série preenchida'),
-          content: const Text(
-            'Para salvar, preencha o peso ou as repetições, ou marque a '
-            'série como feita.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Sair sem salvar'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Continuar treino'),
-            ),
-          ],
-        ),
-      );
-      if (discard != true) return;
-      await provider.finishWorkout();
-      return;
-    }
-
-    // Biblioteca (com arquivados) para gravar o retrato dos músculos. Se não
-    // carregar a tempo, o treino é salvo sem retrato (o mapa usa a
-    // biblioteca, como nos treinos antigos).
-    Exercise? Function(String)? lookup;
-    try {
-      lookup = await loadExerciseLookup(context)
-          .timeout(const Duration(seconds: 5));
-    } catch (_) {}
-    if (!context.mounted) return;
-    final result = await provider.finishWorkout(lookup: lookup);
-    if (!context.mounted) return;
-    if (result == WorkoutFinishResult.saved) {
-      final saved = provider.lastSaved!;
-      final records = provider.lastSavedRecords;
-      // Health Connect / Apple Saúde (se ligado): cópia, não bloqueia.
-      unawaited(healthSyncOrNull?.onWorkoutFinished(saved));
-      // Conquistas novas: grava no perfil e avisa antes do resumo.
-      final earned = await syncAchievementsAfterWorkout(context, saved);
-      if (!context.mounted) return;
-      if (earned.isNotEmpty) await showAchievementsEarned(context, earned);
-      if (!context.mounted) return;
-      _showSavedSummary(context, saved, records);
-    } else if (result == WorkoutFinishResult.failed) {
-      messenger.showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Não foi possível salvar o treino. Verifique a conexão e tente '
-            'de novo. Nada foi perdido.',
-          ),
-        ),
-      );
-    }
-  }
-
-  void _showSavedSummary(
-    BuildContext context,
-    Workout saved,
-    List<PersonalRecord> records,
-  ) {
-    final volume = saved.totalVolume;
-    // Exercícios sem série realizada continuam no treino, mas não contam.
-    final done = saved.exercises.where((e) => e.sets.isNotEmpty).length;
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        icon: const Icon(Icons.check_circle_outline, size: 40),
-        title: const Text('Treino salvo!'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '$done exercício(s) · ${saved.totalSets} '
-                'série(s)${volume > 0 ? ' · ${formatKg(volume)}' : ''}',
-              ),
-              if (records.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                Text(
-                  records.length == 1
-                      ? 'Recorde de hoje'
-                      : 'Recordes de hoje (${records.length})',
-                  style: const TextStyle(fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 4),
-                for (final r in records)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 2),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(Icons.emoji_events_outlined, size: 18),
-                        const SizedBox(width: 6),
-                        Expanded(child: Text(r.label)),
-                      ],
-                    ),
-                  ),
-              ],
-              const SizedBox(height: 12),
-              const Text('Ele fica guardado no seu histórico, em Progresso.'),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Fechar'),
-          ),
-          TextButton.icon(
-            onPressed: () {
-              Navigator.pop(ctx);
-              openWorkoutShare(context, saved, records);
-            },
-            icon: const Icon(Icons.share, size: 18),
-            label: const Text('Compartilhar'),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              context.go(AppRoutes.progress);
-            },
-            child: const Text('Ver no histórico'),
-          ),
-        ],
-      ),
     );
   }
 
@@ -1270,4 +1124,155 @@ class _NumberFieldState extends State<_NumberField> {
       onChanged: widget.onChanged,
     );
   }
+}
+
+/// Finaliza o treino em andamento: valida, salva (com o fim real do treino),
+/// envia ao Health Connect/Apple Saúde, avisa conquistas e mostra o resumo.
+/// Usado pelo botão "Finalizar treino" e pelo aviso de treino esquecido.
+Future<void> finishActiveWorkout(BuildContext context) async {
+  final provider = context.read<WorkoutProvider>();
+  final messenger = ScaffoldMessenger.of(context);
+  final exercises = provider.activeWorkout!.exercises;
+  if (exercises.isEmpty) {
+    messenger.showSnackBar(
+      const SnackBar(
+        content: Text('Adicione ao menos um exercício antes de finalizar.'),
+      ),
+    );
+    return;
+  }
+
+  // Sem séries o treino não é salvo: avisa antes de ele sumir.
+  if (!WorkoutProvider.hasRealizedSets(exercises)) {
+    final discard = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Nenhuma série preenchida'),
+        content: const Text(
+          'Para salvar, preencha o peso ou as repetições, ou marque a '
+          'série como feita.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Sair sem salvar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Continuar treino'),
+          ),
+        ],
+      ),
+    );
+    if (discard != true) return;
+    await provider.finishWorkout();
+    return;
+  }
+
+  // Biblioteca (com arquivados) para gravar o retrato dos músculos. Se não
+  // carregar a tempo, o treino é salvo sem retrato (o mapa usa a
+  // biblioteca, como nos treinos antigos).
+  Exercise? Function(String)? lookup;
+  try {
+    lookup = await loadExerciseLookup(context)
+        .timeout(const Duration(seconds: 5));
+  } catch (_) {}
+  if (!context.mounted) return;
+  final result = await provider.finishWorkout(lookup: lookup);
+  if (!context.mounted) return;
+  if (result == WorkoutFinishResult.saved) {
+    final saved = provider.lastSaved!;
+    final records = provider.lastSavedRecords;
+    // Health Connect / Apple Saúde (se ligado): cópia, não bloqueia.
+    unawaited(healthSyncOrNull?.onWorkoutFinished(saved));
+    // Conquistas novas: grava no perfil e avisa antes do resumo.
+    final earned = await syncAchievementsAfterWorkout(context, saved);
+    if (!context.mounted) return;
+    if (earned.isNotEmpty) await showAchievementsEarned(context, earned);
+    if (!context.mounted) return;
+    _showSavedSummary(context, saved, records);
+  } else if (result == WorkoutFinishResult.failed) {
+    messenger.showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Não foi possível salvar o treino. Verifique a conexão e tente '
+          'de novo. Nada foi perdido.',
+        ),
+      ),
+    );
+  }
+}
+
+void _showSavedSummary(
+  BuildContext context,
+  Workout saved,
+  List<PersonalRecord> records,
+) {
+  final volume = saved.totalVolume;
+  // Exercícios sem série realizada continuam no treino, mas não contam.
+  final done = saved.exercises.where((e) => e.sets.isNotEmpty).length;
+  showDialog<void>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      icon: const Icon(Icons.check_circle_outline, size: 40),
+      title: const Text('Treino salvo!'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '$done exercício(s) · ${saved.totalSets} '
+              'série(s)${volume > 0 ? ' · ${formatKg(volume)}' : ''}',
+            ),
+            if (records.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text(
+                records.length == 1
+                    ? 'Recorde de hoje'
+                    : 'Recordes de hoje (${records.length})',
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 4),
+              for (final r in records)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.emoji_events_outlined, size: 18),
+                      const SizedBox(width: 6),
+                      Expanded(child: Text(r.label)),
+                    ],
+                  ),
+                ),
+            ],
+            const SizedBox(height: 12),
+            const Text('Ele fica guardado no seu histórico, em Progresso.'),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('Fechar'),
+        ),
+        TextButton.icon(
+          onPressed: () {
+            Navigator.pop(ctx);
+            openWorkoutShare(context, saved, records);
+          },
+          icon: const Icon(Icons.share, size: 18),
+          label: const Text('Compartilhar'),
+        ),
+        FilledButton(
+          onPressed: () {
+            Navigator.pop(ctx);
+            context.go(AppRoutes.progress);
+          },
+          child: const Text('Ver no histórico'),
+        ),
+      ],
+    ),
+  );
 }

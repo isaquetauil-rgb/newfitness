@@ -8,6 +8,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:newfitness/features/body_map/logic/muscle_map_logic.dart';
 import 'package:newfitness/features/body_map/presentation/body_map_view.dart';
 import 'package:newfitness/features/stats/logic/period_stats.dart';
+import 'package:newfitness/features/workout/logic/workout_timing.dart';
 import 'package:newfitness/shared/models/workout.dart';
 import 'package:newfitness/shared/utils/one_rep_max.dart';
 
@@ -185,8 +186,8 @@ class WorkoutShareCard extends StatelessWidget {
           _statGrid([
             _Stat(
               'duração',
-              workout.durationSeconds > 0
-                  ? formatHours(workout.durationSeconds)
+              effectiveDurationSeconds(workout) > 0
+                  ? formatHours(effectiveDurationSeconds(workout))
                   : '—',
             ),
             _Stat('volume', formatKg(workout.totalVolume)),

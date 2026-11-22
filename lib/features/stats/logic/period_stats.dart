@@ -4,6 +4,7 @@ library;
 
 import 'package:newfitness/features/home/logic/week_summary.dart';
 import 'package:newfitness/features/stats/logic/record_history.dart';
+import 'package:newfitness/features/workout/logic/workout_timing.dart';
 import 'package:newfitness/shared/models/workout.dart';
 import 'package:newfitness/shared/utils/one_rep_max.dart';
 
@@ -93,7 +94,7 @@ class PeriodStats {
     final byExercise =
         <String, (String, int, int)>{}; // id → nome, treinos, séries
     for (final w in inPeriod) {
-      seconds += w.durationSeconds;
+      seconds += effectiveDurationSeconds(w);
       volume += w.totalVolume;
       final seen = <String>{};
       for (final e in w.exercises) {

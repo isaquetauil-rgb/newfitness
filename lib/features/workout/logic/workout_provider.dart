@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 
+import 'package:newfitness/features/workout/logic/workout_timing.dart';
 import 'package:newfitness/core/di/injector.dart';
 import 'package:newfitness/core/logging/app_logger.dart';
 import 'package:newfitness/core/storage/local_prefs.dart';
@@ -65,12 +66,17 @@ class WorkoutProvider extends ChangeNotifier {
     ActiveWorkoutStore? store,
     RestTimerController? restTimer,
     Future<void> Function(bool on)? keepScreenOn,
-  }) : _firestoreService = firestoreService ?? getIt<FirestoreService>(),
+    DateTime Function()? clock,
+  }) : _now = clock ?? DateTime.now,
+       _firestoreService = firestoreService ?? getIt<FirestoreService>(),
        _store =
            store ??
            (_prefsReady ? ActiveWorkoutStore(getIt<LocalPrefs>()) : null),
        restTimer = restTimer ?? _defaultRestTimer(),
        _keepScreenOn = keepScreenOn ?? _defaultKeepScreenOn;
+
+  /// Relógio (trocável nos testes).
+  final DateTime Function() _now;
 
   static bool get _prefsReady =>
       getIt.isRegistered<LocalPrefs>() && getIt.isReadySync<LocalPrefs>();
@@ -173,12 +179,12 @@ class WorkoutProvider extends ChangeNotifier {
     _activeWorkout = Workout(
       id: '',
       userId: userId,
-      date: DateTime.now(),
+      date: _now(),
       name: name,
       exercises: [],
       source: source,
     );
-    _startedAt = DateTime.now();
+    _startedAt = _now();
     restTimer.skip();
     _setScreenOn(true);
     _changed();
@@ -312,6 +318,9 @@ class WorkoutProvider extends ChangeNotifier {
     if (completed == true && !canComplete(set)) completed = null;
     final justCompleted = completed == true && !set.completed;
     if (completed != null) set.completed = completed;
+    // Hora em que a série foi feita: é dela que sai o fim real do treino.
+    if (justCompleted) set.completedAt = _now();
+    if (completed == false) set.completedAt = null;
     // Mexeu na série ou marcou como feita: a sugestão vira o realizado.
     if (reps != null ||
         weightKg != null ||
@@ -323,10 +332,9 @@ class WorkoutProvider extends ChangeNotifier {
     // automático estiver ligado nas configurações).
     // Aquecimento: descanso curto. Em bi-set/tri-set, só depois do último
     // exercício do grupo.
-    if (justCompleted && set.isWarmup) {
-      restTimer.onSetCompleted(warmupRestSeconds);
-    } else if (justCompleted && isLastOfSuperset(exerciseIndex)) {
-      restTimer.onSetCompleted(exercise.prescription?.restSeconds ?? 60);
+    if (justCompleted) {
+      final rest = restSecondsAfter(exerciseIndex, set);
+      if (rest > 0) restTimer.onSetCompleted(rest);
     }
     _changed();
     if (!justCompleted) return const [];
@@ -389,6 +397,30 @@ class WorkoutProvider extends ChangeNotifier {
 
   /// O exercício fecha a rodada do bi-set (é o último do grupo)? Fora de
   /// grupo, sempre.
+  /// Descanso depois de [set] do exercício [exerciseIndex]: curto no
+  /// aquecimento; em bi-set/tri-set, só depois do último exercício do grupo.
+  int restSecondsAfter(int exerciseIndex, WorkoutSet set) {
+    final exercise = _activeWorkout?.exercises[exerciseIndex];
+    if (exercise == null) return 0;
+    if (set.isWarmup) return warmupRestSeconds;
+    if (!isLastOfSuperset(exerciseIndex)) return 0;
+    return exercise.prescription?.restSeconds ?? 60;
+  }
+
+  /// Início do treino em andamento (para o aviso de treino esquecido).
+  DateTime? get activeStartedAt => _startedAt;
+
+  /// O treino em andamento ficou mais de 3 h sem nenhuma série marcada?
+  bool get hasStaleWorkout {
+    final w = _activeWorkout;
+    final start = _startedAt;
+    return w != null && start != null && isStaleWorkout(w, start, _now());
+  }
+
+  /// O treino em andamento tem alguma série concluída?
+  bool get activeHasCompletedSet =>
+      _activeWorkout != null && hasCompletedSet(_activeWorkout!);
+
   bool isLastOfSuperset(int exerciseIndex) =>
       supersetMembers(exerciseIndex).last == exerciseIndex;
 
@@ -520,9 +552,17 @@ class WorkoutProvider extends ChangeNotifier {
     _saving = true;
     notifyListeners();
     try {
-      final duration = _startedAt == null
+      // Duração até a última série concluída (+ descanso), não até agora:
+      // treino esquecido aberto não vira uma sessão de horas ou dias.
+      final start = _startedAt;
+      final duration = start == null
           ? 0
-          : DateTime.now().difference(_startedAt!).inSeconds;
+          : realWorkoutEnd(
+              _activeWorkout!,
+              start,
+              _now(),
+              restFor: restSecondsAfter,
+            ).difference(start).inSeconds;
       final toSave = Workout(
         id: _uuid.v4(),
         userId: _activeWorkout!.userId,
