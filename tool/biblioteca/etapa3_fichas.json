@@ -1,0 +1,3731 @@
+{
+ "novos": {
+  "decline_bench_press": {
+   "name": "Supino declinado",
+   "alternateName": "Supino declinado com barra",
+   "muscleGroup": "Peito",
+   "secondaryMuscles": [
+    "Tríceps braquial",
+    "Deltoide anterior"
+   ],
+   "equipment": "Barra",
+   "category": "forca",
+   "movementPattern": "Empurrar horizontal",
+   "difficultyLevel": "intermediario",
+   "isUnilateral": false,
+   "tracksDuration": false,
+   "description": "Supino no banco declinado, com ênfase na parte de baixo do peitoral.",
+   "instructions": [
+    "Prenda as pernas no apoio do banco declinado e deite com os olhos abaixo da barra.",
+    "Segure a barra um pouco mais aberta que os ombros e tire do suporte com os braços estendidos.",
+    "Desça a barra controlando até tocar a parte de baixo do peito.",
+    "Empurre de volta até estender os cotovelos, sem tirar as costas do banco."
+   ],
+   "commonMistakes": [
+    "Descer a barra no pescoço ou no meio do peito.",
+    "Abrir demais os cotovelos (90° do tronco).",
+    "Quicar a barra no peito."
+   ],
+   "careNotes": "Faça com alguém ajudando na saída e na volta da barra. Evite se a posição de cabeça para baixo causar tontura ou se tiver pressão alta descontrolada.",
+   "searchTags": [
+    "supino",
+    "peito inferior",
+    "declinado",
+    "barra"
+   ],
+   "alternativeExerciseIds": [
+    "bench_press",
+    "dips",
+    "machine_chest_press"
+   ],
+   "defaultSets": 4,
+   "defaultReps": "8-12",
+   "defaultRestSeconds": 90,
+   "loadUnit": "kg",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "dumbbell_fly": {
+   "name": "Crucifixo reto com halteres",
+   "alternateName": "Crucifixo no banco reto",
+   "muscleGroup": "Peito",
+   "secondaryMuscles": [
+    "Deltoide anterior"
+   ],
+   "equipment": "Halteres",
+   "category": "forca",
+   "movementPattern": "Adução horizontal",
+   "difficultyLevel": "iniciante",
+   "isUnilateral": false,
+   "tracksDuration": false,
+   "description": "Abertura e fechamento dos braços no banco reto, isolando o peitoral.",
+   "instructions": [
+    "Deite no banco reto com um halter em cada mão, braços estendidos acima do peito e palmas viradas uma para a outra.",
+    "Com os cotovelos levemente dobrados, abra os braços em arco até sentir o peito alongar.",
+    "Feche os braços pelo mesmo caminho, como se abraçasse uma árvore."
+   ],
+   "commonMistakes": [
+    "Dobrar e esticar os cotovelos durante o movimento (vira supino).",
+    "Descer os halteres muito abaixo da linha do banco.",
+    "Usar carga alta e perder o controle na parte de baixo."
+   ],
+   "careNotes": "Comece leve: a posição aberta força o ombro. Evite descer além do confortável se tiver dor ou instabilidade no ombro.",
+   "searchTags": [
+    "crucifixo",
+    "peito",
+    "halteres",
+    "isolamento",
+    "fly"
+   ],
+   "alternativeExerciseIds": [
+    "pec_deck",
+    "cable_crossover",
+    "incline_dumbbell_fly"
+   ],
+   "defaultSets": 3,
+   "defaultReps": "10-15",
+   "defaultRestSeconds": 60,
+   "loadUnit": "kg",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "incline_dumbbell_fly": {
+   "name": "Crucifixo inclinado com halteres",
+   "alternateName": "Crucifixo inclinado",
+   "muscleGroup": "Peito",
+   "secondaryMuscles": [
+    "Deltoide anterior"
+   ],
+   "equipment": "Halteres",
+   "category": "forca",
+   "movementPattern": "Adução horizontal",
+   "difficultyLevel": "iniciante",
+   "isUnilateral": false,
+   "tracksDuration": false,
+   "description": "Crucifixo no banco inclinado (30° a 45°), com ênfase na parte de cima do peitoral.",
+   "instructions": [
+    "Ajuste o banco entre 30° e 45° e deite com um halter em cada mão acima do peito.",
+    "Com os cotovelos levemente dobrados, abra os braços em arco até sentir o peito alongar.",
+    "Feche os braços pelo mesmo caminho, até os halteres quase se encostarem."
+   ],
+   "commonMistakes": [
+    "Inclinar demais o banco e transferir o trabalho para o ombro.",
+    "Dobrar e esticar os cotovelos durante o movimento.",
+    "Descer rápido e quicar na parte de baixo."
+   ],
+   "careNotes": "Use carga moderada e amplitude confortável. Evite se tiver dor no ombro na posição aberta.",
+   "searchTags": [
+    "crucifixo",
+    "peito superior",
+    "inclinado",
+    "halteres"
+   ],
+   "alternativeExerciseIds": [
+    "dumbbell_fly",
+    "low_cable_crossover",
+    "incline_dumbbell_press"
+   ],
+   "defaultSets": 3,
+   "defaultReps": "10-15",
+   "defaultRestSeconds": 60,
+   "loadUnit": "kg",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "low_cable_crossover": {
+   "name": "Crossover baixo (polia baixa)",
+   "alternateName": "Crossover de baixo para cima",
+   "muscleGroup": "Peito",
+   "secondaryMuscles": [
+    "Deltoide anterior"
+   ],
+   "equipment": "Polia",
+   "category": "forca",
+   "movementPattern": "Adução horizontal",
+   "difficultyLevel": "intermediario",
+   "isUnilateral": false,
+   "tracksDuration": false,
+   "description": "Crossover com as polias embaixo, puxando de baixo para cima (parte de cima do peitoral).",
+   "instructions": [
+    "Coloque as duas polias na posição mais baixa e segure uma alça em cada mão.",
+    "Dê um passo à frente, peito aberto e cotovelos levemente dobrados.",
+    "Leve as mãos para cima e para o centro, até a altura do peito.",
+    "Volte devagar até sentir o peito alongar."
+   ],
+   "commonMistakes": [
+    "Usar os braços (rosca) em vez de fechar pelo peito.",
+    "Arquear a lombar para subir mais carga.",
+    "Soltar o peso rápido na volta."
+   ],
+   "careNotes": "Mantenha o abdômen firme para não compensar com a lombar.",
+   "searchTags": [
+    "crossover",
+    "polia baixa",
+    "peito superior",
+    "cabo"
+   ],
+   "alternativeExerciseIds": [
+    "incline_dumbbell_fly",
+    "cable_crossover",
+    "pec_deck"
+   ],
+   "defaultSets": 3,
+   "defaultReps": "12-15",
+   "defaultRestSeconds": 60,
+   "loadUnit": "kg",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "t_bar_row": {
+   "name": "Remada cavalinho",
+   "alternateName": "Remada T / barra T",
+   "muscleGroup": "Costas",
+   "secondaryMuscles": [
+    "Latíssimo do dorso",
+    "Romboides",
+    "Trapézio",
+    "Bíceps braquial",
+    "Eretor da espinha"
+   ],
+   "equipment": "Barra",
+   "category": "forca",
+   "movementPattern": "Puxar horizontal",
+   "difficultyLevel": "intermediario",
+   "isUnilateral": false,
+   "tracksDuration": false,
+   "description": "Remada com a barra T (ou barra presa no canto), tronco inclinado à frente.",
+   "instructions": [
+    "Fique com uma perna de cada lado da barra, joelhos levemente dobrados.",
+    "Incline o tronco à frente com a coluna neutra e segure a pegada.",
+    "Puxe a barra em direção ao abdômen, aproximando as escápulas.",
+    "Desça devagar até estender os braços, sem arredondar as costas."
+   ],
+   "commonMistakes": [
+    "Arredondar a coluna durante a puxada.",
+    "Levantar o tronco a cada repetição para ajudar a carga.",
+    "Puxar só com os braços, sem mexer as escápulas."
+   ],
+   "careNotes": "Mantenha a coluna neutra o tempo todo. Evite ou use carga leve se tiver dor lombar; a remada apoiada no peito é uma opção mais segura.",
+   "searchTags": [
+    "remada",
+    "costas",
+    "barra t",
+    "cavalinho",
+    "espessura"
+   ],
+   "alternativeExerciseIds": [
+    "bent_over_row",
+    "seated_cable_row",
+    "dumbbell_row"
+   ],
+   "defaultSets": 4,
+   "defaultReps": "8-12",
+   "defaultRestSeconds": 90,
+   "loadUnit": "kg",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "single_arm_cable_row": {
+   "name": "Remada unilateral na polia",
+   "alternateName": "Remada com um braço no cabo",
+   "muscleGroup": "Costas",
+   "secondaryMuscles": [
+    "Latíssimo do dorso",
+    "Romboides",
+    "Bíceps braquial",
+    "Oblíquos"
+   ],
+   "equipment": "Polia",
+   "category": "forca",
+   "movementPattern": "Puxar horizontal",
+   "difficultyLevel": "iniciante",
+   "isUnilateral": true,
+   "tracksDuration": false,
+   "description": "Remada com um braço de cada vez na polia, na altura do peito ou do abdômen.",
+   "instructions": [
+    "Ajuste a polia na altura do abdômen e segure a alça com uma mão.",
+    "Afaste-se até o braço ficar estendido, pés firmes e tronco estável.",
+    "Puxe a alça até o lado do corpo, levando o cotovelo para trás.",
+    "Volte devagar deixando o ombro ir levemente à frente."
+   ],
+   "commonMistakes": [
+    "Girar o tronco para puxar a carga.",
+    "Encolher o ombro em direção à orelha.",
+    "Fazer o lado mais fraco com menos repetições sem perceber."
+   ],
+   "careNotes": "Comece pelo lado mais fraco e repita o mesmo número de repetições do outro lado.",
+   "searchTags": [
+    "remada",
+    "unilateral",
+    "polia",
+    "costas",
+    "cabo"
+   ],
+   "alternativeExerciseIds": [
+    "dumbbell_row",
+    "seated_cable_row"
+   ],
+   "defaultSets": 3,
+   "defaultReps": "10-12",
+   "defaultRestSeconds": 60,
+   "loadUnit": "kg",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "reverse_grip_lat_pulldown": {
+   "name": "Puxada supinada",
+   "alternateName": "Puxada alta com pegada supinada",
+   "muscleGroup": "Costas",
+   "secondaryMuscles": [
+    "Bíceps braquial",
+    "Romboides",
+    "Braquial"
+   ],
+   "equipment": "Polia",
+   "category": "forca",
+   "movementPattern": "Puxar vertical",
+   "difficultyLevel": "iniciante",
+   "isUnilateral": false,
+   "tracksDuration": false,
+   "description": "Puxada na polia alta com as palmas viradas para você, na largura dos ombros.",
+   "instructions": [
+    "Sente com as coxas presas no apoio e segure a barra com as palmas para você.",
+    "Incline levemente o tronco para trás e puxe a barra até a parte de cima do peito.",
+    "Leve os cotovelos para baixo e junto ao corpo.",
+    "Volte devagar até estender os braços."
+   ],
+   "commonMistakes": [
+    "Jogar o tronco para trás para puxar o peso.",
+    "Puxar só até o queixo, sem completar o movimento.",
+    "Soltar a barra rápido na subida."
+   ],
+   "careNotes": "Evite carga que obrigue a balançar o tronco. Atenção a dor no cotovelo com a pegada supinada.",
+   "searchTags": [
+    "puxada",
+    "supinada",
+    "costas",
+    "polia",
+    "pegada invertida"
+   ],
+   "alternativeExerciseIds": [
+    "lat_pulldown",
+    "close_grip_lat_pulldown",
+    "pull_up"
+   ],
+   "defaultSets": 3,
+   "defaultReps": "8-12",
+   "defaultRestSeconds": 90,
+   "loadUnit": "kg",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "cable_pullover": {
+   "name": "Pullover na polia",
+   "alternateName": "Pulldown de braços estendidos",
+   "muscleGroup": "Costas",
+   "secondaryMuscles": [
+    "Tríceps braquial",
+    "Peitoral maior"
+   ],
+   "equipment": "Polia",
+   "category": "forca",
+   "movementPattern": "Extensão de ombro",
+   "difficultyLevel": "intermediario",
+   "isUnilateral": false,
+   "tracksDuration": false,
+   "description": "Braços quase estendidos levando a barra (ou corda) da polia alta até as coxas.",
+   "instructions": [
+    "Fique de frente para a polia alta segurando a barra ou corda com os braços quase estendidos.",
+    "Incline levemente o tronco à frente, abdômen firme.",
+    "Leve a barra em arco até as coxas, sem dobrar os cotovelos.",
+    "Volte devagar até os braços ficarem acima da cabeça."
+   ],
+   "commonMistakes": [
+    "Dobrar os cotovelos e transformar em tríceps.",
+    "Jogar o tronco para baixo junto com a barra.",
+    "Usar carga alta e perder o arco do movimento."
+   ],
+   "careNotes": "Evite amplitude total acima da cabeça se tiver dor no ombro.",
+   "searchTags": [
+    "pullover",
+    "polia",
+    "costas",
+    "dorsal",
+    "braços estendidos"
+   ],
+   "alternativeExerciseIds": [
+    "lat_pulldown",
+    "close_grip_lat_pulldown"
+   ],
+   "defaultSets": 3,
+   "defaultReps": "12-15",
+   "defaultRestSeconds": 60,
+   "loadUnit": "kg",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "front_raise": {
+   "name": "Elevação frontal com halteres",
+   "alternateName": "Elevação frontal",
+   "muscleGroup": "Ombros",
+   "secondaryMuscles": [
+    "Peitoral maior",
+    "Trapézio"
+   ],
+   "equipment": "Halteres",
+   "category": "forca",
+   "movementPattern": "Flexão de ombro",
+   "difficultyLevel": "iniciante",
+   "isUnilateral": false,
+   "tracksDuration": false,
+   "description": "Elevação dos braços à frente até a altura dos ombros.",
+   "instructions": [
+    "Em pé, um halter em cada mão à frente das coxas.",
+    "Com os cotovelos levemente dobrados, eleve os braços à frente até a altura dos ombros.",
+    "Desça devagar até a posição inicial."
+   ],
+   "commonMistakes": [
+    "Balançar o tronco para subir o peso.",
+    "Subir acima da linha dos ombros.",
+    "Encolher os ombros durante a subida."
+   ],
+   "careNotes": "Use carga leve. Evite se tiver dor na frente do ombro ao elevar o braço.",
+   "searchTags": [
+    "elevação frontal",
+    "ombro",
+    "deltoide anterior",
+    "halteres"
+   ],
+   "alternativeExerciseIds": [
+    "dumbbell_shoulder_press",
+    "machine_shoulder_press"
+   ],
+   "defaultSets": 3,
+   "defaultReps": "10-15",
+   "defaultRestSeconds": 60,
+   "loadUnit": "kg",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "machine_shoulder_press": {
+   "name": "Desenvolvimento na máquina",
+   "alternateName": "Desenvolvimento articulado",
+   "muscleGroup": "Ombros",
+   "secondaryMuscles": [
+    "Tríceps braquial",
+    "Trapézio"
+   ],
+   "equipment": "Máquina",
+   "category": "forca",
+   "movementPattern": "Empurrar vertical",
+   "difficultyLevel": "iniciante",
+   "isUnilateral": false,
+   "tracksDuration": false,
+   "description": "Empurrar as alças da máquina para cima, sentado com as costas apoiadas.",
+   "instructions": [
+    "Ajuste o banco para as alças ficarem na altura dos ombros.",
+    "Sente com as costas apoiadas e segure as alças.",
+    "Empurre para cima até quase estender os cotovelos.",
+    "Desça devagar até a altura dos ombros."
+   ],
+   "commonMistakes": [
+    "Banco muito baixo, começando com as mãos abaixo do ombro.",
+    "Tirar as costas do encosto e arquear a lombar.",
+    "Travar os cotovelos com força no topo."
+   ],
+   "careNotes": "Opção mais estável que barra e halteres para iniciantes. Evite se elevar o braço acima da cabeça causar dor.",
+   "searchTags": [
+    "desenvolvimento",
+    "máquina",
+    "ombro",
+    "empurrar"
+   ],
+   "alternativeExerciseIds": [
+    "dumbbell_shoulder_press",
+    "shoulder_press"
+   ],
+   "defaultSets": 3,
+   "defaultReps": "8-12",
+   "defaultRestSeconds": 90,
+   "loadUnit": "kg",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "machine_lateral_raise": {
+   "name": "Elevação lateral na máquina",
+   "alternateName": "Elevação lateral sentado na máquina",
+   "muscleGroup": "Ombros",
+   "secondaryMuscles": [
+    "Trapézio"
+   ],
+   "equipment": "Máquina",
+   "category": "forca",
+   "movementPattern": "Abdução de ombro",
+   "difficultyLevel": "iniciante",
+   "isUnilateral": false,
+   "tracksDuration": false,
+   "description": "Elevação lateral dos braços com apoio no cotovelo, na máquina própria.",
+   "instructions": [
+    "Ajuste o banco para o eixo da máquina ficar na altura dos ombros.",
+    "Apoie os braços nas almofadas e segure as alças.",
+    "Eleve os braços para os lados até a altura dos ombros.",
+    "Desça devagar."
+   ],
+   "commonMistakes": [
+    "Encolher os ombros e usar o trapézio.",
+    "Subir acima da linha dos ombros.",
+    "Soltar o peso rápido na descida."
+   ],
+   "careNotes": "Ajuste bem o eixo da máquina ao ombro. Evite se tiver dor ao abrir o braço.",
+   "searchTags": [
+    "elevação lateral",
+    "máquina",
+    "deltoide lateral",
+    "ombro"
+   ],
+   "alternativeExerciseIds": [
+    "lateral_raise",
+    "cable_lateral_raise"
+   ],
+   "defaultSets": 3,
+   "defaultReps": "12-15",
+   "defaultRestSeconds": 60,
+   "loadUnit": "kg",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "cable_external_rotation": {
+   "name": "Rotação externa na polia",
+   "alternateName": "Rotação externa de ombro no cabo",
+   "muscleGroup": "Ombros",
+   "secondaryMuscles": [
+    "Deltoide posterior"
+   ],
+   "equipment": "Polia",
+   "category": "forca",
+   "movementPattern": "Rotação de ombro",
+   "difficultyLevel": "iniciante",
+   "isUnilateral": true,
+   "tracksDuration": false,
+   "description": "Rotação externa do ombro na polia, com o cotovelo junto ao corpo (manguito rotador).",
+   "instructions": [
+    "Ajuste a polia na altura do cotovelo e fique de lado para ela.",
+    "Segure a alça com a mão mais longe da polia, cotovelo dobrado a 90° e colado ao corpo.",
+    "Gire o antebraço para fora, sem afastar o cotovelo do tronco.",
+    "Volte devagar."
+   ],
+   "commonMistakes": [
+    "Afastar o cotovelo do corpo.",
+    "Girar o tronco em vez do ombro.",
+    "Usar carga alta: é um exercício de controle."
+   ],
+   "careNotes": "Carga leve e movimento lento. Se for para reabilitação, siga a orientação do fisioterapeuta.",
+   "searchTags": [
+    "rotação externa",
+    "manguito rotador",
+    "ombro",
+    "polia",
+    "prevenção"
+   ],
+   "alternativeExerciseIds": [
+    "band_external_rotation",
+    "face_pull"
+   ],
+   "defaultSets": 3,
+   "defaultReps": "12-15",
+   "defaultRestSeconds": 45,
+   "loadUnit": "kg",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "band_shoulder_dislocate": {
+   "name": "Mobilidade de ombros com elástico (passagem)",
+   "alternateName": "Passagem de ombros",
+   "muscleGroup": "Ombros",
+   "secondaryMuscles": [
+    "Peitoral maior",
+    "Trapézio"
+   ],
+   "equipment": "Elástico",
+   "category": "mobilidade",
+   "movementPattern": "Mobilidade",
+   "difficultyLevel": "iniciante",
+   "isUnilateral": false,
+   "tracksDuration": false,
+   "description": "Passar o elástico da frente para trás da cabeça com os braços estendidos.",
+   "instructions": [
+    "Segure o elástico com as mãos bem afastadas, braços estendidos à frente.",
+    "Eleve os braços acima da cabeça e leve o elástico para trás até onde for confortável.",
+    "Volte pelo mesmo caminho.",
+    "Aproxime as mãos aos poucos, só se não houver dor."
+   ],
+   "commonMistakes": [
+    "Dobrar os cotovelos para passar.",
+    "Arquear a lombar para compensar.",
+    "Pegada fechada demais logo no começo."
+   ],
+   "careNotes": "Sem dor: se doer, abra mais a pegada ou reduza a amplitude.",
+   "searchTags": [
+    "mobilidade",
+    "ombro",
+    "elástico",
+    "aquecimento",
+    "passagem"
+   ],
+   "alternativeExerciseIds": [
+    "thoracic_rotation",
+    "band_pull_apart"
+   ],
+   "defaultSets": 2,
+   "defaultReps": "10-15",
+   "defaultRestSeconds": 30,
+   "loadUnit": "nenhuma",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "preacher_curl": {
+   "name": "Rosca Scott",
+   "alternateName": "Rosca no banco Scott",
+   "muscleGroup": "Bíceps",
+   "secondaryMuscles": [
+    "Braquial",
+    "Braquiorradial"
+   ],
+   "equipment": "Barra",
+   "category": "forca",
+   "movementPattern": "Flexão de cotovelo",
+   "difficultyLevel": "iniciante",
+   "isUnilateral": false,
+   "tracksDuration": false,
+   "description": "Rosca com os braços apoiados no banco Scott, com barra W ou reta.",
+   "instructions": [
+    "Ajuste o banco para as axilas ficarem encostadas no topo do apoio.",
+    "Segure a barra com as palmas para cima e os braços apoiados.",
+    "Flexione os cotovelos levando a barra em direção aos ombros.",
+    "Desça devagar até quase estender os braços."
+   ],
+   "commonMistakes": [
+    "Tirar os cotovelos do apoio.",
+    "Soltar o peso de uma vez no fim da descida.",
+    "Usar o corpo para subir a barra."
+   ],
+   "careNotes": "Controle o final da descida: é onde o cotovelo fica mais exposto. Evite estender totalmente com carga alta.",
+   "searchTags": [
+    "rosca",
+    "scott",
+    "bíceps",
+    "barra w"
+   ],
+   "alternativeExerciseIds": [
+    "bicep_curl",
+    "concentration_curl",
+    "cable_curl"
+   ],
+   "defaultSets": 3,
+   "defaultReps": "8-12",
+   "defaultRestSeconds": 60,
+   "loadUnit": "kg",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "concentration_curl": {
+   "name": "Rosca concentrada",
+   "alternateName": "Rosca concentrada com halter",
+   "muscleGroup": "Bíceps",
+   "secondaryMuscles": [
+    "Braquial"
+   ],
+   "equipment": "Halteres",
+   "category": "forca",
+   "movementPattern": "Flexão de cotovelo",
+   "difficultyLevel": "iniciante",
+   "isUnilateral": true,
+   "tracksDuration": false,
+   "description": "Rosca sentada com o cotovelo apoiado na parte de dentro da coxa.",
+   "instructions": [
+    "Sente no banco, pernas afastadas, e apoie o cotovelo na parte interna da coxa.",
+    "Segure o halter com o braço estendido.",
+    "Flexione o cotovelo levando o halter ao ombro.",
+    "Desça devagar."
+   ],
+   "commonMistakes": [
+    "Mexer o tronco para ajudar a subir.",
+    "Tirar o cotovelo da coxa.",
+    "Descer rápido."
+   ],
+   "careNotes": "Faça o mesmo número de repetições com os dois braços.",
+   "searchTags": [
+    "rosca",
+    "concentrada",
+    "bíceps",
+    "unilateral",
+    "halter"
+   ],
+   "alternativeExerciseIds": [
+    "preacher_curl",
+    "alternating_dumbbell_curl"
+   ],
+   "defaultSets": 3,
+   "defaultReps": "10-12",
+   "defaultRestSeconds": 45,
+   "loadUnit": "kg",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "alternating_dumbbell_curl": {
+   "name": "Rosca alternada com halteres",
+   "alternateName": "Rosca alternada",
+   "muscleGroup": "Bíceps",
+   "secondaryMuscles": [
+    "Braquial",
+    "Braquiorradial"
+   ],
+   "equipment": "Halteres",
+   "category": "forca",
+   "movementPattern": "Flexão de cotovelo",
+   "difficultyLevel": "iniciante",
+   "isUnilateral": false,
+   "tracksDuration": false,
+   "description": "Rosca em pé com halteres, um braço de cada vez, girando a palma para cima.",
+   "instructions": [
+    "Em pé, um halter em cada mão ao lado do corpo, palmas para dentro.",
+    "Suba um halter girando a palma para cima, cotovelo parado junto ao corpo.",
+    "Desça devagar e repita com o outro braço."
+   ],
+   "commonMistakes": [
+    "Balançar o tronco para subir.",
+    "Levar o cotovelo à frente.",
+    "Acelerar a troca de braço sem controlar a descida."
+   ],
+   "careNotes": "Conte as repetições de cada braço igualmente. Evite balançar se tiver dor lombar.",
+   "searchTags": [
+    "rosca",
+    "alternada",
+    "bíceps",
+    "halteres"
+   ],
+   "alternativeExerciseIds": [
+    "bicep_curl",
+    "hammer_curl",
+    "incline_dumbbell_curl"
+   ],
+   "defaultSets": 3,
+   "defaultReps": "10-12",
+   "defaultRestSeconds": 60,
+   "loadUnit": "kg",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "reverse_curl": {
+   "name": "Rosca inversa",
+   "alternateName": "Rosca pronada",
+   "muscleGroup": "Antebraço",
+   "secondaryMuscles": [
+    "Braquial",
+    "Bíceps braquial"
+   ],
+   "equipment": "Barra",
+   "category": "forca",
+   "movementPattern": "Flexão de cotovelo",
+   "difficultyLevel": "iniciante",
+   "isUnilateral": false,
+   "tracksDuration": false,
+   "description": "Rosca com as palmas viradas para baixo, para braquiorradial e antebraço.",
+   "instructions": [
+    "Em pé, segure a barra com as palmas para baixo, na largura dos ombros.",
+    "Flexione os cotovelos levando a barra até perto dos ombros.",
+    "Desça devagar mantendo os punhos firmes."
+   ],
+   "commonMistakes": [
+    "Dobrar os punhos para baixo durante a subida.",
+    "Balançar o tronco.",
+    "Usar a mesma carga da rosca direta (ela é bem menor)."
+   ],
+   "careNotes": "Comece com carga leve. Evite se tiver dor no cotovelo do lado de fora (epicondilite).",
+   "searchTags": [
+    "rosca inversa",
+    "antebraço",
+    "pronada",
+    "barra"
+   ],
+   "alternativeExerciseIds": [
+    "hammer_curl",
+    "bicep_curl"
+   ],
+   "defaultSets": 3,
+   "defaultReps": "10-15",
+   "defaultRestSeconds": 60,
+   "loadUnit": "kg",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "triceps_bar_pushdown": {
+   "name": "Tríceps na polia com barra",
+   "alternateName": "Tríceps pulley com barra reta",
+   "muscleGroup": "Tríceps",
+   "secondaryMuscles": [],
+   "equipment": "Polia",
+   "category": "forca",
+   "movementPattern": "Extensão de cotovelo",
+   "difficultyLevel": "iniciante",
+   "isUnilateral": false,
+   "tracksDuration": false,
+   "description": "Extensão dos cotovelos na polia alta com barra reta ou V (separado do tríceps com corda: a carga é diferente).",
+   "instructions": [
+    "Fique de frente para a polia alta e segure a barra com as palmas para baixo.",
+    "Cotovelos colados ao corpo e dobrados a 90°.",
+    "Estenda os cotovelos até os braços ficarem retos.",
+    "Volte devagar até 90° sem tirar os cotovelos do lugar."
+   ],
+   "commonMistakes": [
+    "Afastar os cotovelos do corpo.",
+    "Jogar o peso do corpo sobre a barra.",
+    "Subir a barra acima do peito na volta."
+   ],
+   "careNotes": "Mantenha os punhos retos. Evite travar os cotovelos com força no fim.",
+   "searchTags": [
+    "tríceps",
+    "polia",
+    "barra",
+    "pulley",
+    "pushdown"
+   ],
+   "alternativeExerciseIds": [
+    "triceps_pushdown",
+    "tricep_extension",
+    "dips"
+   ],
+   "defaultSets": 3,
+   "defaultReps": "10-12",
+   "defaultRestSeconds": 60,
+   "loadUnit": "kg",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "triceps_kickback": {
+   "name": "Tríceps coice com halter",
+   "alternateName": "Coice de tríceps",
+   "muscleGroup": "Tríceps",
+   "secondaryMuscles": [
+    "Deltoide posterior"
+   ],
+   "equipment": "Halteres",
+   "category": "forca",
+   "movementPattern": "Extensão de cotovelo",
+   "difficultyLevel": "iniciante",
+   "isUnilateral": true,
+   "tracksDuration": false,
+   "description": "Extensão do cotovelo com o tronco inclinado e o braço junto ao corpo.",
+   "instructions": [
+    "Apoie uma mão e um joelho no banco, tronco paralelo ao chão.",
+    "Com o halter na outra mão, leve o cotovelo para trás até o braço ficar junto ao tronco.",
+    "Estenda o cotovelo até o braço ficar reto.",
+    "Volte devagar até 90°."
+   ],
+   "commonMistakes": [
+    "Deixar o cotovelo cair durante o movimento.",
+    "Balançar o halter.",
+    "Arredondar as costas."
+   ],
+   "careNotes": "Carga leve, foco no controle. Mantenha a coluna neutra.",
+   "searchTags": [
+    "tríceps",
+    "coice",
+    "kickback",
+    "halter",
+    "unilateral"
+   ],
+   "alternativeExerciseIds": [
+    "triceps_pushdown",
+    "triceps_bar_pushdown",
+    "single_arm_overhead_triceps_extension"
+   ],
+   "defaultSets": 3,
+   "defaultReps": "10-15",
+   "defaultRestSeconds": 45,
+   "loadUnit": "kg",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "barbell_overhead_triceps_extension": {
+   "name": "Tríceps francês com barra",
+   "alternateName": "Tríceps francês",
+   "muscleGroup": "Tríceps",
+   "secondaryMuscles": [],
+   "equipment": "Barra",
+   "category": "forca",
+   "movementPattern": "Extensão de cotovelo",
+   "difficultyLevel": "intermediario",
+   "isUnilateral": false,
+   "tracksDuration": false,
+   "description": "Extensão dos cotovelos com a barra atrás da cabeça, sentado ou em pé.",
+   "instructions": [
+    "Sente com as costas apoiadas e segure a barra W acima da cabeça.",
+    "Dobre os cotovelos levando a barra para trás da cabeça.",
+    "Estenda os cotovelos de volta, sem abrir os braços."
+   ],
+   "commonMistakes": [
+    "Abrir demais os cotovelos.",
+    "Arquear a lombar.",
+    "Descer rápido e bater a barra na nuca."
+   ],
+   "careNotes": "Evite se tiver dor no ombro ao elevar o braço. Use barra W para poupar os punhos.",
+   "searchTags": [
+    "tríceps",
+    "francês",
+    "barra",
+    "acima da cabeça"
+   ],
+   "alternativeExerciseIds": [
+    "tricep_extension",
+    "single_arm_overhead_triceps_extension",
+    "triceps_pushdown"
+   ],
+   "defaultSets": 3,
+   "defaultReps": "10-12",
+   "defaultRestSeconds": 60,
+   "loadUnit": "kg",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "dips": {
+   "name": "Mergulho nas paralelas",
+   "alternateName": "Paralelas / dips",
+   "muscleGroup": "Tríceps",
+   "secondaryMuscles": [
+    "Peitoral maior",
+    "Deltoide anterior"
+   ],
+   "equipment": "Peso corporal",
+   "category": "forca",
+   "movementPattern": "Empurrar vertical",
+   "difficultyLevel": "avancado",
+   "isUnilateral": false,
+   "tracksDuration": false,
+   "description": "Descer e subir o corpo apoiado nas barras paralelas.",
+   "instructions": [
+    "Apoie as mãos nas paralelas e suba com os braços estendidos.",
+    "Tronco mais reto para focar o tríceps; inclinado à frente para o peito.",
+    "Desça dobrando os cotovelos até cerca de 90°.",
+    "Empurre de volta até estender os braços."
+   ],
+   "commonMistakes": [
+    "Descer demais e forçar a frente do ombro.",
+    "Encolher os ombros perto das orelhas.",
+    "Balançar as pernas para subir."
+   ],
+   "careNotes": "Exige força e ombro saudável. Use máquina de mergulho ou elástico de ajuda se ainda não fizer com o peso do corpo. Evite com dor no ombro.",
+   "searchTags": [
+    "mergulho",
+    "paralelas",
+    "dips",
+    "tríceps",
+    "peso corporal"
+   ],
+   "alternativeExerciseIds": [
+    "triceps_bar_pushdown",
+    "decline_bench_press",
+    "push_up"
+   ],
+   "defaultSets": 3,
+   "defaultReps": "6-12",
+   "defaultRestSeconds": 90,
+   "loadUnit": "peso do corpo",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "front_squat": {
+   "name": "Agachamento frontal",
+   "alternateName": "Front squat",
+   "muscleGroup": "Quadríceps",
+   "secondaryMuscles": [
+    "Glúteos",
+    "Eretor da espinha",
+    "Reto abdominal"
+   ],
+   "equipment": "Barra",
+   "category": "forca",
+   "movementPattern": "Agachamento",
+   "difficultyLevel": "avancado",
+   "isUnilateral": false,
+   "tracksDuration": false,
+   "description": "Agachamento com a barra apoiada na frente dos ombros, tronco mais reto.",
+   "instructions": [
+    "Apoie a barra na frente dos ombros, cotovelos altos apontando à frente.",
+    "Pés na largura dos ombros, abdômen firme.",
+    "Agache mantendo o tronco o mais reto possível.",
+    "Suba empurrando o chão, sem deixar os cotovelos caírem."
+   ],
+   "commonMistakes": [
+    "Deixar os cotovelos caírem e a barra escorregar.",
+    "Arredondar as costas no fundo.",
+    "Joelhos caindo para dentro."
+   ],
+   "careNotes": "Exige mobilidade de punho, ombro e tornozelo. Aprenda com carga leve e acompanhamento.",
+   "searchTags": [
+    "agachamento",
+    "frontal",
+    "quadríceps",
+    "barra"
+   ],
+   "alternativeExerciseIds": [
+    "squat",
+    "smith_squat",
+    "hack_squat"
+   ],
+   "defaultSets": 4,
+   "defaultReps": "6-10",
+   "defaultRestSeconds": 120,
+   "loadUnit": "kg",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "smith_squat": {
+   "name": "Agachamento no Smith",
+   "alternateName": "Agachamento guiado",
+   "muscleGroup": "Quadríceps",
+   "secondaryMuscles": [
+    "Glúteos",
+    "Adutores"
+   ],
+   "equipment": "Smith",
+   "category": "forca",
+   "movementPattern": "Agachamento",
+   "difficultyLevel": "iniciante",
+   "isUnilateral": false,
+   "tracksDuration": false,
+   "description": "Agachamento com a barra guiada do Smith.",
+   "instructions": [
+    "Posicione a barra nas costas (no trapézio) e destrave o Smith.",
+    "Pés um pouco à frente da linha da barra, na largura dos ombros.",
+    "Agache até onde mantiver a coluna neutra.",
+    "Suba empurrando o chão."
+   ],
+   "commonMistakes": [
+    "Pés colados na linha da barra, forçando os joelhos.",
+    "Esquecer de travar a barra no fim da série.",
+    "Tirar os calcanhares do chão."
+   ],
+   "careNotes": "Confira as travas de segurança antes de começar.",
+   "searchTags": [
+    "agachamento",
+    "smith",
+    "quadríceps",
+    "guiado"
+   ],
+   "alternativeExerciseIds": [
+    "squat",
+    "hack_squat",
+    "leg_press"
+   ],
+   "defaultSets": 4,
+   "defaultReps": "8-12",
+   "defaultRestSeconds": 90,
+   "loadUnit": "kg",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "single_leg_extension": {
+   "name": "Cadeira extensora unilateral",
+   "alternateName": "Extensora com uma perna",
+   "muscleGroup": "Quadríceps",
+   "secondaryMuscles": [],
+   "equipment": "Máquina",
+   "category": "forca",
+   "movementPattern": "Extensão de joelho",
+   "difficultyLevel": "iniciante",
+   "isUnilateral": true,
+   "tracksDuration": false,
+   "description": "Cadeira extensora com uma perna de cada vez.",
+   "instructions": [
+    "Ajuste o encosto e o rolo logo acima do tornozelo.",
+    "Segure as alças e estenda uma perna até quase reta.",
+    "Desça devagar e repita; depois troque de perna."
+   ],
+   "commonMistakes": [
+    "Chutar o peso e perder o controle.",
+    "Tirar o quadril do banco.",
+    "Fazer menos repetições com a perna mais fraca."
+   ],
+   "careNotes": "Comece pela perna mais fraca. Evite carga alta com dor na frente do joelho.",
+   "searchTags": [
+    "extensora",
+    "unilateral",
+    "quadríceps",
+    "máquina"
+   ],
+   "alternativeExerciseIds": [
+    "leg_extension",
+    "bulgarian_split_squat"
+   ],
+   "defaultSets": 3,
+   "defaultReps": "10-15",
+   "defaultRestSeconds": 45,
+   "loadUnit": "kg",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "smith_lunge": {
+   "name": "Afundo no Smith",
+   "alternateName": "Avanço no Smith",
+   "muscleGroup": "Quadríceps",
+   "secondaryMuscles": [
+    "Glúteos",
+    "Adutores"
+   ],
+   "equipment": "Smith",
+   "category": "forca",
+   "movementPattern": "Avanço",
+   "difficultyLevel": "iniciante",
+   "isUnilateral": true,
+   "tracksDuration": false,
+   "description": "Afundo parado com a barra guiada do Smith nas costas.",
+   "instructions": [
+    "Barra do Smith nas costas, um pé à frente e o outro atrás.",
+    "Desça o joelho de trás em direção ao chão.",
+    "Suba empurrando com o pé da frente.",
+    "Faça todas as repetições e troque de perna."
+   ],
+   "commonMistakes": [
+    "Passo curto demais, joelho da frente muito à frente.",
+    "Tronco caindo para a frente.",
+    "Joelho da frente caindo para dentro."
+   ],
+   "careNotes": "Destrave e trave a barra com cuidado. Evite se tiver dor no joelho ao descer.",
+   "searchTags": [
+    "afundo",
+    "avanço",
+    "smith",
+    "unilateral",
+    "pernas"
+   ],
+   "alternativeExerciseIds": [
+    "lunge",
+    "bulgarian_split_squat",
+    "step_up"
+   ],
+   "defaultSets": 3,
+   "defaultReps": "8-12",
+   "defaultRestSeconds": 60,
+   "loadUnit": "kg",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "single_leg_curl": {
+   "name": "Mesa flexora unilateral",
+   "alternateName": "Flexora deitado com uma perna",
+   "muscleGroup": "Posteriores de coxa",
+   "secondaryMuscles": [
+    "Gastrocnêmio"
+   ],
+   "equipment": "Máquina",
+   "category": "forca",
+   "movementPattern": "Flexão de joelho",
+   "difficultyLevel": "iniciante",
+   "isUnilateral": true,
+   "tracksDuration": false,
+   "description": "Mesa flexora com uma perna de cada vez.",
+   "instructions": [
+    "Deite de bruços com o rolo logo acima do calcanhar.",
+    "Flexione uma perna trazendo o calcanhar em direção ao glúteo.",
+    "Desça devagar e repita; depois troque de perna."
+   ],
+   "commonMistakes": [
+    "Levantar o quadril do banco.",
+    "Soltar o peso na descida.",
+    "Girar o corpo para ajudar."
+   ],
+   "careNotes": "Mantenha o quadril encostado no banco. Comece pela perna mais fraca.",
+   "searchTags": [
+    "flexora",
+    "unilateral",
+    "posterior de coxa",
+    "máquina"
+   ],
+   "alternativeExerciseIds": [
+    "leg_curl",
+    "seated_leg_curl"
+   ],
+   "defaultSets": 3,
+   "defaultReps": "10-12",
+   "defaultRestSeconds": 45,
+   "loadUnit": "kg",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "seated_leg_curl": {
+   "name": "Cadeira flexora",
+   "alternateName": "Flexora sentado",
+   "muscleGroup": "Posteriores de coxa",
+   "secondaryMuscles": [
+    "Gastrocnêmio"
+   ],
+   "equipment": "Máquina",
+   "category": "forca",
+   "movementPattern": "Flexão de joelho",
+   "difficultyLevel": "iniciante",
+   "isUnilateral": false,
+   "tracksDuration": false,
+   "description": "Flexão dos joelhos sentado na máquina.",
+   "instructions": [
+    "Ajuste o encosto para o joelho ficar no eixo da máquina e o rolo acima do calcanhar.",
+    "Abaixe a trava das coxas.",
+    "Flexione os joelhos levando o rolo para baixo e para trás.",
+    "Volte devagar."
+   ],
+   "commonMistakes": [
+    "Trava das coxas frouxa.",
+    "Soltar o peso na volta.",
+    "Tirar o quadril do banco."
+   ],
+   "careNotes": "Ajuste o eixo ao joelho antes de colocar carga.",
+   "searchTags": [
+    "flexora",
+    "cadeira flexora",
+    "posterior de coxa",
+    "máquina"
+   ],
+   "alternativeExerciseIds": [
+    "leg_curl",
+    "single_leg_curl",
+    "nordic_curl"
+   ],
+   "defaultSets": 3,
+   "defaultReps": "10-12",
+   "defaultRestSeconds": 60,
+   "loadUnit": "kg",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "dumbbell_romanian_deadlift": {
+   "name": "Stiff com halteres",
+   "alternateName": "Terra romeno com halteres",
+   "muscleGroup": "Posteriores de coxa",
+   "secondaryMuscles": [
+    "Glúteos",
+    "Eretor da espinha"
+   ],
+   "equipment": "Halteres",
+   "category": "forca",
+   "movementPattern": "Dobradiça de quadril",
+   "difficultyLevel": "iniciante",
+   "isUnilateral": false,
+   "tracksDuration": false,
+   "description": "Dobradiça de quadril com um halter em cada mão, joelhos levemente dobrados.",
+   "instructions": [
+    "Em pé, halteres à frente das coxas, joelhos levemente dobrados.",
+    "Leve o quadril para trás deslizando os halteres pelas pernas.",
+    "Desça até sentir alongar atrás da coxa, coluna neutra.",
+    "Suba empurrando o quadril à frente."
+   ],
+   "commonMistakes": [
+    "Arredondar as costas.",
+    "Dobrar demais os joelhos (vira agachamento).",
+    "Afastar os halteres das pernas."
+   ],
+   "careNotes": "Pare a descida antes de perder a coluna neutra. Evite carga alta com dor lombar.",
+   "searchTags": [
+    "stiff",
+    "terra romeno",
+    "posterior de coxa",
+    "halteres"
+   ],
+   "alternativeExerciseIds": [
+    "romanian_deadlift",
+    "good_morning",
+    "kettlebell_swing"
+   ],
+   "defaultSets": 3,
+   "defaultReps": "8-12",
+   "defaultRestSeconds": 90,
+   "loadUnit": "kg",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "good_morning": {
+   "name": "Good morning (bom dia)",
+   "alternateName": "Bom dia",
+   "muscleGroup": "Posteriores de coxa",
+   "secondaryMuscles": [
+    "Glúteos",
+    "Eretor da espinha"
+   ],
+   "equipment": "Barra",
+   "category": "forca",
+   "movementPattern": "Dobradiça de quadril",
+   "difficultyLevel": "avancado",
+   "isUnilateral": false,
+   "tracksDuration": false,
+   "description": "Dobradiça de quadril com a barra nas costas.",
+   "instructions": [
+    "Barra nas costas como no agachamento, joelhos levemente dobrados.",
+    "Leve o quadril para trás inclinando o tronco à frente com a coluna neutra.",
+    "Desça até o tronco quase paralelo ao chão ou até onde mantiver a coluna neutra.",
+    "Suba empurrando o quadril à frente."
+   ],
+   "commonMistakes": [
+    "Arredondar a lombar.",
+    "Usar carga alta antes de dominar o movimento.",
+    "Dobrar demais os joelhos."
+   ],
+   "careNotes": "Exige técnica: comece só com a barra. Evite com dor lombar ou hérnia.",
+   "searchTags": [
+    "good morning",
+    "bom dia",
+    "posterior de coxa",
+    "lombar",
+    "barra"
+   ],
+   "alternativeExerciseIds": [
+    "romanian_deadlift",
+    "back_extension_45",
+    "dumbbell_romanian_deadlift"
+   ],
+   "defaultSets": 3,
+   "defaultReps": "8-10",
+   "defaultRestSeconds": 90,
+   "loadUnit": "kg",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "back_extension_45": {
+   "name": "Extensão de quadril no banco 45°",
+   "alternateName": "Hiperextensão / banco romano",
+   "muscleGroup": "Glúteos",
+   "secondaryMuscles": [
+    "Posteriores de coxa",
+    "Eretor da espinha"
+   ],
+   "equipment": "Banco",
+   "category": "forca",
+   "movementPattern": "Dobradiça de quadril",
+   "difficultyLevel": "iniciante",
+   "isUnilateral": false,
+   "tracksDuration": false,
+   "description": "Extensão do quadril no banco 45° (banco romano).",
+   "instructions": [
+    "Ajuste o apoio logo abaixo do quadril e prenda os pés.",
+    "Desça o tronco dobrando no quadril, coluna neutra.",
+    "Suba até o corpo ficar em linha reta, apertando os glúteos."
+   ],
+   "commonMistakes": [
+    "Subir além da linha do corpo e arquear a lombar.",
+    "Apoio alto demais, travando o quadril.",
+    "Descer rápido."
+   ],
+   "careNotes": "Não passe da linha reta no topo. Evite com dor lombar aguda.",
+   "searchTags": [
+    "extensão de quadril",
+    "hiperextensão",
+    "banco romano",
+    "glúteos",
+    "lombar"
+   ],
+   "alternativeExerciseIds": [
+    "good_morning",
+    "romanian_deadlift",
+    "hip_thrust"
+   ],
+   "defaultSets": 3,
+   "defaultReps": "10-15",
+   "defaultRestSeconds": 60,
+   "loadUnit": "peso do corpo",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "single_leg_hip_thrust": {
+   "name": "Elevação pélvica unilateral",
+   "alternateName": "Hip thrust com uma perna",
+   "muscleGroup": "Glúteos",
+   "secondaryMuscles": [
+    "Posteriores de coxa"
+   ],
+   "equipment": "Peso corporal",
+   "category": "forca",
+   "movementPattern": "Extensão de quadril",
+   "difficultyLevel": "intermediario",
+   "isUnilateral": true,
+   "tracksDuration": false,
+   "description": "Elevação pélvica com as costas no banco e uma perna apoiada.",
+   "instructions": [
+    "Apoie a parte de cima das costas no banco e um pé no chão; a outra perna fica no ar.",
+    "Empurre o chão com o calcanhar e suba o quadril até o tronco ficar alinhado.",
+    "Aperte o glúteo no topo e desça devagar.",
+    "Faça todas as repetições e troque de lado."
+   ],
+   "commonMistakes": [
+    "Arquear a lombar no topo.",
+    "Deixar o quadril girar para o lado da perna livre.",
+    "Empurrar com a ponta do pé."
+   ],
+   "careNotes": "Mantenha o quadril nivelado. Comece sem carga.",
+   "searchTags": [
+    "elevação pélvica",
+    "hip thrust",
+    "unilateral",
+    "glúteos"
+   ],
+   "alternativeExerciseIds": [
+    "hip_thrust",
+    "glute_bridge",
+    "cable_kickback"
+   ],
+   "defaultSets": 3,
+   "defaultReps": "10-12",
+   "defaultRestSeconds": 60,
+   "loadUnit": "peso do corpo",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "ankle_weight_kickback": {
+   "name": "Coice com caneleira (quatro apoios)",
+   "alternateName": "Glúteo quatro apoios",
+   "muscleGroup": "Glúteos",
+   "secondaryMuscles": [
+    "Posteriores de coxa"
+   ],
+   "equipment": "Caneleira",
+   "category": "forca",
+   "movementPattern": "Extensão de quadril",
+   "difficultyLevel": "iniciante",
+   "isUnilateral": true,
+   "tracksDuration": false,
+   "description": "Extensão do quadril em quatro apoios com caneleira.",
+   "instructions": [
+    "Fique em quatro apoios com a caneleira no tornozelo.",
+    "Com o joelho dobrado, empurre o pé para cima até a coxa ficar alinhada ao tronco.",
+    "Desça devagar sem encostar o joelho no chão.",
+    "Faça todas as repetições e troque de perna."
+   ],
+   "commonMistakes": [
+    "Arquear a lombar para subir mais.",
+    "Girar o quadril para o lado.",
+    "Balançar a perna."
+   ],
+   "careNotes": "Abdômen firme para proteger a lombar.",
+   "searchTags": [
+    "coice",
+    "caneleira",
+    "glúteos",
+    "quatro apoios",
+    "unilateral"
+   ],
+   "alternativeExerciseIds": [
+    "cable_kickback",
+    "glute_bridge"
+   ],
+   "defaultSets": 3,
+   "defaultReps": "12-15",
+   "defaultRestSeconds": 45,
+   "loadUnit": "kg",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "cable_hip_abduction": {
+   "name": "Abdução de quadril na polia",
+   "alternateName": "Abdução em pé no cabo",
+   "muscleGroup": "Abdutores",
+   "secondaryMuscles": [
+    "Glúteos"
+   ],
+   "equipment": "Polia",
+   "category": "forca",
+   "movementPattern": "Abdução de quadril",
+   "difficultyLevel": "iniciante",
+   "isUnilateral": true,
+   "tracksDuration": false,
+   "description": "Afastar a perna para o lado em pé, com a polia baixa presa ao tornozelo.",
+   "instructions": [
+    "Prenda a tornozeleira da polia baixa na perna mais longe da polia.",
+    "Segure-se no aparelho, corpo reto.",
+    "Afaste a perna para o lado sem inclinar o tronco.",
+    "Volte devagar e troque de lado no fim."
+   ],
+   "commonMistakes": [
+    "Inclinar o tronco para o lado.",
+    "Girar o pé para fora.",
+    "Balançar a perna."
+   ],
+   "careNotes": "Movimento curto e controlado; não force a amplitude.",
+   "searchTags": [
+    "abdução",
+    "polia",
+    "glúteo médio",
+    "unilateral"
+   ],
+   "alternativeExerciseIds": [
+    "hip_abduction",
+    "band_hip_abduction"
+   ],
+   "defaultSets": 3,
+   "defaultReps": "12-15",
+   "defaultRestSeconds": 45,
+   "loadUnit": "kg",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "band_hip_abduction": {
+   "name": "Abdução de quadril com elástico",
+   "alternateName": "Abdução com miniband",
+   "muscleGroup": "Abdutores",
+   "secondaryMuscles": [
+    "Glúteos"
+   ],
+   "equipment": "Elástico",
+   "category": "forca",
+   "movementPattern": "Abdução de quadril",
+   "difficultyLevel": "iniciante",
+   "isUnilateral": false,
+   "tracksDuration": false,
+   "description": "Afastar os joelhos contra o elástico, sentado ou deitado de lado.",
+   "instructions": [
+    "Coloque o elástico logo acima dos joelhos.",
+    "Sentado, com os pés no chão, afaste os joelhos contra o elástico.",
+    "Segure um segundo e volte devagar."
+   ],
+   "commonMistakes": [
+    "Deixar o elástico puxar os joelhos de volta rápido.",
+    "Inclinar o tronco para ajudar.",
+    "Elástico fraco demais."
+   ],
+   "careNotes": "Escolha um elástico que permita terminar as repetições com controle.",
+   "searchTags": [
+    "abdução",
+    "elástico",
+    "miniband",
+    "glúteo médio"
+   ],
+   "alternativeExerciseIds": [
+    "hip_abduction",
+    "cable_hip_abduction"
+   ],
+   "defaultSets": 3,
+   "defaultReps": "15-20",
+   "defaultRestSeconds": 45,
+   "loadUnit": "nenhuma",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "leg_press_calf_raise": {
+   "name": "Panturrilha no leg press",
+   "alternateName": "Gêmeos no leg press",
+   "muscleGroup": "Panturrilha",
+   "secondaryMuscles": [
+    "Sóleo"
+   ],
+   "equipment": "Máquina",
+   "category": "forca",
+   "movementPattern": "Flexão plantar",
+   "difficultyLevel": "iniciante",
+   "isUnilateral": false,
+   "tracksDuration": false,
+   "description": "Flexão plantar empurrando a plataforma do leg press com a ponta dos pés.",
+   "instructions": [
+    "Sente no leg press e apoie só a ponta dos pés na borda de baixo da plataforma.",
+    "Com os joelhos estendidos (sem travar), empurre a plataforma esticando os tornozelos.",
+    "Volte devagar até sentir a panturrilha alongar."
+   ],
+   "commonMistakes": [
+    "Destravar o leg press sem estar com os pés firmes.",
+    "Dobrar os joelhos durante o movimento.",
+    "Amplitude curta."
+   ],
+   "careNotes": "Cuidado: se o pé escorregar, a plataforma desce. Mantenha as travas por perto.",
+   "searchTags": [
+    "panturrilha",
+    "leg press",
+    "gêmeos"
+   ],
+   "alternativeExerciseIds": [
+    "calf_raise",
+    "smith_calf_raise",
+    "seated_calf_raise"
+   ],
+   "defaultSets": 4,
+   "defaultReps": "12-15",
+   "defaultRestSeconds": 45,
+   "loadUnit": "kg",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "single_leg_calf_raise": {
+   "name": "Panturrilha unilateral no degrau",
+   "alternateName": "Panturrilha com uma perna",
+   "muscleGroup": "Panturrilha",
+   "secondaryMuscles": [
+    "Sóleo"
+   ],
+   "equipment": "Halteres",
+   "category": "forca",
+   "movementPattern": "Flexão plantar",
+   "difficultyLevel": "iniciante",
+   "isUnilateral": true,
+   "tracksDuration": false,
+   "description": "Subir na ponta de um pé no degrau, com um halter na mão do mesmo lado.",
+   "instructions": [
+    "Apoie a ponta de um pé no degrau e segure-se com a mão livre.",
+    "Desça o calcanhar abaixo do degrau.",
+    "Suba na ponta do pé o mais alto possível.",
+    "Faça todas as repetições e troque de perna."
+   ],
+   "commonMistakes": [
+    "Dobrar o joelho para ajudar.",
+    "Amplitude curta.",
+    "Subir rápido sem pausa no topo."
+   ],
+   "careNotes": "Pode ser feito sem halter. Segure-se em algo firme para não perder o equilíbrio.",
+   "searchTags": [
+    "panturrilha",
+    "unilateral",
+    "degrau",
+    "gêmeos"
+   ],
+   "alternativeExerciseIds": [
+    "calf_raise",
+    "smith_calf_raise"
+   ],
+   "defaultSets": 3,
+   "defaultReps": "12-15",
+   "defaultRestSeconds": 45,
+   "loadUnit": "kg",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "cable_crunch": {
+   "name": "Abdominal na polia (ajoelhado)",
+   "alternateName": "Abdominal com corda",
+   "muscleGroup": "Abdômen",
+   "secondaryMuscles": [
+    "Oblíquos"
+   ],
+   "equipment": "Polia",
+   "category": "forca",
+   "movementPattern": "Flexão de tronco",
+   "difficultyLevel": "intermediario",
+   "isUnilateral": false,
+   "tracksDuration": false,
+   "description": "Flexão do tronco ajoelhado, puxando a corda da polia alta.",
+   "instructions": [
+    "Ajoelhe de frente para a polia alta e segure a corda ao lado da cabeça.",
+    "Flexione o tronco levando os cotovelos em direção às coxas.",
+    "Volte devagar sem soltar a contração."
+   ],
+   "commonMistakes": [
+    "Puxar com os braços.",
+    "Sentar nos calcanhares (vira movimento de quadril).",
+    "Carga alta com pouca amplitude."
+   ],
+   "careNotes": "Foque em enrolar a coluna. Evite com dor lombar ou hérnia ativa.",
+   "searchTags": [
+    "abdominal",
+    "polia",
+    "corda",
+    "reto abdominal"
+   ],
+   "alternativeExerciseIds": [
+    "crunch",
+    "ab_wheel_rollout"
+   ],
+   "defaultSets": 3,
+   "defaultReps": "12-15",
+   "defaultRestSeconds": 45,
+   "loadUnit": "kg",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "ab_wheel_rollout": {
+   "name": "Roda abdominal",
+   "alternateName": "Rollout",
+   "muscleGroup": "Abdômen",
+   "secondaryMuscles": [
+    "Latíssimo do dorso",
+    "Transverso"
+   ],
+   "equipment": "Roda abdominal",
+   "category": "forca",
+   "movementPattern": "Isometria de core",
+   "difficultyLevel": "avancado",
+   "isUnilateral": false,
+   "tracksDuration": false,
+   "description": "Rolar a roda à frente e voltar, mantendo o abdômen firme.",
+   "instructions": [
+    "Ajoelhe e segure a roda à frente dos joelhos.",
+    "Role a roda à frente devagar, sem deixar a lombar afundar.",
+    "Vá só até onde conseguir manter a posição.",
+    "Volte puxando com o abdômen."
+   ],
+   "commonMistakes": [
+    "Deixar a lombar afundar.",
+    "Ir longe demais logo no começo.",
+    "Voltar puxando só com o quadril."
+   ],
+   "careNotes": "Exercício avançado. Comece com amplitude curta. Evite com dor lombar.",
+   "searchTags": [
+    "roda abdominal",
+    "rollout",
+    "core",
+    "abdômen"
+   ],
+   "alternativeExerciseIds": [
+    "plank",
+    "hollow_hold",
+    "dead_bug"
+   ],
+   "defaultSets": 3,
+   "defaultReps": "6-10",
+   "defaultRestSeconds": 60,
+   "loadUnit": "peso do corpo",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "dead_bug": {
+   "name": "Dead bug (inseto morto)",
+   "alternateName": "Inseto morto",
+   "muscleGroup": "Abdômen",
+   "secondaryMuscles": [
+    "Transverso",
+    "Reto abdominal"
+   ],
+   "equipment": "Peso corporal",
+   "category": "forca",
+   "movementPattern": "Isometria de core",
+   "difficultyLevel": "iniciante",
+   "isUnilateral": false,
+   "tracksDuration": false,
+   "description": "Deitado de costas, estender braço e perna opostos mantendo a lombar no chão.",
+   "instructions": [
+    "Deite de costas, braços estendidos para cima e joelhos a 90° no ar.",
+    "Estenda um braço para trás e a perna oposta à frente, sem tirar a lombar do chão.",
+    "Volte e repita do outro lado."
+   ],
+   "commonMistakes": [
+    "Tirar a lombar do chão.",
+    "Fazer rápido.",
+    "Prender a respiração."
+   ],
+   "careNotes": "Bom para iniciantes e para reaprender o controle do core. Solte o ar ao estender.",
+   "searchTags": [
+    "dead bug",
+    "inseto morto",
+    "core",
+    "abdômen",
+    "estabilização"
+   ],
+   "alternativeExerciseIds": [
+    "bird_dog",
+    "hollow_hold",
+    "plank"
+   ],
+   "defaultSets": 3,
+   "defaultReps": "8-12 por lado",
+   "defaultRestSeconds": 45,
+   "loadUnit": "peso do corpo",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "bird_dog": {
+   "name": "Perdigueiro (bird dog)",
+   "alternateName": "Quatro apoios alternado",
+   "muscleGroup": "Abdômen",
+   "secondaryMuscles": [
+    "Eretor da espinha",
+    "Glúteos",
+    "Transverso"
+   ],
+   "equipment": "Peso corporal",
+   "category": "forca",
+   "movementPattern": "Isometria de core",
+   "difficultyLevel": "iniciante",
+   "isUnilateral": false,
+   "tracksDuration": false,
+   "description": "Em quatro apoios, estender braço e perna opostos mantendo o tronco parado.",
+   "instructions": [
+    "Fique em quatro apoios, mãos abaixo dos ombros e joelhos abaixo do quadril.",
+    "Estenda um braço à frente e a perna oposta para trás.",
+    "Segure 2 segundos sem girar o quadril.",
+    "Volte e repita do outro lado."
+   ],
+   "commonMistakes": [
+    "Girar o quadril ao levantar a perna.",
+    "Arquear a lombar.",
+    "Subir a perna acima da linha do tronco."
+   ],
+   "careNotes": "Movimento lento. Indicado também para quem tem dor lombar leve, com orientação.",
+   "searchTags": [
+    "bird dog",
+    "perdigueiro",
+    "core",
+    "lombar",
+    "estabilização"
+   ],
+   "alternativeExerciseIds": [
+    "dead_bug",
+    "side_plank"
+   ],
+   "defaultSets": 3,
+   "defaultReps": "8-12 por lado",
+   "defaultRestSeconds": 45,
+   "loadUnit": "peso do corpo",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "hollow_hold": {
+   "name": "Canoa (hollow hold)",
+   "alternateName": "Hollow body",
+   "muscleGroup": "Abdômen",
+   "secondaryMuscles": [
+    "Reto abdominal",
+    "Transverso"
+   ],
+   "equipment": "Peso corporal",
+   "category": "forca",
+   "movementPattern": "Isometria de core",
+   "difficultyLevel": "intermediario",
+   "isUnilateral": false,
+   "tracksDuration": true,
+   "description": "Segurar o corpo em forma de canoa, deitado de costas, lombar no chão.",
+   "instructions": [
+    "Deite de costas e encoste a lombar no chão.",
+    "Tire os ombros e as pernas do chão, braços estendidos para trás.",
+    "Segure a posição pelo tempo indicado."
+   ],
+   "commonMistakes": [
+    "Lombar saindo do chão.",
+    "Pernas baixas demais para a sua força.",
+    "Prender a respiração."
+   ],
+   "careNotes": "Se a lombar sair do chão, dobre os joelhos ou suba as pernas.",
+   "searchTags": [
+    "canoa",
+    "hollow",
+    "core",
+    "isometria",
+    "abdômen"
+   ],
+   "alternativeExerciseIds": [
+    "plank",
+    "dead_bug",
+    "leg_raise"
+   ],
+   "defaultSets": 3,
+   "defaultReps": "",
+   "defaultRestSeconds": 45,
+   "defaultDurationSeconds": 30,
+   "loadUnit": "peso do corpo",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "stationary_bike": {
+   "name": "Bicicleta ergométrica",
+   "alternateName": "Bike",
+   "muscleGroup": "Corpo todo",
+   "secondaryMuscles": [
+    "Quadríceps",
+    "Glúteos",
+    "Gastrocnêmio"
+   ],
+   "equipment": "Bicicleta",
+   "category": "cardio",
+   "movementPattern": "Cardio",
+   "difficultyLevel": "iniciante",
+   "isUnilateral": false,
+   "tracksDuration": true,
+   "description": "Pedalar na bicicleta ergométrica em ritmo contínuo ou intervalado.",
+   "instructions": [
+    "Ajuste o banco: com o pedal embaixo, o joelho fica levemente dobrado.",
+    "Comece com 3 a 5 minutos leves para aquecer.",
+    "Mantenha o ritmo combinado pelo tempo do treino.",
+    "Termine com alguns minutos leves."
+   ],
+   "commonMistakes": [
+    "Banco baixo demais, forçando o joelho.",
+    "Carga alta com pedalada muito lenta.",
+    "Tronco jogado sobre o guidão."
+   ],
+   "careNotes": "Comece leve e aumente aos poucos. Pare se sentir dor no peito, falta de ar fora do normal ou tontura.",
+   "searchTags": [
+    "bike",
+    "bicicleta",
+    "cardio",
+    "aeróbico"
+   ],
+   "alternativeExerciseIds": [
+    "elliptical",
+    "rowing_machine",
+    "treadmill_run_walk"
+   ],
+   "defaultSets": 1,
+   "defaultReps": "",
+   "defaultRestSeconds": 0,
+   "defaultDurationSeconds": 1200,
+   "loadUnit": "nenhuma",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "elliptical": {
+   "name": "Elíptico",
+   "alternateName": "Transport",
+   "muscleGroup": "Corpo todo",
+   "secondaryMuscles": [
+    "Quadríceps",
+    "Glúteos",
+    "Posteriores de coxa"
+   ],
+   "equipment": "Elíptico",
+   "category": "cardio",
+   "movementPattern": "Cardio",
+   "difficultyLevel": "iniciante",
+   "isUnilateral": false,
+   "tracksDuration": true,
+   "description": "Movimento contínuo no elíptico, com baixo impacto nas articulações.",
+   "instructions": [
+    "Suba com os pés no centro dos pedais e segure as alças.",
+    "Comece leve por 3 a 5 minutos.",
+    "Mantenha o ritmo combinado com o tronco ereto.",
+    "Termine com alguns minutos leves."
+   ],
+   "commonMistakes": [
+    "Apoiar o peso do corpo nas alças.",
+    "Ficar na ponta dos pés.",
+    "Curvar o tronco."
+   ],
+   "careNotes": "Comece leve e aumente aos poucos. Pare se sentir dor no peito, falta de ar fora do normal ou tontura.",
+   "searchTags": [
+    "elíptico",
+    "transport",
+    "cardio",
+    "baixo impacto"
+   ],
+   "alternativeExerciseIds": [
+    "stationary_bike",
+    "stair_climber",
+    "treadmill_run_walk"
+   ],
+   "defaultSets": 1,
+   "defaultReps": "",
+   "defaultRestSeconds": 0,
+   "defaultDurationSeconds": 1200,
+   "loadUnit": "nenhuma",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "rowing_machine": {
+   "name": "Remo ergômetro",
+   "alternateName": "Remo seco",
+   "muscleGroup": "Corpo todo",
+   "secondaryMuscles": [
+    "Latíssimo do dorso",
+    "Quadríceps",
+    "Glúteos",
+    "Bíceps braquial"
+   ],
+   "equipment": "Remo",
+   "category": "cardio",
+   "movementPattern": "Cardio",
+   "difficultyLevel": "intermediario",
+   "isUnilateral": false,
+   "tracksDuration": true,
+   "description": "Remada contínua no remo ergômetro: pernas, tronco e braços em sequência.",
+   "instructions": [
+    "Prenda os pés e segure o puxador com os braços estendidos.",
+    "Empurre com as pernas, depois incline o tronco levemente para trás e puxe o puxador até o abdômen.",
+    "Volte na ordem inversa: braços, tronco e pernas.",
+    "Mantenha o ritmo combinado."
+   ],
+   "commonMistakes": [
+    "Puxar com os braços antes de empurrar com as pernas.",
+    "Arredondar as costas.",
+    "Jogar o tronco muito para trás."
+   ],
+   "careNotes": "Comece leve e aumente aos poucos. Pare se sentir dor no peito, falta de ar fora do normal ou tontura. Evite com dor lombar até dominar a técnica.",
+   "searchTags": [
+    "remo",
+    "remo ergômetro",
+    "cardio",
+    "corpo todo"
+   ],
+   "alternativeExerciseIds": [
+    "stationary_bike",
+    "elliptical"
+   ],
+   "defaultSets": 1,
+   "defaultReps": "",
+   "defaultRestSeconds": 0,
+   "defaultDurationSeconds": 900,
+   "loadUnit": "nenhuma",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "stair_climber": {
+   "name": "Escada (simulador)",
+   "alternateName": "Escada ergométrica",
+   "muscleGroup": "Corpo todo",
+   "secondaryMuscles": [
+    "Quadríceps",
+    "Glúteos",
+    "Gastrocnêmio"
+   ],
+   "equipment": "Escada",
+   "category": "cardio",
+   "movementPattern": "Cardio",
+   "difficultyLevel": "intermediario",
+   "isUnilateral": false,
+   "tracksDuration": true,
+   "description": "Subir degraus contínuos no simulador de escada.",
+   "instructions": [
+    "Suba no aparelho segurando os apoios laterais.",
+    "Comece numa velocidade lenta por alguns minutos.",
+    "Suba apoiando o pé inteiro no degrau, tronco ereto.",
+    "Termine reduzindo a velocidade."
+   ],
+   "commonMistakes": [
+    "Apoiar o peso do corpo nas alças.",
+    "Pisar só com a ponta do pé.",
+    "Velocidade alta demais logo no começo."
+   ],
+   "careNotes": "Comece leve e aumente aos poucos. Pare se sentir dor no peito, falta de ar fora do normal ou tontura.",
+   "searchTags": [
+    "escada",
+    "simulador de escada",
+    "cardio",
+    "glúteos"
+   ],
+   "alternativeExerciseIds": [
+    "elliptical",
+    "treadmill_run_walk",
+    "step_up"
+   ],
+   "defaultSets": 1,
+   "defaultReps": "",
+   "defaultRestSeconds": 0,
+   "defaultDurationSeconds": 900,
+   "loadUnit": "nenhuma",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "pendulum_squat": {
+   "name": "Agachamento pêndulo",
+   "alternateName": "Pêndulo",
+   "muscleGroup": "Quadríceps",
+   "secondaryMuscles": [
+    "Glúteos",
+    "Adutores"
+   ],
+   "equipment": "Máquina",
+   "category": "forca",
+   "movementPattern": "Agachamento",
+   "difficultyLevel": "iniciante",
+   "isUnilateral": false,
+   "tracksDuration": false,
+   "description": "Agachamento na máquina pêndulo, com as costas apoiadas.",
+   "instructions": [
+    "Apoie as costas e os ombros nas almofadas, pés no meio da plataforma.",
+    "Destrave e desça dobrando os joelhos até onde for confortável.",
+    "Suba empurrando a plataforma sem travar os joelhos."
+   ],
+   "commonMistakes": [
+    "Tirar os calcanhares da plataforma.",
+    "Joelhos caindo para dentro.",
+    "Descer rápido e quicar no fundo."
+   ],
+   "careNotes": "Ajuste a amplitude à sua mobilidade. Evite com dor no joelho ao descer.",
+   "searchTags": [
+    "agachamento",
+    "pêndulo",
+    "quadríceps",
+    "máquina"
+   ],
+   "alternativeExerciseIds": [
+    "hack_squat",
+    "leg_press",
+    "smith_squat"
+   ],
+   "defaultSets": 3,
+   "defaultReps": "8-12",
+   "defaultRestSeconds": 90,
+   "loadUnit": "kg",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "hip_adduction": {
+   "name": "Cadeira adutora",
+   "alternateName": "Adutora",
+   "muscleGroup": "Adutores",
+   "secondaryMuscles": [],
+   "equipment": "Máquina",
+   "category": "forca",
+   "movementPattern": "Adução de quadril",
+   "difficultyLevel": "iniciante",
+   "isUnilateral": false,
+   "tracksDuration": false,
+   "description": "Fechar as pernas contra as almofadas da máquina adutora.",
+   "instructions": [
+    "Sente com as costas apoiadas e as almofadas na parte de dentro dos joelhos.",
+    "Feche as pernas até as almofadas quase se encostarem.",
+    "Volte devagar até a abertura confortável."
+   ],
+   "commonMistakes": [
+    "Abertura inicial maior que o confortável.",
+    "Soltar o peso na volta.",
+    "Tirar o quadril do banco."
+   ],
+   "careNotes": "Ajuste a abertura antes de colocar carga.",
+   "searchTags": [
+    "adutora",
+    "adutores",
+    "parte interna da coxa",
+    "máquina"
+   ],
+   "alternativeExerciseIds": [
+    "side_lunge"
+   ],
+   "defaultSets": 3,
+   "defaultReps": "12-15",
+   "defaultRestSeconds": 45,
+   "loadUnit": "kg",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "treadmill_run_walk": {
+   "name": "Corrida/caminhada na esteira",
+   "alternateName": "Esteira",
+   "muscleGroup": "Corpo todo",
+   "secondaryMuscles": [
+    "Quadríceps",
+    "Posteriores de coxa",
+    "Gastrocnêmio"
+   ],
+   "equipment": "Esteira",
+   "category": "cardio",
+   "movementPattern": "Cardio",
+   "difficultyLevel": "iniciante",
+   "isUnilateral": false,
+   "tracksDuration": true,
+   "description": "Caminhada ou corrida na esteira, contínua ou intervalada.",
+   "instructions": [
+    "Prenda a chave de segurança na roupa antes de começar.",
+    "Comece caminhando por 3 a 5 minutos.",
+    "Aumente a velocidade ou a inclinação até o ritmo combinado.",
+    "Termine caminhando alguns minutos."
+   ],
+   "commonMistakes": [
+    "Segurar no painel durante a corrida.",
+    "Passada longa demais, batendo o calcanhar à frente do corpo.",
+    "Inclinação alta segurando nas alças."
+   ],
+   "careNotes": "Comece leve e aumente aos poucos. Pare se sentir dor no peito, falta de ar fora do normal ou tontura.",
+   "searchTags": [
+    "esteira",
+    "corrida",
+    "caminhada",
+    "cardio"
+   ],
+   "alternativeExerciseIds": [
+    "elliptical",
+    "stationary_bike",
+    "stair_climber"
+   ],
+   "defaultSets": 1,
+   "defaultReps": "",
+   "defaultRestSeconds": 0,
+   "defaultDurationSeconds": 1200,
+   "loadUnit": "nenhuma",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "dumbbell_shrug": {
+   "name": "Encolhimento com halteres",
+   "alternateName": "Encolhimento",
+   "muscleGroup": "Costas",
+   "secondaryMuscles": [
+    "Trapézio"
+   ],
+   "equipment": "Halteres",
+   "category": "forca",
+   "movementPattern": "Elevação de escápulas",
+   "difficultyLevel": "iniciante",
+   "isUnilateral": false,
+   "tracksDuration": false,
+   "description": "Elevar os ombros em direção às orelhas segurando halteres.",
+   "instructions": [
+    "Em pé, um halter em cada mão ao lado do corpo.",
+    "Suba os ombros em direção às orelhas, sem dobrar os cotovelos.",
+    "Segure um segundo e desça devagar."
+   ],
+   "commonMistakes": [
+    "Girar os ombros.",
+    "Dobrar os cotovelos para ajudar.",
+    "Projetar a cabeça à frente."
+   ],
+   "careNotes": "Movimento só para cima e para baixo. Evite com dor no pescoço.",
+   "searchTags": [
+    "encolhimento",
+    "trapézio",
+    "halteres"
+   ],
+   "alternativeExerciseIds": [
+    "farmer_walk",
+    "face_pull"
+   ],
+   "defaultSets": 3,
+   "defaultReps": "12-15",
+   "defaultRestSeconds": 45,
+   "loadUnit": "kg",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "smith_calf_raise": {
+   "name": "Panturrilha no Smith",
+   "alternateName": "Gêmeos no Smith",
+   "muscleGroup": "Panturrilha",
+   "secondaryMuscles": [
+    "Sóleo"
+   ],
+   "equipment": "Smith",
+   "category": "forca",
+   "movementPattern": "Flexão plantar",
+   "difficultyLevel": "iniciante",
+   "isUnilateral": false,
+   "tracksDuration": false,
+   "description": "Subir na ponta dos pés com a barra do Smith nas costas.",
+   "instructions": [
+    "Barra do Smith nas costas, ponta dos pés sobre uma anilha ou degrau.",
+    "Desça os calcanhares abaixo da linha da ponta dos pés.",
+    "Suba o mais alto possível e segure um segundo.",
+    "Desça devagar."
+   ],
+   "commonMistakes": [
+    "Dobrar os joelhos.",
+    "Amplitude curta.",
+    "Pés escorregando do apoio."
+   ],
+   "careNotes": "Use um apoio firme para os pés e trave a barra ao terminar.",
+   "searchTags": [
+    "panturrilha",
+    "smith",
+    "gêmeos"
+   ],
+   "alternativeExerciseIds": [
+    "calf_raise",
+    "leg_press_calf_raise",
+    "single_leg_calf_raise"
+   ],
+   "defaultSets": 4,
+   "defaultReps": "12-15",
+   "defaultRestSeconds": 45,
+   "loadUnit": "kg",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "incline_dumbbell_curl": {
+   "name": "Rosca inclinada com halteres (banco 45°)",
+   "alternateName": "Rosca 45°",
+   "muscleGroup": "Bíceps",
+   "secondaryMuscles": [
+    "Braquial"
+   ],
+   "equipment": "Halteres",
+   "category": "forca",
+   "movementPattern": "Flexão de cotovelo",
+   "difficultyLevel": "intermediario",
+   "isUnilateral": false,
+   "tracksDuration": false,
+   "description": "Rosca sentado no banco inclinado, braços pendurados atrás da linha do tronco.",
+   "instructions": [
+    "Ajuste o banco a 45° e sente com as costas apoiadas, halteres pendurados.",
+    "Flexione os cotovelos sem levar os braços à frente.",
+    "Desça devagar até quase estender."
+   ],
+   "commonMistakes": [
+    "Tirar as costas do banco.",
+    "Levar os cotovelos à frente.",
+    "Usar a mesma carga da rosca em pé."
+   ],
+   "careNotes": "Posição alonga bastante o bíceps: comece leve. Evite com dor na frente do ombro.",
+   "searchTags": [
+    "rosca",
+    "inclinada",
+    "rosca 45",
+    "bíceps",
+    "halteres"
+   ],
+   "alternativeExerciseIds": [
+    "alternating_dumbbell_curl",
+    "bicep_curl",
+    "preacher_curl"
+   ],
+   "defaultSets": 3,
+   "defaultReps": "10-12",
+   "defaultRestSeconds": 60,
+   "loadUnit": "kg",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  },
+  "single_arm_overhead_triceps_extension": {
+   "name": "Tríceps francês unilateral com halter",
+   "alternateName": "Tríceps francês com um braço",
+   "muscleGroup": "Tríceps",
+   "secondaryMuscles": [],
+   "equipment": "Halteres",
+   "category": "forca",
+   "movementPattern": "Extensão de cotovelo",
+   "difficultyLevel": "iniciante",
+   "isUnilateral": true,
+   "tracksDuration": false,
+   "description": "Extensão do cotovelo com um halter atrás da cabeça, um braço de cada vez.",
+   "instructions": [
+    "Sentado, segure o halter com o braço estendido acima da cabeça.",
+    "Dobre o cotovelo levando o halter para trás da cabeça.",
+    "Estenda o cotovelo de volta sem mover o braço.",
+    "Faça todas as repetições e troque de braço."
+   ],
+   "commonMistakes": [
+    "Abrir o cotovelo para o lado.",
+    "Arquear a lombar.",
+    "Descer rápido demais."
+   ],
+   "careNotes": "Use a outra mão para apoiar o braço que trabalha. Evite com dor no ombro.",
+   "searchTags": [
+    "tríceps",
+    "francês",
+    "unilateral",
+    "halter"
+   ],
+   "alternativeExerciseIds": [
+    "barbell_overhead_triceps_extension",
+    "tricep_extension",
+    "triceps_kickback"
+   ],
+   "defaultSets": 3,
+   "defaultReps": "10-12",
+   "defaultRestSeconds": 45,
+   "loadUnit": "kg",
+   "videoUrl": "",
+   "imageUrls": [],
+   "professionalReviewPending": true
+  }
+ },
+ "blocoDosNovos": {
+  "decline_bench_press": "A",
+  "dumbbell_fly": "A",
+  "incline_dumbbell_fly": "A",
+  "low_cable_crossover": "A",
+  "t_bar_row": "A",
+  "single_arm_cable_row": "A",
+  "reverse_grip_lat_pulldown": "A",
+  "cable_pullover": "A",
+  "front_raise": "A",
+  "machine_shoulder_press": "A",
+  "machine_lateral_raise": "A",
+  "cable_external_rotation": "A",
+  "band_shoulder_dislocate": "A",
+  "preacher_curl": "A",
+  "concentration_curl": "A",
+  "alternating_dumbbell_curl": "A",
+  "reverse_curl": "A",
+  "triceps_bar_pushdown": "A",
+  "triceps_kickback": "A",
+  "barbell_overhead_triceps_extension": "A",
+  "dips": "A",
+  "front_squat": "A",
+  "smith_squat": "A",
+  "single_leg_extension": "A",
+  "smith_lunge": "A",
+  "single_leg_curl": "A",
+  "seated_leg_curl": "A",
+  "dumbbell_romanian_deadlift": "A",
+  "good_morning": "A",
+  "back_extension_45": "A",
+  "single_leg_hip_thrust": "A",
+  "ankle_weight_kickback": "A",
+  "cable_hip_abduction": "A",
+  "band_hip_abduction": "A",
+  "leg_press_calf_raise": "A",
+  "single_leg_calf_raise": "A",
+  "cable_crunch": "A",
+  "ab_wheel_rollout": "A",
+  "dead_bug": "A",
+  "bird_dog": "A",
+  "hollow_hold": "A",
+  "stationary_bike": "A",
+  "elliptical": "A",
+  "rowing_machine": "A",
+  "stair_climber": "A",
+  "pendulum_squat": "B",
+  "hip_adduction": "B",
+  "treadmill_run_walk": "B",
+  "dumbbell_shrug": "B",
+  "smith_calf_raise": "B",
+  "incline_dumbbell_curl": "B",
+  "single_arm_overhead_triceps_extension": "B"
+ },
+ "existentes": {
+  "bench_press": {
+   "commonMistakes": [
+    "Tirar o quadril do banco.",
+    "Quicar a barra no peito.",
+    "Abrir demais os cotovelos."
+   ],
+   "careNotes": "Use alguém para ajudar com carga alta. Evite ou reduza a amplitude se sentir dor no ombro.",
+   "searchTags": [
+    "supino",
+    "peito",
+    "barra",
+    "empurrar"
+   ],
+   "alternativeExerciseIds": [
+    "dumbbell_bench_press",
+    "machine_chest_press",
+    "push_up",
+    "decline_bench_press"
+   ]
+  },
+  "dumbbell_bench_press": {
+   "commonMistakes": [
+    "Descer os halteres sem controle.",
+    "Bater os halteres no topo.",
+    "Abrir demais os cotovelos."
+   ],
+   "careNotes": "Evite ou reduza a amplitude se sentir dor no ombro.",
+   "searchTags": [
+    "supino",
+    "halteres",
+    "peito"
+   ],
+   "alternativeExerciseIds": []
+  },
+  "incline_dumbbell_press": {
+   "commonMistakes": [
+    "Banco inclinado demais (vira ombro).",
+    "Tirar o quadril do banco.",
+    "Descer sem controle."
+   ],
+   "careNotes": "Evite ou reduza a amplitude se sentir dor no ombro.",
+   "searchTags": [
+    "supino inclinado",
+    "peito superior",
+    "halteres"
+   ],
+   "alternativeExerciseIds": []
+  },
+  "machine_chest_press": {
+   "commonMistakes": [
+    "Banco na altura errada (alças acima do ombro).",
+    "Tirar as costas do encosto.",
+    "Travar os cotovelos com força."
+   ],
+   "careNotes": "Boa opção para iniciantes. Evite ou reduza a amplitude se sentir dor no ombro.",
+   "searchTags": [
+    "supino",
+    "máquina",
+    "peito"
+   ],
+   "alternativeExerciseIds": []
+  },
+  "push_up": {
+   "commonMistakes": [
+    "Quadril caindo ou empinado.",
+    "Cotovelos muito abertos.",
+    "Amplitude curta."
+   ],
+   "careNotes": "Apoie os joelhos ou faça na parede se ainda não conseguir com o corpo reto. Evite com dor no punho.",
+   "searchTags": [
+    "flexão",
+    "apoio",
+    "peito",
+    "peso corporal"
+   ],
+   "alternativeExerciseIds": [
+    "wall_push_up",
+    "bench_press",
+    "dumbbell_bench_press",
+    "machine_chest_press"
+   ]
+  },
+  "wall_push_up": {
+   "commonMistakes": [
+    "Pés perto demais da parede.",
+    "Quadril para trás.",
+    "Descer pouco."
+   ],
+   "careNotes": "Boa porta de entrada para a flexão de braço.",
+   "searchTags": [
+    "flexão na parede",
+    "iniciante",
+    "peito",
+    "idoso"
+   ],
+   "alternativeExerciseIds": [
+    "push_up",
+    "machine_chest_press"
+   ]
+  },
+  "cable_crossover": {
+   "commonMistakes": [
+    "Dobrar e esticar os cotovelos (vira supino).",
+    "Arquear a lombar.",
+    "Soltar o peso rápido na volta."
+   ],
+   "careNotes": "Abdômen firme e passo à frente para ter estabilidade.",
+   "searchTags": [
+    "crossover",
+    "crossover alto",
+    "polia alta",
+    "peito",
+    "cabo"
+   ],
+   "alternativeExerciseIds": [
+    "pec_deck",
+    "dumbbell_fly",
+    "low_cable_crossover"
+   ]
+  },
+  "pec_deck": {
+   "commonMistakes": [
+    "Banco na altura errada (cotovelos acima do ombro).",
+    "Abrir além do confortável.",
+    "Soltar o peso na volta."
+   ],
+   "careNotes": "Evite ou reduza a amplitude se sentir dor no ombro.",
+   "searchTags": [
+    "voador",
+    "peck deck",
+    "crucifixo máquina",
+    "peito"
+   ],
+   "alternativeExerciseIds": [
+    "cable_crossover",
+    "dumbbell_fly",
+    "incline_dumbbell_fly"
+   ]
+  },
+  "bent_over_row": {
+   "commonMistakes": [
+    "Arredondar a coluna.",
+    "Levantar o tronco a cada repetição.",
+    "Puxar só com os braços."
+   ],
+   "careNotes": "Mantenha a coluna neutra. Evite carga alta com dor lombar.",
+   "searchTags": [
+    "remada",
+    "remada curvada",
+    "costas",
+    "barra"
+   ],
+   "alternativeExerciseIds": [
+    "t_bar_row",
+    "seated_cable_row",
+    "dumbbell_row",
+    "single_arm_cable_row"
+   ]
+  },
+  "dumbbell_row": {
+   "commonMistakes": [
+    "Girar o tronco para puxar.",
+    "Encolher o ombro.",
+    "Costas arredondadas."
+   ],
+   "careNotes": "Apoie mão e joelho no banco e mantenha a coluna neutra.",
+   "searchTags": [
+    "remada",
+    "serrote",
+    "unilateral",
+    "halter",
+    "costas"
+   ],
+   "alternativeExerciseIds": [
+    "single_arm_cable_row",
+    "bent_over_row",
+    "seated_cable_row"
+   ]
+  },
+  "seated_cable_row": {
+   "commonMistakes": [
+    "Jogar o tronco para trás.",
+    "Arredondar as costas na volta.",
+    "Encolher os ombros."
+   ],
+   "careNotes": "Mantenha a coluna neutra. Evite carga alta com dor lombar.",
+   "searchTags": [
+    "remada baixa",
+    "polia",
+    "costas",
+    "remada sentada"
+   ],
+   "alternativeExerciseIds": [
+    "bent_over_row",
+    "t_bar_row",
+    "dumbbell_row",
+    "single_arm_cable_row"
+   ]
+  },
+  "lat_pulldown": {
+   "commonMistakes": [
+    "Puxar a barra atrás da nuca.",
+    "Jogar o tronco para trás.",
+    "Não completar a descida."
+   ],
+   "careNotes": "Puxe sempre pela frente, até a parte de cima do peito.",
+   "searchTags": [
+    "puxada",
+    "puxada frontal",
+    "costas",
+    "dorsal",
+    "polia"
+   ],
+   "alternativeExerciseIds": [
+    "pull_up",
+    "close_grip_lat_pulldown",
+    "reverse_grip_lat_pulldown"
+   ]
+  },
+  "close_grip_lat_pulldown": {
+   "commonMistakes": [
+    "Jogar o tronco para trás.",
+    "Encolher os ombros.",
+    "Soltar rápido na subida."
+   ],
+   "careNotes": "Evite balançar o tronco para puxar a carga.",
+   "searchTags": [
+    "puxada",
+    "triângulo",
+    "puxada neutra",
+    "pegada neutra",
+    "costas"
+   ],
+   "alternativeExerciseIds": [
+    "lat_pulldown",
+    "reverse_grip_lat_pulldown",
+    "pull_up"
+   ]
+  },
+  "pull_up": {
+   "commonMistakes": [
+    "Balançar o corpo (kipping) sem controle.",
+    "Não estender os braços embaixo.",
+    "Projetar o queixo à frente."
+   ],
+   "careNotes": "Use elástico ou a máquina de barra assistida até conseguir com o peso do corpo. Evite ou reduza a amplitude se sentir dor no ombro.",
+   "searchTags": [
+    "barra fixa",
+    "pull up",
+    "costas",
+    "peso corporal"
+   ],
+   "alternativeExerciseIds": [
+    "lat_pulldown",
+    "close_grip_lat_pulldown",
+    "reverse_grip_lat_pulldown"
+   ]
+  },
+  "face_pull": {
+   "commonMistakes": [
+    "Puxar baixo demais (na altura do peito).",
+    "Usar carga alta e perder a rotação.",
+    "Jogar o tronco para trás."
+   ],
+   "careNotes": "Carga leve a moderada, foco na postura.",
+   "searchTags": [
+    "face pull",
+    "deltoide posterior",
+    "manguito",
+    "polia",
+    "postura"
+   ],
+   "alternativeExerciseIds": [
+    "rear_delt_fly",
+    "machine_rear_delt_fly",
+    "band_pull_apart"
+   ]
+  },
+  "cat_cow": {
+   "commonMistakes": [
+    "Fazer rápido.",
+    "Mexer só o pescoço.",
+    "Prender a respiração."
+   ],
+   "careNotes": "Movimento sem dor e dentro da amplitude confortável.",
+   "searchTags": [
+    "gato e camelo",
+    "mobilidade",
+    "coluna",
+    "aquecimento"
+   ],
+   "alternativeExerciseIds": [
+    "thoracic_rotation",
+    "hip_90_90"
+   ]
+  },
+  "thoracic_rotation": {
+   "commonMistakes": [
+    "Girar o quadril junto.",
+    "Forçar a amplitude.",
+    "Prender a respiração."
+   ],
+   "careNotes": "Sem dor; vá só até onde for confortável.",
+   "searchTags": [
+    "rotação torácica",
+    "mobilidade torácica",
+    "coluna",
+    "aquecimento"
+   ],
+   "alternativeExerciseIds": [
+    "cat_cow",
+    "band_shoulder_dislocate"
+   ]
+  },
+  "shoulder_press": {
+   "commonMistakes": [
+    "Arquear a lombar.",
+    "Empurrar a barra à frente do rosto.",
+    "Descer pouco."
+   ],
+   "careNotes": "Abdômen e glúteos firmes. Evite ou reduza a amplitude se sentir dor no ombro.",
+   "searchTags": [
+    "desenvolvimento",
+    "militar",
+    "ombro",
+    "barra"
+   ],
+   "alternativeExerciseIds": [
+    "dumbbell_shoulder_press",
+    "machine_shoulder_press"
+   ]
+  },
+  "dumbbell_shoulder_press": {
+   "commonMistakes": [
+    "Arquear a lombar.",
+    "Bater os halteres no topo.",
+    "Descer pouco."
+   ],
+   "careNotes": "Evite ou reduza a amplitude se sentir dor no ombro.",
+   "searchTags": [
+    "desenvolvimento",
+    "halteres",
+    "ombro"
+   ],
+   "alternativeExerciseIds": [
+    "shoulder_press",
+    "machine_shoulder_press"
+   ]
+  },
+  "lateral_raise": {
+   "commonMistakes": [
+    "Balançar o tronco.",
+    "Subir acima da linha do ombro.",
+    "Encolher os ombros."
+   ],
+   "careNotes": "Carga leve e controle. Evite ou reduza a amplitude se sentir dor no ombro.",
+   "searchTags": [
+    "elevação lateral",
+    "deltoide lateral",
+    "ombro",
+    "halteres"
+   ],
+   "alternativeExerciseIds": [
+    "cable_lateral_raise",
+    "machine_lateral_raise"
+   ]
+  },
+  "cable_lateral_raise": {
+   "commonMistakes": [
+    "Inclinar o tronco para longe da polia.",
+    "Encolher o ombro.",
+    "Subir acima da linha do ombro."
+   ],
+   "careNotes": "Faça o mesmo número de repetições dos dois lados.",
+   "searchTags": [
+    "elevação lateral",
+    "polia",
+    "unilateral",
+    "ombro"
+   ],
+   "alternativeExerciseIds": [
+    "lateral_raise",
+    "machine_lateral_raise"
+   ]
+  },
+  "rear_delt_fly": {
+   "commonMistakes": [
+    "Usar as costas (remada) em vez do ombro.",
+    "Balançar o tronco.",
+    "Carga alta."
+   ],
+   "careNotes": "Mantenha a coluna neutra com o tronco inclinado.",
+   "searchTags": [
+    "crucifixo inverso",
+    "deltoide posterior",
+    "halteres"
+   ],
+   "alternativeExerciseIds": [
+    "machine_rear_delt_fly",
+    "face_pull",
+    "band_pull_apart"
+   ]
+  },
+  "machine_rear_delt_fly": {
+   "commonMistakes": [
+    "Juntar as escápulas e usar as costas.",
+    "Banco na altura errada.",
+    "Soltar o peso na volta."
+   ],
+   "careNotes": "Ajuste o banco para as alças ficarem na altura dos ombros.",
+   "searchTags": [
+    "crucifixo inverso",
+    "máquina",
+    "deltoide posterior",
+    "voador invertido"
+   ],
+   "alternativeExerciseIds": [
+    "rear_delt_fly",
+    "face_pull",
+    "band_pull_apart"
+   ]
+  },
+  "band_pull_apart": {
+   "commonMistakes": [
+    "Encolher os ombros.",
+    "Dobrar os cotovelos.",
+    "Elástico forte demais."
+   ],
+   "careNotes": "Bom para aquecer e para postura.",
+   "searchTags": [
+    "abertura com elástico",
+    "deltoide posterior",
+    "postura",
+    "aquecimento"
+   ],
+   "alternativeExerciseIds": [
+    "face_pull",
+    "rear_delt_fly",
+    "machine_rear_delt_fly"
+   ]
+  },
+  "band_external_rotation": {
+   "commonMistakes": [
+    "Afastar o cotovelo do corpo.",
+    "Girar o tronco.",
+    "Elástico forte demais."
+   ],
+   "careNotes": "Movimento lento e leve. Em reabilitação, siga o fisioterapeuta.",
+   "searchTags": [
+    "rotação externa",
+    "manguito rotador",
+    "elástico",
+    "prevenção"
+   ],
+   "alternativeExerciseIds": [
+    "cable_external_rotation",
+    "face_pull"
+   ]
+  },
+  "bicep_curl": {
+   "commonMistakes": [
+    "Balançar o tronco.",
+    "Levar os cotovelos à frente.",
+    "Descer rápido."
+   ],
+   "careNotes": "Evite balançar se tiver dor lombar.",
+   "searchTags": [
+    "rosca direta",
+    "bíceps",
+    "barra"
+   ],
+   "alternativeExerciseIds": [
+    "cable_curl",
+    "alternating_dumbbell_curl",
+    "preacher_curl",
+    "hammer_curl"
+   ]
+  },
+  "cable_curl": {
+   "commonMistakes": [
+    "Afastar os cotovelos do corpo.",
+    "Inclinar o tronco para trás.",
+    "Soltar o peso rápido."
+   ],
+   "careNotes": "Mantenha os punhos retos.",
+   "searchTags": [
+    "rosca",
+    "polia",
+    "bíceps",
+    "rosca na polia"
+   ],
+   "alternativeExerciseIds": [
+    "bicep_curl",
+    "preacher_curl",
+    "alternating_dumbbell_curl"
+   ]
+  },
+  "hammer_curl": {
+   "commonMistakes": [
+    "Balançar o tronco.",
+    "Girar o punho durante o movimento.",
+    "Levar os cotovelos à frente."
+   ],
+   "careNotes": "Boa opção se a rosca direta incomoda o punho.",
+   "searchTags": [
+    "rosca martelo",
+    "braquial",
+    "antebraço",
+    "halteres"
+   ],
+   "alternativeExerciseIds": [
+    "reverse_curl",
+    "alternating_dumbbell_curl",
+    "bicep_curl"
+   ]
+  },
+  "dead_hang": {
+   "commonMistakes": [
+    "Ombros encolhidos perto das orelhas.",
+    "Balançar o corpo.",
+    "Soltar de uma vez."
+   ],
+   "careNotes": "Comece com poucos segundos. Evite ou reduza a amplitude se sentir dor no ombro.",
+   "searchTags": [
+    "suspensão",
+    "pegada",
+    "antebraço",
+    "barra fixa"
+   ],
+   "alternativeExerciseIds": [
+    "farmer_walk",
+    "pull_up"
+   ]
+  },
+  "tricep_extension": {
+   "commonMistakes": [
+    "Abrir os cotovelos.",
+    "Descer o peso rápido em direção à testa.",
+    "Mover os ombros."
+   ],
+   "careNotes": "Use carga que você controle bem: o peso passa perto do rosto.",
+   "searchTags": [
+    "tríceps testa",
+    "tríceps",
+    "halteres"
+   ],
+   "alternativeExerciseIds": [
+    "barbell_overhead_triceps_extension",
+    "triceps_pushdown",
+    "triceps_bar_pushdown"
+   ]
+  },
+  "triceps_pushdown": {
+   "commonMistakes": [
+    "Afastar os cotovelos do corpo.",
+    "Jogar o peso do corpo sobre a corda.",
+    "Não abrir a corda embaixo."
+   ],
+   "careNotes": "Mantenha os punhos firmes e os cotovelos parados.",
+   "searchTags": [
+    "tríceps corda",
+    "tríceps",
+    "polia",
+    "pulley",
+    "corda"
+   ],
+   "alternativeExerciseIds": [
+    "triceps_bar_pushdown",
+    "tricep_extension",
+    "triceps_kickback"
+   ]
+  },
+  "squat": {
+   "commonMistakes": [
+    "Joelhos caindo para dentro.",
+    "Arredondar a lombar no fundo.",
+    "Tirar os calcanhares do chão."
+   ],
+   "careNotes": "Aprenda com carga leve e acompanhamento. Evite carga alta ou amplitude total se sentir dor no joelho.",
+   "searchTags": [
+    "agachamento",
+    "agachamento livre",
+    "quadríceps",
+    "barra"
+   ],
+   "alternativeExerciseIds": [
+    "front_squat",
+    "smith_squat",
+    "hack_squat",
+    "leg_press"
+   ]
+  },
+  "hack_squat": {
+   "commonMistakes": [
+    "Tirar os calcanhares da plataforma.",
+    "Joelhos caindo para dentro.",
+    "Travar os joelhos no topo."
+   ],
+   "careNotes": "Evite carga alta ou amplitude total se sentir dor no joelho.",
+   "searchTags": [
+    "hack",
+    "agachamento",
+    "quadríceps",
+    "máquina"
+   ],
+   "alternativeExerciseIds": [
+    "leg_press",
+    "smith_squat",
+    "pendulum_squat",
+    "squat"
+   ]
+  },
+  "leg_press": {
+   "commonMistakes": [
+    "Tirar o quadril do banco no fundo.",
+    "Travar os joelhos no topo.",
+    "Joelhos caindo para dentro."
+   ],
+   "careNotes": "Não desça além do ponto em que o quadril sai do encosto. Evite carga alta ou amplitude total se sentir dor no joelho.",
+   "searchTags": [
+    "leg press",
+    "quadríceps",
+    "pernas",
+    "máquina"
+   ],
+   "alternativeExerciseIds": [
+    "hack_squat",
+    "pendulum_squat",
+    "smith_squat",
+    "squat"
+   ]
+  },
+  "leg_extension": {
+   "commonMistakes": [
+    "Chutar o peso.",
+    "Tirar o quadril do banco.",
+    "Descer rápido."
+   ],
+   "careNotes": "Ajuste o eixo da máquina ao joelho. Evite carga alta ou amplitude total se sentir dor no joelho.",
+   "searchTags": [
+    "extensora",
+    "cadeira extensora",
+    "quadríceps",
+    "máquina"
+   ],
+   "alternativeExerciseIds": [
+    "single_leg_extension",
+    "leg_press",
+    "bulgarian_split_squat"
+   ]
+  },
+  "bulgarian_split_squat": {
+   "commonMistakes": [
+    "Pé da frente perto demais do banco.",
+    "Joelho caindo para dentro.",
+    "Tronco desabando à frente."
+   ],
+   "careNotes": "Comece sem carga para achar a distância do banco. Segure-se em algo se faltar equilíbrio.",
+   "searchTags": [
+    "búlgaro",
+    "agachamento búlgaro",
+    "unilateral",
+    "pernas"
+   ],
+   "alternativeExerciseIds": [
+    "lunge",
+    "smith_lunge",
+    "step_up"
+   ]
+  },
+  "lunge": {
+   "commonMistakes": [
+    "Passo curto demais.",
+    "Joelho da frente caindo para dentro.",
+    "Tronco inclinado à frente."
+   ],
+   "careNotes": "Evite carga alta ou amplitude total se sentir dor no joelho.",
+   "searchTags": [
+    "afundo",
+    "avanço",
+    "passada",
+    "unilateral"
+   ],
+   "alternativeExerciseIds": [
+    "bulgarian_split_squat",
+    "smith_lunge",
+    "step_up"
+   ]
+  },
+  "side_lunge": {
+   "commonMistakes": [
+    "Joelho passando muito da ponta do pé.",
+    "Pé da perna dobrada girando para fora.",
+    "Costas arredondadas."
+   ],
+   "careNotes": "Amplitude confortável para a parte interna da coxa.",
+   "searchTags": [
+    "afundo lateral",
+    "adutores",
+    "unilateral"
+   ],
+   "alternativeExerciseIds": [
+    "lunge",
+    "bulgarian_split_squat",
+    "hip_adduction"
+   ]
+  },
+  "step_up": {
+   "commonMistakes": [
+    "Empurrar com o pé de baixo.",
+    "Joelho caindo para dentro.",
+    "Degrau alto demais."
+   ],
+   "careNotes": "Use um degrau firme. Comece baixo.",
+   "searchTags": [
+    "subida no degrau",
+    "step",
+    "unilateral",
+    "pernas"
+   ],
+   "alternativeExerciseIds": [
+    "lunge",
+    "bulgarian_split_squat",
+    "smith_lunge"
+   ]
+  },
+  "sit_to_stand": {
+   "commonMistakes": [
+    "Usar as mãos para levantar.",
+    "Joelhos para dentro.",
+    "Cair sentado sem controle."
+   ],
+   "careNotes": "Use uma cadeira firme encostada na parede.",
+   "searchTags": [
+    "sentar e levantar",
+    "idoso",
+    "iniciante",
+    "funcional"
+   ],
+   "alternativeExerciseIds": [
+    "leg_press",
+    "step_up",
+    "smith_squat"
+   ]
+  },
+  "box_jump": {
+   "commonMistakes": [
+    "Aterrissar com os joelhos para dentro.",
+    "Caixa alta demais.",
+    "Descer pulando para trás."
+   ],
+   "careNotes": "Desça da caixa andando. Evite com dor no joelho ou no tornozelo.",
+   "searchTags": [
+    "salto na caixa",
+    "pliometria",
+    "potência"
+   ],
+   "alternativeExerciseIds": [
+    "squat_jump",
+    "lateral_bound"
+   ]
+  },
+  "squat_jump": {
+   "commonMistakes": [
+    "Aterrissar com as pernas esticadas.",
+    "Joelhos para dentro na aterrissagem.",
+    "Sem pausa entre os saltos."
+   ],
+   "careNotes": "Aterrisse macio, dobrando os joelhos. Evite com dor no joelho.",
+   "searchTags": [
+    "agachamento com salto",
+    "pliometria",
+    "salto"
+   ],
+   "alternativeExerciseIds": [
+    "box_jump",
+    "lateral_bound"
+   ]
+  },
+  "lateral_bound": {
+   "commonMistakes": [
+    "Aterrissar sem controle.",
+    "Joelho caindo para dentro.",
+    "Saltos longos demais no começo."
+   ],
+   "careNotes": "Comece com saltos curtos. Evite com instabilidade no tornozelo.",
+   "searchTags": [
+    "salto lateral",
+    "pliometria",
+    "agilidade"
+   ],
+   "alternativeExerciseIds": [
+    "box_jump",
+    "squat_jump",
+    "side_lunge"
+   ]
+  },
+  "leg_curl": {
+   "commonMistakes": [
+    "Levantar o quadril do banco.",
+    "Soltar o peso na descida.",
+    "Amplitude curta."
+   ],
+   "careNotes": "Mantenha o quadril no banco.",
+   "searchTags": [
+    "mesa flexora",
+    "flexora",
+    "posterior de coxa",
+    "máquina"
+   ],
+   "alternativeExerciseIds": [
+    "seated_leg_curl",
+    "single_leg_curl",
+    "nordic_curl"
+   ]
+  },
+  "nordic_curl": {
+   "commonMistakes": [
+    "Cair de uma vez.",
+    "Dobrar o quadril.",
+    "Fazer sem ajuda antes da hora."
+   ],
+   "careNotes": "Exercício intenso: use apoio ou elástico e poucas repetições no começo.",
+   "searchTags": [
+    "flexão nórdica",
+    "nordic",
+    "posterior de coxa"
+   ],
+   "alternativeExerciseIds": [
+    "leg_curl",
+    "seated_leg_curl",
+    "romanian_deadlift"
+   ]
+  },
+  "romanian_deadlift": {
+   "commonMistakes": [
+    "Arredondar as costas.",
+    "Dobrar demais os joelhos.",
+    "Afastar a barra das pernas."
+   ],
+   "careNotes": "Mantenha a coluna neutra. Evite carga alta com dor lombar.",
+   "searchTags": [
+    "stiff",
+    "terra romeno",
+    "posterior de coxa",
+    "barra"
+   ],
+   "alternativeExerciseIds": [
+    "dumbbell_romanian_deadlift",
+    "good_morning",
+    "deadlift"
+   ]
+  },
+  "deadlift": {
+   "commonMistakes": [
+    "Arredondar as costas.",
+    "Barra longe das pernas.",
+    "Hiperestender a lombar no topo."
+   ],
+   "careNotes": "Aprenda com acompanhamento e carga leve. Mantenha a coluna neutra. Evite carga alta com dor lombar.",
+   "searchTags": [
+    "levantamento terra",
+    "terra",
+    "deadlift",
+    "barra"
+   ],
+   "alternativeExerciseIds": [
+    "romanian_deadlift",
+    "dumbbell_romanian_deadlift",
+    "back_extension_45"
+   ]
+  },
+  "kettlebell_swing": {
+   "commonMistakes": [
+    "Agachar em vez de dobrar o quadril.",
+    "Levantar com os braços.",
+    "Arredondar as costas."
+   ],
+   "careNotes": "O impulso vem do quadril. Mantenha a coluna neutra. Evite carga alta com dor lombar.",
+   "searchTags": [
+    "kettlebell",
+    "swing",
+    "balanço",
+    "quadril"
+   ],
+   "alternativeExerciseIds": [
+    "hip_thrust",
+    "back_extension_45",
+    "romanian_deadlift"
+   ]
+  },
+  "hip_thrust": {
+   "commonMistakes": [
+    "Arquear a lombar no topo.",
+    "Empurrar com a ponta dos pés.",
+    "Apoio do banco alto demais nas costas."
+   ],
+   "careNotes": "Use proteção na barra sobre o quadril.",
+   "searchTags": [
+    "elevação pélvica",
+    "hip thrust",
+    "glúteos",
+    "barra"
+   ],
+   "alternativeExerciseIds": [
+    "glute_bridge",
+    "single_leg_hip_thrust",
+    "cable_kickback"
+   ]
+  },
+  "glute_bridge": {
+   "commonMistakes": [
+    "Arquear a lombar no topo.",
+    "Pés longe demais do quadril.",
+    "Joelhos abrindo ou fechando."
+   ],
+   "careNotes": "Boa opção para iniciantes e para aquecer.",
+   "searchTags": [
+    "ponte",
+    "ponte de glúteos",
+    "glúteos",
+    "peso corporal"
+   ],
+   "alternativeExerciseIds": [
+    "hip_thrust",
+    "single_leg_hip_thrust"
+   ]
+  },
+  "cable_kickback": {
+   "commonMistakes": [
+    "Arquear a lombar.",
+    "Girar o quadril.",
+    "Balançar a perna."
+   ],
+   "careNotes": "Abdômen firme; faça o mesmo número de repetições dos dois lados.",
+   "searchTags": [
+    "coice",
+    "polia",
+    "glúteos",
+    "unilateral"
+   ],
+   "alternativeExerciseIds": [
+    "ankle_weight_kickback",
+    "hip_thrust",
+    "glute_bridge"
+   ]
+  },
+  "hip_abduction": {
+   "commonMistakes": [
+    "Soltar o peso na volta.",
+    "Inclinar o tronco à frente sem querer.",
+    "Amplitude curta."
+   ],
+   "careNotes": "Controle a volta das pernas.",
+   "searchTags": [
+    "abdutora",
+    "cadeira abdutora",
+    "glúteo médio",
+    "máquina"
+   ],
+   "alternativeExerciseIds": [
+    "cable_hip_abduction",
+    "band_hip_abduction"
+   ]
+  },
+  "calf_raise": {
+   "commonMistakes": [
+    "Amplitude curta.",
+    "Dobrar os joelhos.",
+    "Subir rápido sem pausa."
+   ],
+   "careNotes": "Desça devagar até alongar bem a panturrilha.",
+   "searchTags": [
+    "panturrilha",
+    "gêmeos",
+    "em pé"
+   ],
+   "alternativeExerciseIds": [
+    "smith_calf_raise",
+    "leg_press_calf_raise",
+    "single_leg_calf_raise"
+   ]
+  },
+  "seated_calf_raise": {
+   "commonMistakes": [
+    "Amplitude curta.",
+    "Quicar no fundo.",
+    "Subir rápido."
+   ],
+   "careNotes": "Trabalha mais o sóleo (joelho dobrado).",
+   "searchTags": [
+    "panturrilha sentado",
+    "sóleo",
+    "máquina"
+   ],
+   "alternativeExerciseIds": [
+    "calf_raise",
+    "leg_press_calf_raise"
+   ]
+  },
+  "ankle_mobility": {
+   "commonMistakes": [
+    "Tirar o calcanhar do chão.",
+    "Joelho caindo para dentro.",
+    "Forçar a amplitude."
+   ],
+   "careNotes": "Sem dor; aumente a distância da parede aos poucos.",
+   "searchTags": [
+    "mobilidade de tornozelo",
+    "tornozelo",
+    "aquecimento"
+   ],
+   "alternativeExerciseIds": [
+    "single_leg_balance",
+    "heel_toe_walk"
+   ]
+  },
+  "hip_90_90": {
+   "commonMistakes": [
+    "Arredondar as costas.",
+    "Forçar o joelho.",
+    "Usar as mãos para compensar o tempo todo."
+   ],
+   "careNotes": "Sem dor no joelho ou no quadril.",
+   "searchTags": [
+    "90/90",
+    "mobilidade de quadril",
+    "quadril",
+    "aquecimento"
+   ],
+   "alternativeExerciseIds": [
+    "cat_cow",
+    "hip_escape"
+   ]
+  },
+  "crunch": {
+   "commonMistakes": [
+    "Puxar o pescoço com as mãos.",
+    "Subir o tronco inteiro.",
+    "Fazer rápido."
+   ],
+   "careNotes": "Mãos só apoiando a cabeça.",
+   "searchTags": [
+    "abdominal",
+    "abdominal supra",
+    "reto abdominal"
+   ],
+   "alternativeExerciseIds": [
+    "cable_crunch",
+    "dead_bug",
+    "leg_raise"
+   ]
+  },
+  "leg_raise": {
+   "commonMistakes": [
+    "Lombar saindo do chão.",
+    "Descer as pernas rápido.",
+    "Usar impulso."
+   ],
+   "careNotes": "Se a lombar sair do chão, dobre os joelhos.",
+   "searchTags": [
+    "elevação de pernas",
+    "abdominal infra",
+    "infra",
+    "abdômen"
+   ],
+   "alternativeExerciseIds": [
+    "dead_bug",
+    "crunch",
+    "hollow_hold"
+   ]
+  },
+  "plank": {
+   "commonMistakes": [
+    "Quadril caindo.",
+    "Quadril alto demais.",
+    "Prender a respiração."
+   ],
+   "careNotes": "Comece com tempos curtos e aumente aos poucos.",
+   "searchTags": [
+    "prancha",
+    "core",
+    "isometria",
+    "abdômen"
+   ],
+   "alternativeExerciseIds": [
+    "side_plank",
+    "hollow_hold",
+    "dead_bug",
+    "ab_wheel_rollout"
+   ]
+  },
+  "side_plank": {
+   "commonMistakes": [
+    "Quadril caindo.",
+    "Ombro longe do cotovelo de apoio.",
+    "Girar o tronco."
+   ],
+   "careNotes": "Apoie o joelho de baixo para facilitar. Evite ou reduza a amplitude se sentir dor no ombro.",
+   "searchTags": [
+    "prancha lateral",
+    "oblíquos",
+    "core"
+   ],
+   "alternativeExerciseIds": [
+    "plank",
+    "russian_twist",
+    "bird_dog"
+   ]
+  },
+  "russian_twist": {
+   "commonMistakes": [
+    "Girar só os braços.",
+    "Arredondar as costas.",
+    "Fazer rápido."
+   ],
+   "careNotes": "Evite com dor lombar; pode fazer com os pés no chão.",
+   "searchTags": [
+    "rotação russa",
+    "oblíquos",
+    "abdômen"
+   ],
+   "alternativeExerciseIds": [
+    "side_plank",
+    "cable_crunch"
+   ]
+  },
+  "mountain_climber": {
+   "commonMistakes": [
+    "Quadril alto.",
+    "Ombros atrás das mãos.",
+    "Perder o ritmo e a postura."
+   ],
+   "careNotes": "Mãos abaixo dos ombros. Evite com dor no punho.",
+   "searchTags": [
+    "escalador",
+    "mountain climber",
+    "hiit",
+    "core"
+   ],
+   "alternativeExerciseIds": [
+    "burpee",
+    "plank",
+    "bear_crawl"
+   ]
+  },
+  "burpee": {
+   "commonMistakes": [
+    "Cair no chão sem controle.",
+    "Quadril caindo na prancha.",
+    "Aterrissar com as pernas esticadas."
+   ],
+   "careNotes": "Pode tirar o salto ou a flexão para facilitar.",
+   "searchTags": [
+    "burpee",
+    "hiit",
+    "corpo todo",
+    "cardio"
+   ],
+   "alternativeExerciseIds": [
+    "mountain_climber",
+    "squat_jump",
+    "jump_rope"
+   ]
+  },
+  "bear_crawl": {
+   "commonMistakes": [
+    "Quadril alto.",
+    "Joelhos encostando no chão.",
+    "Passos longos demais."
+   ],
+   "careNotes": "Joelhos baixos e coluna neutra.",
+   "searchTags": [
+    "caminhada do urso",
+    "core",
+    "locomoção"
+   ],
+   "alternativeExerciseIds": [
+    "mountain_climber",
+    "plank"
+   ]
+  },
+  "farmer_walk": {
+   "commonMistakes": [
+    "Inclinar o corpo para um lado.",
+    "Ombros encolhidos.",
+    "Passos rápidos e curtos."
+   ],
+   "careNotes": "Comece com carga moderada e distância curta.",
+   "searchTags": [
+    "caminhada do fazendeiro",
+    "pegada",
+    "carregar",
+    "core"
+   ],
+   "alternativeExerciseIds": [
+    "dead_hang",
+    "dumbbell_shrug"
+   ]
+  },
+  "jump_rope": {
+   "commonMistakes": [
+    "Saltar alto demais.",
+    "Girar a corda com os braços inteiros.",
+    "Aterrissar nos calcanhares."
+   ],
+   "careNotes": "Comece com blocos curtos. Evite com dor no tornozelo ou na canela.",
+   "searchTags": [
+    "pular corda",
+    "corda",
+    "cardio"
+   ],
+   "alternativeExerciseIds": [
+    "burpee",
+    "shadow_boxing",
+    "stationary_bike"
+   ]
+  },
+  "shadow_boxing": {
+   "commonMistakes": [
+    "Esticar o cotovelo até travar.",
+    "Abaixar a guarda.",
+    "Ficar parado nos pés."
+   ],
+   "careNotes": "Não trave os cotovelos nos golpes.",
+   "searchTags": [
+    "sombra",
+    "boxe",
+    "cardio"
+   ],
+   "alternativeExerciseIds": [
+    "jump_rope",
+    "elliptical"
+   ]
+  },
+  "med_ball_slam": {
+   "commonMistakes": [
+    "Arredondar as costas para pegar a bola.",
+    "Usar só os braços.",
+    "Bola que quica muito."
+   ],
+   "careNotes": "Use bola própria para arremesso (que não quica). Mantenha a coluna neutra. Evite carga alta com dor lombar.",
+   "searchTags": [
+    "arremesso",
+    "bola medicinal",
+    "slam",
+    "potência"
+   ],
+   "alternativeExerciseIds": [
+    "kettlebell_swing",
+    "burpee"
+   ]
+  },
+  "heel_toe_walk": {
+   "commonMistakes": [
+    "Olhar para os pés.",
+    "Passos rápidos.",
+    "Sem apoio por perto."
+   ],
+   "careNotes": "Faça perto de uma parede para se apoiar se precisar.",
+   "searchTags": [
+    "equilíbrio",
+    "caminhada",
+    "idoso"
+   ],
+   "alternativeExerciseIds": [
+    "single_leg_balance",
+    "ankle_mobility"
+   ]
+  },
+  "single_leg_balance": {
+   "commonMistakes": [
+    "Travar o joelho de apoio.",
+    "Prender a respiração.",
+    "Sem apoio por perto."
+   ],
+   "careNotes": "Faça perto de um apoio firme.",
+   "searchTags": [
+    "equilíbrio",
+    "unilateral",
+    "idoso",
+    "tornozelo"
+   ],
+   "alternativeExerciseIds": [
+    "heel_toe_walk",
+    "step_up"
+   ]
+  },
+  "hip_escape": {
+   "commonMistakes": [
+    "Fazer rápido sem controle.",
+    "Não usar os pés para empurrar.",
+    "Tirar os ombros do chão."
+   ],
+   "careNotes": "Movimento de mobilidade: sem dor.",
+   "searchTags": [
+    "fuga de quadril",
+    "mobilidade",
+    "chão",
+    "quadril"
+   ],
+   "alternativeExerciseIds": [
+    "hip_90_90",
+    "bear_crawl"
+   ]
+  }
+ },
+ "renomear": {
+  "triceps_pushdown": {
+   "name": "Tríceps na polia com corda",
+   "alternateName": "Tríceps corda",
+   "description": "Isola o tríceps com a corda na polia alta."
+  }
+ },
+ "equipamentosNovos": {
+  "roda_abdominal": "Roda abdominal"
+ }
+}

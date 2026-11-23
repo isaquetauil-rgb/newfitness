@@ -199,7 +199,7 @@ void main() {
       for (final id in sampleExerciseCorrections.keys) {
         expect(ids, contains(id));
       }
-      expect(sampleExercises.length, 71); // 67 + 4 versões gerais novas
+      expect(sampleExercises.length, 123); // 67 + 4 (Etapa 2) + 52 (Etapa 3)
     });
 
     test('unilaterais, prancha por tempo e as 4 versões gerais novas', () {

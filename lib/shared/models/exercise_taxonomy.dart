@@ -74,6 +74,7 @@ const List<String> canonicalEquipment = [
   'Remo',
   'Escada',
   'Corda',
+  'Roda abdominal',
 ];
 
 String _key(String s) => s
@@ -136,6 +137,7 @@ const Map<String, String> _legacyEquipment = {
   'bike': 'Bicicleta',
   'corda de pular': 'Corda',
   'maquina smith': 'Smith',
+  'ab wheel': 'Roda abdominal',
 };
 
 /// Equipamento padronizado (lê também os nomes antigos). Desconhecido volta

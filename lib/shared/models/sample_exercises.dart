@@ -1,4 +1,5 @@
 import 'sample_exercise_corrections.dart';
+import 'sample_exercise_stage3.dart';
 import 'exercise.dart';
 import 'sample_functional_exercises.dart';
 
@@ -19,10 +20,12 @@ import 'sample_functional_exercises.dart';
 /// barra fixa foram curados manualmente como exemplo; o resto da biblioteca
 /// já participa do cálculo automático mesmo sem curadoria.
 /// Lista padrão já com as correções da Etapa 2 (ver
-/// sample_exercise_corrections.dart) e os exercícios gerais novos.
+/// sample_exercise_corrections.dart), as fichas da Etapa 3 (ver
+/// sample_exercise_stage3.dart) e os exercícios gerais novos.
 final List<Exercise> sampleExercises = [
-  for (final e in _baseSampleExercises) applySampleCorrection(e),
-  ...stage2NewExercises,
+  for (final e in _baseSampleExercises) applyStage3(applySampleCorrection(e)),
+  for (final e in stage2NewExercises) applyStage3(e),
+  ...stage3NewExercises,
 ];
 
 final List<Exercise> _baseSampleExercises = [

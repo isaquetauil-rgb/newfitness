@@ -48,4 +48,5 @@ final List<EquipmentItem> sampleEquipment = [
   const EquipmentItem(id: 'remo', name: 'Remo'),
   const EquipmentItem(id: 'escada', name: 'Escada'),
   const EquipmentItem(id: 'corda', name: 'Corda'),
+  const EquipmentItem(id: 'roda_abdominal', name: 'Roda abdominal'),
 ];
