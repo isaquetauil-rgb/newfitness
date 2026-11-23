@@ -1,3 +1,7 @@
+import 'exercise_taxonomy.dart';
+
+export 'exercise_taxonomy.dart';
+
 /// Níveis de dificuldade aceitos em [Exercise.difficultyLevel] — usados tanto
 /// no formulário de cadastro (chips) quanto no cálculo de semelhança em
 /// `exercise_similarity.dart`.
@@ -32,7 +36,9 @@ const List<String> exerciseCategories = [
 ];
 
 String exerciseCategoryLabel(String category) {
-  switch (category) {
+  // Valores antigos ("funcional", "condicionamento", "Cardio"...) são
+  // convertidos na leitura (ver exercise_taxonomy.dart).
+  switch (canonicalCategory(category)) {
     case 'forca':
       return 'Força';
     case 'cardio':
@@ -192,6 +198,10 @@ class Exercise {
   /// `true`.
   final bool archived;
 
+  /// Textos (instruções, erros, cuidados) ainda sem revisão de um
+  /// profissional com CREF. Campo opcional, só gravado quando `true`.
+  final bool professionalReviewPending;
+
   const Exercise({
     required this.id,
     required this.name,
@@ -228,6 +238,7 @@ class Exercise {
     this.variationExerciseIds = const [],
     this.alternativeExerciseIds = const [],
     this.archived = false,
+    this.professionalReviewPending = false,
   });
 
   factory Exercise.fromMap(String id, Map<String, dynamic> map) {
@@ -272,6 +283,7 @@ class Exercise {
       variationExerciseIds: stringList('variationExerciseIds'),
       alternativeExerciseIds: stringList('alternativeExerciseIds'),
       archived: map['archived'] == true,
+      professionalReviewPending: map['professionalReviewPending'] == true,
     );
   }
 
@@ -311,6 +323,7 @@ class Exercise {
       'variationExerciseIds': variationExerciseIds,
       'alternativeExerciseIds': alternativeExerciseIds,
       if (archived) 'archived': true,
+      if (professionalReviewPending) 'professionalReviewPending': true,
     };
   }
 }

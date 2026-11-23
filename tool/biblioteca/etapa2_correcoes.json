@@ -1,0 +1,936 @@
+{
+  "correcoes": {
+    "bench_press": {
+      "muscleGroup": "Peito",
+      "secondaryMuscles": [
+        "Tríceps braquial",
+        "Deltoide anterior"
+      ],
+      "equipment": "Barra",
+      "category": "forca",
+      "movementPattern": "Empurrar horizontal",
+      "difficultyLevel": "intermediario",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "dumbbell_bench_press": {
+      "muscleGroup": "Peito",
+      "secondaryMuscles": [
+        "Tríceps braquial",
+        "Deltoide anterior"
+      ],
+      "equipment": "Halteres",
+      "category": "forca",
+      "movementPattern": "Empurrar horizontal",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "incline_dumbbell_press": {
+      "muscleGroup": "Peito",
+      "secondaryMuscles": [
+        "Deltoide anterior",
+        "Tríceps braquial"
+      ],
+      "equipment": "Halteres",
+      "category": "forca",
+      "movementPattern": "Empurrar horizontal",
+      "difficultyLevel": "intermediario",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "machine_chest_press": {
+      "muscleGroup": "Peito",
+      "secondaryMuscles": [
+        "Tríceps braquial",
+        "Deltoide anterior"
+      ],
+      "equipment": "Máquina",
+      "category": "forca",
+      "movementPattern": "Empurrar horizontal",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "pec_deck": {
+      "muscleGroup": "Peito",
+      "secondaryMuscles": [
+        "Deltoide anterior"
+      ],
+      "equipment": "Máquina",
+      "category": "forca",
+      "movementPattern": "Adução horizontal",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "cable_crossover": {
+      "muscleGroup": "Peito",
+      "secondaryMuscles": [
+        "Deltoide anterior"
+      ],
+      "equipment": "Polia",
+      "category": "forca",
+      "movementPattern": "Adução horizontal",
+      "difficultyLevel": "intermediario",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "push_up": {
+      "muscleGroup": "Peito",
+      "secondaryMuscles": [
+        "Tríceps braquial",
+        "Deltoide anterior",
+        "Reto abdominal"
+      ],
+      "equipment": "Peso corporal",
+      "category": "forca",
+      "movementPattern": "Empurrar horizontal",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "wall_push_up": {
+      "muscleGroup": "Peito",
+      "secondaryMuscles": [
+        "Tríceps braquial",
+        "Deltoide anterior"
+      ],
+      "equipment": "Peso corporal",
+      "category": "forca",
+      "movementPattern": "Empurrar horizontal",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "lat_pulldown": {
+      "muscleGroup": "Costas",
+      "secondaryMuscles": [
+        "Bíceps braquial",
+        "Romboides"
+      ],
+      "equipment": "Polia",
+      "category": "forca",
+      "movementPattern": "Puxar vertical",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "pull_up": {
+      "muscleGroup": "Costas",
+      "secondaryMuscles": [
+        "Bíceps braquial",
+        "Romboides"
+      ],
+      "equipment": "Barra fixa",
+      "category": "forca",
+      "movementPattern": "Puxar vertical",
+      "difficultyLevel": "intermediario",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "bent_over_row": {
+      "muscleGroup": "Costas",
+      "secondaryMuscles": [
+        "Romboides",
+        "Trapézio",
+        "Deltoide posterior",
+        "Bíceps braquial",
+        "Eretor da espinha"
+      ],
+      "equipment": "Barra",
+      "category": "forca",
+      "movementPattern": "Puxar horizontal",
+      "difficultyLevel": "intermediario",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "seated_cable_row": {
+      "muscleGroup": "Costas",
+      "secondaryMuscles": [
+        "Romboides",
+        "Trapézio",
+        "Bíceps braquial"
+      ],
+      "equipment": "Polia",
+      "category": "forca",
+      "movementPattern": "Puxar horizontal",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "dumbbell_row": {
+      "muscleGroup": "Costas",
+      "secondaryMuscles": [
+        "Romboides",
+        "Deltoide posterior",
+        "Bíceps braquial"
+      ],
+      "equipment": "Halteres",
+      "category": "forca",
+      "movementPattern": "Puxar horizontal",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": true,
+      "tracksDuration": false
+    },
+    "cat_cow": {
+      "muscleGroup": "Costas",
+      "secondaryMuscles": [],
+      "equipment": "Peso corporal",
+      "category": "mobilidade",
+      "movementPattern": "Mobilidade",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "thoracic_rotation": {
+      "muscleGroup": "Costas",
+      "secondaryMuscles": [],
+      "equipment": "Peso corporal",
+      "category": "mobilidade",
+      "movementPattern": "Mobilidade",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "shoulder_press": {
+      "muscleGroup": "Ombros",
+      "secondaryMuscles": [
+        "Tríceps braquial",
+        "Trapézio"
+      ],
+      "equipment": "Barra",
+      "category": "forca",
+      "movementPattern": "Empurrar vertical",
+      "difficultyLevel": "intermediario",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "dumbbell_shoulder_press": {
+      "muscleGroup": "Ombros",
+      "secondaryMuscles": [
+        "Tríceps braquial",
+        "Trapézio"
+      ],
+      "equipment": "Halteres",
+      "category": "forca",
+      "movementPattern": "Empurrar vertical",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "lateral_raise": {
+      "muscleGroup": "Ombros",
+      "secondaryMuscles": [
+        "Trapézio"
+      ],
+      "equipment": "Halteres",
+      "category": "forca",
+      "movementPattern": "Abdução de ombro",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "rear_delt_fly": {
+      "muscleGroup": "Ombros",
+      "secondaryMuscles": [
+        "Romboides",
+        "Trapézio"
+      ],
+      "equipment": "Halteres",
+      "category": "forca",
+      "movementPattern": "Abdução horizontal",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "face_pull": {
+      "muscleGroup": "Ombros",
+      "secondaryMuscles": [
+        "Romboides",
+        "Trapézio"
+      ],
+      "equipment": "Polia",
+      "category": "forca",
+      "movementPattern": "Puxar horizontal",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "band_pull_apart": {
+      "muscleGroup": "Ombros",
+      "secondaryMuscles": [
+        "Romboides",
+        "Trapézio"
+      ],
+      "equipment": "Elástico",
+      "category": "forca",
+      "movementPattern": "Abdução horizontal",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "band_external_rotation": {
+      "muscleGroup": "Ombros",
+      "secondaryMuscles": [],
+      "equipment": "Elástico",
+      "category": "forca",
+      "movementPattern": "Rotação de ombro",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "bicep_curl": {
+      "muscleGroup": "Bíceps",
+      "secondaryMuscles": [
+        "Braquial",
+        "Braquiorradial"
+      ],
+      "equipment": "Barra",
+      "category": "forca",
+      "movementPattern": "Flexão de cotovelo",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "hammer_curl": {
+      "muscleGroup": "Bíceps",
+      "secondaryMuscles": [
+        "Braquiorradial",
+        "Braquial"
+      ],
+      "equipment": "Halteres",
+      "category": "forca",
+      "movementPattern": "Flexão de cotovelo",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "tricep_extension": {
+      "muscleGroup": "Tríceps",
+      "secondaryMuscles": [],
+      "equipment": "Halteres",
+      "category": "forca",
+      "movementPattern": "Extensão de cotovelo",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "triceps_pushdown": {
+      "muscleGroup": "Tríceps",
+      "secondaryMuscles": [],
+      "equipment": "Polia",
+      "category": "forca",
+      "movementPattern": "Extensão de cotovelo",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "dead_hang": {
+      "muscleGroup": "Antebraço",
+      "secondaryMuscles": [
+        "Latíssimo do dorso"
+      ],
+      "equipment": "Barra fixa",
+      "category": "forca",
+      "movementPattern": "Isometria de pegada",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": false,
+      "tracksDuration": true
+    },
+    "squat": {
+      "muscleGroup": "Quadríceps",
+      "secondaryMuscles": [
+        "Glúteos",
+        "Adutores",
+        "Eretor da espinha"
+      ],
+      "equipment": "Barra",
+      "category": "forca",
+      "movementPattern": "Agachamento",
+      "difficultyLevel": "intermediario",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "hack_squat": {
+      "muscleGroup": "Quadríceps",
+      "secondaryMuscles": [
+        "Glúteos"
+      ],
+      "equipment": "Máquina",
+      "category": "forca",
+      "movementPattern": "Agachamento",
+      "difficultyLevel": "intermediario",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "leg_press": {
+      "muscleGroup": "Quadríceps",
+      "secondaryMuscles": [
+        "Glúteos",
+        "Adutores"
+      ],
+      "equipment": "Máquina",
+      "category": "forca",
+      "movementPattern": "Agachamento",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "leg_extension": {
+      "muscleGroup": "Quadríceps",
+      "secondaryMuscles": [],
+      "equipment": "Máquina",
+      "category": "forca",
+      "movementPattern": "Extensão de joelho",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "bulgarian_split_squat": {
+      "muscleGroup": "Quadríceps",
+      "secondaryMuscles": [
+        "Glúteos",
+        "Adutores"
+      ],
+      "equipment": "Halteres",
+      "category": "forca",
+      "movementPattern": "Avanço",
+      "difficultyLevel": "intermediario",
+      "isUnilateral": true,
+      "tracksDuration": false
+    },
+    "lunge": {
+      "muscleGroup": "Quadríceps",
+      "secondaryMuscles": [
+        "Glúteos",
+        "Adutores"
+      ],
+      "equipment": "Halteres",
+      "category": "forca",
+      "movementPattern": "Avanço",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": true,
+      "tracksDuration": false
+    },
+    "side_lunge": {
+      "muscleGroup": "Quadríceps",
+      "secondaryMuscles": [
+        "Adutores",
+        "Glúteos"
+      ],
+      "equipment": "Peso corporal",
+      "category": "forca",
+      "movementPattern": "Avanço lateral",
+      "difficultyLevel": "intermediario",
+      "isUnilateral": true,
+      "tracksDuration": false
+    },
+    "step_up": {
+      "muscleGroup": "Quadríceps",
+      "secondaryMuscles": [
+        "Glúteos"
+      ],
+      "equipment": "Banco",
+      "category": "forca",
+      "movementPattern": "Avanço",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": true,
+      "tracksDuration": false
+    },
+    "sit_to_stand": {
+      "muscleGroup": "Quadríceps",
+      "secondaryMuscles": [
+        "Glúteos"
+      ],
+      "equipment": "Peso corporal",
+      "category": "forca",
+      "movementPattern": "Agachamento",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "squat_jump": {
+      "muscleGroup": "Quadríceps",
+      "secondaryMuscles": [
+        "Glúteos",
+        "Gastrocnêmio"
+      ],
+      "equipment": "Peso corporal",
+      "category": "forca",
+      "movementPattern": "Salto",
+      "difficultyLevel": "intermediario",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "box_jump": {
+      "muscleGroup": "Quadríceps",
+      "secondaryMuscles": [
+        "Glúteos",
+        "Gastrocnêmio"
+      ],
+      "equipment": "Peso corporal",
+      "category": "forca",
+      "movementPattern": "Salto",
+      "difficultyLevel": "intermediario",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "lateral_bound": {
+      "muscleGroup": "Quadríceps",
+      "secondaryMuscles": [
+        "Glúteos",
+        "Abdutores",
+        "Gastrocnêmio"
+      ],
+      "equipment": "Peso corporal",
+      "category": "forca",
+      "movementPattern": "Salto",
+      "difficultyLevel": "intermediario",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "leg_curl": {
+      "muscleGroup": "Posteriores de coxa",
+      "secondaryMuscles": [
+        "Gastrocnêmio"
+      ],
+      "equipment": "Máquina",
+      "category": "forca",
+      "movementPattern": "Flexão de joelho",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "nordic_curl": {
+      "muscleGroup": "Posteriores de coxa",
+      "secondaryMuscles": [
+        "Gastrocnêmio"
+      ],
+      "equipment": "Peso corporal",
+      "category": "forca",
+      "movementPattern": "Flexão de joelho",
+      "difficultyLevel": "avancado",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "romanian_deadlift": {
+      "muscleGroup": "Posteriores de coxa",
+      "secondaryMuscles": [
+        "Glúteos",
+        "Eretor da espinha"
+      ],
+      "equipment": "Barra",
+      "category": "forca",
+      "movementPattern": "Dobradiça de quadril",
+      "difficultyLevel": "intermediario",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "deadlift": {
+      "muscleGroup": "Glúteos",
+      "secondaryMuscles": [
+        "Posteriores de coxa",
+        "Eretor da espinha",
+        "Quadríceps",
+        "Trapézio"
+      ],
+      "equipment": "Barra",
+      "category": "forca",
+      "movementPattern": "Dobradiça de quadril",
+      "difficultyLevel": "intermediario",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "hip_thrust": {
+      "muscleGroup": "Glúteos",
+      "secondaryMuscles": [
+        "Posteriores de coxa"
+      ],
+      "equipment": "Barra",
+      "category": "forca",
+      "movementPattern": "Extensão de quadril",
+      "difficultyLevel": "intermediario",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "glute_bridge": {
+      "muscleGroup": "Glúteos",
+      "secondaryMuscles": [
+        "Posteriores de coxa"
+      ],
+      "equipment": "Peso corporal",
+      "category": "forca",
+      "movementPattern": "Extensão de quadril",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "cable_kickback": {
+      "muscleGroup": "Glúteos",
+      "secondaryMuscles": [
+        "Posteriores de coxa"
+      ],
+      "equipment": "Polia",
+      "category": "forca",
+      "movementPattern": "Extensão de quadril",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": true,
+      "tracksDuration": false
+    },
+    "kettlebell_swing": {
+      "muscleGroup": "Glúteos",
+      "secondaryMuscles": [
+        "Posteriores de coxa",
+        "Eretor da espinha"
+      ],
+      "equipment": "Kettlebell",
+      "category": "forca",
+      "movementPattern": "Dobradiça de quadril",
+      "difficultyLevel": "intermediario",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "hip_abduction": {
+      "muscleGroup": "Abdutores",
+      "secondaryMuscles": [
+        "Glúteos"
+      ],
+      "equipment": "Máquina",
+      "category": "forca",
+      "movementPattern": "Abdução de quadril",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "hip_90_90": {
+      "muscleGroup": "Glúteos",
+      "secondaryMuscles": [],
+      "equipment": "Peso corporal",
+      "category": "mobilidade",
+      "movementPattern": "Mobilidade",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "calf_raise": {
+      "muscleGroup": "Panturrilha",
+      "secondaryMuscles": [
+        "Sóleo"
+      ],
+      "equipment": "Máquina",
+      "category": "forca",
+      "movementPattern": "Flexão plantar",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "seated_calf_raise": {
+      "muscleGroup": "Panturrilha",
+      "secondaryMuscles": [
+        "Gastrocnêmio"
+      ],
+      "equipment": "Máquina",
+      "category": "forca",
+      "movementPattern": "Flexão plantar",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "ankle_mobility": {
+      "muscleGroup": "Panturrilha",
+      "secondaryMuscles": [],
+      "equipment": "Peso corporal",
+      "category": "mobilidade",
+      "movementPattern": "Mobilidade",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "crunch": {
+      "muscleGroup": "Abdômen",
+      "secondaryMuscles": [
+        "Oblíquos"
+      ],
+      "equipment": "Peso corporal",
+      "category": "forca",
+      "movementPattern": "Flexão de tronco",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "leg_raise": {
+      "muscleGroup": "Abdômen",
+      "secondaryMuscles": [
+        "Oblíquos"
+      ],
+      "equipment": "Peso corporal",
+      "category": "forca",
+      "movementPattern": "Flexão de quadril",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "plank": {
+      "muscleGroup": "Abdômen",
+      "secondaryMuscles": [
+        "Transverso",
+        "Oblíquos"
+      ],
+      "equipment": "Peso corporal",
+      "category": "forca",
+      "movementPattern": "Isometria de core",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": false,
+      "tracksDuration": true
+    },
+    "side_plank": {
+      "muscleGroup": "Abdômen",
+      "secondaryMuscles": [
+        "Oblíquos",
+        "Transverso"
+      ],
+      "equipment": "Peso corporal",
+      "category": "forca",
+      "movementPattern": "Isometria de core",
+      "difficultyLevel": "intermediario",
+      "isUnilateral": false,
+      "tracksDuration": true
+    },
+    "russian_twist": {
+      "muscleGroup": "Abdômen",
+      "secondaryMuscles": [
+        "Oblíquos"
+      ],
+      "equipment": "Peso corporal",
+      "category": "forca",
+      "movementPattern": "Rotação de tronco",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "mountain_climber": {
+      "muscleGroup": "Abdômen",
+      "secondaryMuscles": [
+        "Quadríceps",
+        "Deltoide anterior"
+      ],
+      "equipment": "Peso corporal",
+      "category": "hiit",
+      "movementPattern": "Cardio",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "burpee": {
+      "muscleGroup": "Corpo todo",
+      "secondaryMuscles": [
+        "Peitoral maior",
+        "Quadríceps",
+        "Tríceps braquial"
+      ],
+      "equipment": "Peso corporal",
+      "category": "hiit",
+      "movementPattern": "Cardio",
+      "difficultyLevel": "intermediario",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "bear_crawl": {
+      "muscleGroup": "Corpo todo",
+      "secondaryMuscles": [
+        "Deltoide anterior",
+        "Reto abdominal",
+        "Quadríceps"
+      ],
+      "equipment": "Peso corporal",
+      "category": "hiit",
+      "movementPattern": "Locomoção",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "jump_rope": {
+      "muscleGroup": "Corpo todo",
+      "secondaryMuscles": [
+        "Gastrocnêmio"
+      ],
+      "equipment": "Corda",
+      "category": "cardio",
+      "movementPattern": "Cardio",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "shadow_boxing": {
+      "muscleGroup": "Corpo todo",
+      "secondaryMuscles": [
+        "Deltoide anterior"
+      ],
+      "equipment": "Peso corporal",
+      "category": "cardio",
+      "movementPattern": "Cardio",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "med_ball_slam": {
+      "muscleGroup": "Corpo todo",
+      "secondaryMuscles": [
+        "Latíssimo do dorso",
+        "Reto abdominal"
+      ],
+      "equipment": "Bola medicinal",
+      "category": "forca",
+      "movementPattern": "Potência",
+      "difficultyLevel": "intermediario",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "farmer_walk": {
+      "muscleGroup": "Corpo todo",
+      "secondaryMuscles": [
+        "Trapézio",
+        "Braquiorradial",
+        "Oblíquos"
+      ],
+      "equipment": "Halteres",
+      "category": "forca",
+      "movementPattern": "Carregar",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "single_leg_balance": {
+      "muscleGroup": "Corpo todo",
+      "secondaryMuscles": [
+        "Abdutores",
+        "Gastrocnêmio"
+      ],
+      "equipment": "Peso corporal",
+      "category": "mobilidade",
+      "movementPattern": "Equilíbrio",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": true,
+      "tracksDuration": false
+    },
+    "heel_toe_walk": {
+      "muscleGroup": "Corpo todo",
+      "secondaryMuscles": [
+        "Gastrocnêmio"
+      ],
+      "equipment": "Peso corporal",
+      "category": "mobilidade",
+      "movementPattern": "Equilíbrio",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": false,
+      "tracksDuration": false
+    },
+    "hip_escape": {
+      "muscleGroup": "Corpo todo",
+      "secondaryMuscles": [
+        "Glúteos",
+        "Oblíquos"
+      ],
+      "equipment": "Peso corporal",
+      "category": "mobilidade",
+      "movementPattern": "Locomoção",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": false,
+      "tracksDuration": false
+    }
+  },
+  "novos": {
+    "close_grip_lat_pulldown": {
+      "name": "Puxada alta com triângulo",
+      "alternateName": "Puxada com pegada neutra fechada",
+      "description": "Puxada na polia alta com o triângulo (pegada neutra e fechada).",
+      "instructions": [
+        "Sente-se com as coxas presas no apoio e segure o triângulo.",
+        "Puxe o triângulo até a parte de cima do peito, levando os cotovelos para baixo.",
+        "Volte devagar até os braços quase estenderem."
+      ],
+      "muscleGroup": "Costas",
+      "secondaryMuscles": [
+        "Bíceps braquial",
+        "Romboides"
+      ],
+      "equipment": "Polia",
+      "category": "forca",
+      "movementPattern": "Puxar vertical",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": false,
+      "tracksDuration": false,
+      "videoUrl": "",
+      "revisaoProfissionalPendente": true
+    },
+    "cable_curl": {
+      "name": "Rosca direta na polia",
+      "alternateName": "Rosca na polia baixa",
+      "description": "Flexão de cotovelo na polia baixa, com barra reta ou W.",
+      "instructions": [
+        "Fique de frente para a polia baixa, com a barra nas mãos e os cotovelos junto ao corpo.",
+        "Flexione os cotovelos até a barra chegar perto dos ombros.",
+        "Desça devagar sem afastar os cotovelos do tronco."
+      ],
+      "muscleGroup": "Bíceps",
+      "secondaryMuscles": [
+        "Braquial",
+        "Braquiorradial"
+      ],
+      "equipment": "Polia",
+      "category": "forca",
+      "movementPattern": "Flexão de cotovelo",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": false,
+      "tracksDuration": false,
+      "videoUrl": "",
+      "revisaoProfissionalPendente": true
+    },
+    "machine_rear_delt_fly": {
+      "name": "Crucifixo inverso na máquina",
+      "alternateName": "Voador inverso",
+      "description": "Abertura dos braços para trás no voador, de frente para o encosto.",
+      "instructions": [
+        "Sente-se de frente para o encosto do voador e segure as alças na altura dos ombros.",
+        "Abra os braços para trás, com os cotovelos levemente flexionados.",
+        "Volte devagar até as mãos quase se encontrarem."
+      ],
+      "muscleGroup": "Ombros",
+      "secondaryMuscles": [
+        "Romboides",
+        "Trapézio"
+      ],
+      "equipment": "Máquina",
+      "category": "forca",
+      "movementPattern": "Abdução horizontal",
+      "difficultyLevel": "iniciante",
+      "isUnilateral": false,
+      "tracksDuration": false,
+      "videoUrl": "",
+      "revisaoProfissionalPendente": true
+    },
+    "cable_lateral_raise": {
+      "name": "Elevação lateral unilateral na polia",
+      "alternateName": "Elevação lateral no cabo",
+      "description": "Elevação lateral com um braço, na polia baixa.",
+      "instructions": [
+        "Fique de lado para a polia baixa e segure a alça com a mão do lado de fora.",
+        "Eleve o braço pela lateral até a altura do ombro, com o cotovelo levemente flexionado.",
+        "Desça devagar e repita; depois troque de lado."
+      ],
+      "muscleGroup": "Ombros",
+      "secondaryMuscles": [
+        "Trapézio"
+      ],
+      "equipment": "Polia",
+      "category": "forca",
+      "movementPattern": "Abdução de ombro",
+      "difficultyLevel": "intermediario",
+      "isUnilateral": true,
+      "tracksDuration": false,
+      "videoUrl": "",
+      "revisaoProfissionalPendente": true
+    }
+  }
+}

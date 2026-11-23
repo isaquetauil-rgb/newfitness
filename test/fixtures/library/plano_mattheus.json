@@ -1,0 +1,556 @@
+{
+  "plan": {
+    "studentUid": "aluno-teste",
+    "instructorUid": "personal-teste",
+    "title": "Treino Matheus",
+    "instructions": "Quinta e domingo: descanso.",
+    "workouts": [
+      {
+        "label": "Segunda – Costas e bíceps",
+        "exercises": [
+          {
+            "exerciseId": "lat_pulldown",
+            "exerciseName": "Puxada frontal",
+            "targetSets": 3,
+            "targetReps": "10",
+            "targetWeightsKg": "25",
+            "restSeconds": 90,
+            "notes": "Pegada aberta",
+            "replacedExerciseId": null,
+            "replacedExerciseName": null
+          },
+          {
+            "exerciseId": "pt_puxada_triangulo",
+            "exerciseName": "Puxada alta triângulo",
+            "targetSets": 3,
+            "targetReps": "10",
+            "targetWeightsKg": "25",
+            "restSeconds": 90,
+            "notes": null,
+            "replacedExerciseId": null,
+            "replacedExerciseName": null
+          },
+          {
+            "exerciseId": "seated_cable_row",
+            "exerciseName": "Remada baixa na polia",
+            "targetSets": 4,
+            "targetReps": "8-10",
+            "targetWeightsKg": "25",
+            "restSeconds": 90,
+            "notes": "Pirâmide: 25/30 kg",
+            "replacedExerciseId": null,
+            "replacedExerciseName": null
+          },
+          {
+            "exerciseId": "bent_over_row",
+            "exerciseName": "Remada curvada",
+            "targetSets": 3,
+            "targetReps": "10",
+            "targetWeightsKg": "10",
+            "restSeconds": 90,
+            "notes": "Carga em cada lado da barra. Pirâmide: 10/15 kg",
+            "replacedExerciseId": null,
+            "replacedExerciseName": null
+          },
+          {
+            "exerciseId": "pt_crucifixo_inverso_maquina",
+            "exerciseName": "Crucifixo inverso na máquina",
+            "targetSets": 3,
+            "targetReps": "12-15",
+            "targetWeightsKg": "10",
+            "restSeconds": 60,
+            "notes": "Pirâmide: 10/15 kg",
+            "replacedExerciseId": null,
+            "replacedExerciseName": null
+          },
+          {
+            "exerciseId": "hammer_curl",
+            "exerciseName": "Rosca martelo",
+            "targetSets": 3,
+            "targetReps": "12",
+            "targetWeightsKg": "8",
+            "restSeconds": 60,
+            "notes": "Unilateral. Pirâmide: 8/9 kg",
+            "replacedExerciseId": null,
+            "replacedExerciseName": null
+          },
+          {
+            "exerciseId": "pt_rosca_45",
+            "exerciseName": "Rosca 45° (banco inclinado)",
+            "targetSets": 3,
+            "targetReps": "10-12",
+            "targetWeightsKg": "7",
+            "restSeconds": 60,
+            "notes": null,
+            "replacedExerciseId": null,
+            "replacedExerciseName": null
+          },
+          {
+            "exerciseId": "pt_rosca_direta_polia",
+            "exerciseName": "Rosca direta na polia",
+            "targetSets": 3,
+            "targetReps": "8-12",
+            "targetWeightsKg": "20",
+            "restSeconds": 60,
+            "notes": null,
+            "replacedExerciseId": null,
+            "replacedExerciseName": null
+          },
+          {
+            "exerciseId": "pt_corrida_caminhada",
+            "exerciseName": "Corrida/caminhada",
+            "targetSets": 1,
+            "targetReps": "30-40 min",
+            "targetWeightsKg": "",
+            "restSeconds": 0,
+            "notes": "Por tempo",
+            "replacedExerciseId": null,
+            "replacedExerciseName": null
+          }
+        ]
+      },
+      {
+        "label": "Terça – Posterior e panturrilha",
+        "exercises": [
+          {
+            "exerciseId": "leg_curl",
+            "exerciseName": "Mesa flexora",
+            "targetSets": 3,
+            "targetReps": "8-12",
+            "targetWeightsKg": "20",
+            "restSeconds": 60,
+            "notes": "Pirâmide: 20/25/30 kg",
+            "replacedExerciseId": null,
+            "replacedExerciseName": null
+          },
+          {
+            "exerciseId": "romanian_deadlift",
+            "exerciseName": "Stiff (levantamento terra romeno)",
+            "targetSets": 3,
+            "targetReps": "8-12",
+            "targetWeightsKg": "15",
+            "restSeconds": 90,
+            "notes": "Com barra. Pirâmide: 15/20/25 kg",
+            "replacedExerciseId": null,
+            "replacedExerciseName": null
+          },
+          {
+            "exerciseId": "hip_abduction",
+            "exerciseName": "Cadeira abdutora",
+            "targetSets": 3,
+            "targetReps": "12-15",
+            "targetWeightsKg": "20",
+            "restSeconds": 60,
+            "notes": "Pirâmide: 20/25/30 kg",
+            "replacedExerciseId": null,
+            "replacedExerciseName": null
+          },
+          {
+            "exerciseId": "bulgarian_split_squat",
+            "exerciseName": "Agachamento búlgaro",
+            "targetSets": 3,
+            "targetReps": "12-15",
+            "targetWeightsKg": "12",
+            "restSeconds": 90,
+            "notes": "Pirâmide: 12/14 kg",
+            "replacedExerciseId": null,
+            "replacedExerciseName": null
+          },
+          {
+            "exerciseId": "pt_panturrilha_smith",
+            "exerciseName": "Panturrilha no Smith",
+            "targetSets": 2,
+            "targetReps": "20",
+            "targetWeightsKg": "10",
+            "restSeconds": 60,
+            "notes": null,
+            "replacedExerciseId": null,
+            "replacedExerciseName": null
+          },
+          {
+            "exerciseId": "seated_calf_raise",
+            "exerciseName": "Panturrilha sentado",
+            "targetSets": 3,
+            "targetReps": "12-15",
+            "targetWeightsKg": "25",
+            "restSeconds": 60,
+            "notes": "Pirâmide: 25/30/35 kg",
+            "replacedExerciseId": null,
+            "replacedExerciseName": null
+          }
+        ]
+      },
+      {
+        "label": "Quarta – Peitoral e tríceps",
+        "exercises": [
+          {
+            "exerciseId": "incline_dumbbell_press",
+            "exerciseName": "Supino inclinado com halteres",
+            "targetSets": 4,
+            "targetReps": "10-12",
+            "targetWeightsKg": "12",
+            "restSeconds": 90,
+            "notes": "Pirâmide: 12/12/14/16 kg",
+            "replacedExerciseId": null,
+            "replacedExerciseName": null
+          },
+          {
+            "exerciseId": "dumbbell_bench_press",
+            "exerciseName": "Supino reto com halteres",
+            "targetSets": 3,
+            "targetReps": "10-12",
+            "targetWeightsKg": "12",
+            "restSeconds": 90,
+            "notes": "Pirâmide: 12/14/16 kg",
+            "replacedExerciseId": null,
+            "replacedExerciseName": null
+          },
+          {
+            "exerciseId": "pec_deck",
+            "exerciseName": "Voador (peck deck)",
+            "targetSets": 3,
+            "targetReps": "12",
+            "targetWeightsKg": "30",
+            "restSeconds": 60,
+            "notes": "Voador na máquina. Pirâmide: 30/40/50 kg",
+            "replacedExerciseId": null,
+            "replacedExerciseName": null
+          },
+          {
+            "exerciseId": "cable_crossover",
+            "exerciseName": "Crossover na polia",
+            "targetSets": 3,
+            "targetReps": "12",
+            "targetWeightsKg": "5",
+            "restSeconds": 60,
+            "notes": "Polia baixa. Pirâmide: 5/7/10 kg",
+            "replacedExerciseId": null,
+            "replacedExerciseName": null
+          },
+          {
+            "exerciseId": "triceps_pushdown",
+            "exerciseName": "Tríceps na polia",
+            "targetSets": 3,
+            "targetReps": "10-12",
+            "targetWeightsKg": "15",
+            "restSeconds": 60,
+            "notes": "Com barra. Pirâmide: 15/20/25 kg",
+            "replacedExerciseId": null,
+            "replacedExerciseName": null
+          },
+          {
+            "exerciseId": "tricep_extension",
+            "exerciseName": "Tríceps testa",
+            "targetSets": 3,
+            "targetReps": "10-12",
+            "targetWeightsKg": "15",
+            "restSeconds": 60,
+            "notes": "Pirâmide: 15/20/25 kg",
+            "replacedExerciseId": null,
+            "replacedExerciseName": null
+          },
+          {
+            "exerciseId": "pt_triceps_frances_unilateral",
+            "exerciseName": "Tríceps francês unilateral",
+            "targetSets": 2,
+            "targetReps": "10-12",
+            "targetWeightsKg": "5",
+            "restSeconds": 60,
+            "notes": "Pirâmide: 5/10 kg",
+            "replacedExerciseId": null,
+            "replacedExerciseName": null
+          },
+          {
+            "exerciseId": "pt_corrida_caminhada",
+            "exerciseName": "Corrida/caminhada",
+            "targetSets": 1,
+            "targetReps": "25-30 min",
+            "targetWeightsKg": "",
+            "restSeconds": 0,
+            "notes": "Por tempo",
+            "replacedExerciseId": null,
+            "replacedExerciseName": null
+          }
+        ]
+      },
+      {
+        "label": "Sexta – Ombros",
+        "exercises": [
+          {
+            "exerciseId": "dumbbell_shoulder_press",
+            "exerciseName": "Desenvolvimento com halteres",
+            "targetSets": 3,
+            "targetReps": "8-12",
+            "targetWeightsKg": "12",
+            "restSeconds": 90,
+            "notes": null,
+            "replacedExerciseId": null,
+            "replacedExerciseName": null
+          },
+          {
+            "exerciseId": "lateral_raise",
+            "exerciseName": "Elevação lateral",
+            "targetSets": 3,
+            "targetReps": "10-15",
+            "targetWeightsKg": "5",
+            "restSeconds": 60,
+            "notes": null,
+            "replacedExerciseId": null,
+            "replacedExerciseName": null
+          },
+          {
+            "exerciseId": "pt_elevacao_lateral_polia",
+            "exerciseName": "Elevação lateral unilateral na polia",
+            "targetSets": 3,
+            "targetReps": "12-15",
+            "targetWeightsKg": "",
+            "restSeconds": 60,
+            "notes": "Carga livre",
+            "replacedExerciseId": null,
+            "replacedExerciseName": null
+          },
+          {
+            "exerciseId": "rear_delt_fly",
+            "exerciseName": "Crucifixo inverso",
+            "targetSets": 3,
+            "targetReps": "12-15",
+            "targetWeightsKg": "5",
+            "restSeconds": 60,
+            "notes": "Elevação posterior no banco 45°",
+            "replacedExerciseId": null,
+            "replacedExerciseName": null
+          },
+          {
+            "exerciseId": "pt_encolhimento",
+            "exerciseName": "Encolhimento com halteres",
+            "targetSets": 3,
+            "targetReps": "12-15",
+            "targetWeightsKg": "12",
+            "restSeconds": 60,
+            "notes": "Pirâmide: 12/14 kg",
+            "replacedExerciseId": null,
+            "replacedExerciseName": null
+          }
+        ]
+      },
+      {
+        "label": "Sábado – Quadríceps e panturrilha",
+        "exercises": [
+          {
+            "exerciseId": "squat",
+            "exerciseName": "Agachamento livre",
+            "targetSets": 0,
+            "targetReps": "",
+            "targetWeightsKg": "",
+            "restSeconds": 90,
+            "notes": "Em aberto: séries, repetições e carga você define no treino.",
+            "replacedExerciseId": null,
+            "replacedExerciseName": null
+          },
+          {
+            "exerciseId": "pt_agachamento_pendulo",
+            "exerciseName": "Agachamento pêndulo",
+            "targetSets": 0,
+            "targetReps": "",
+            "targetWeightsKg": "",
+            "restSeconds": 90,
+            "notes": "Em aberto: séries, repetições e carga você define no treino.",
+            "replacedExerciseId": null,
+            "replacedExerciseName": null
+          },
+          {
+            "exerciseId": "leg_extension",
+            "exerciseName": "Cadeira extensora",
+            "targetSets": 4,
+            "targetReps": "10",
+            "targetWeightsKg": "20",
+            "restSeconds": 60,
+            "notes": "Pirâmide: 20/30/40/50 kg",
+            "replacedExerciseId": null,
+            "replacedExerciseName": null
+          },
+          {
+            "exerciseId": "pt_cadeira_adutora",
+            "exerciseName": "Cadeira adutora",
+            "targetSets": 3,
+            "targetReps": "12-15",
+            "targetWeightsKg": "30",
+            "restSeconds": 60,
+            "notes": null,
+            "replacedExerciseId": null,
+            "replacedExerciseName": null
+          },
+          {
+            "exerciseId": "leg_press",
+            "exerciseName": "Leg press 45°",
+            "targetSets": 0,
+            "targetReps": "",
+            "targetWeightsKg": "",
+            "restSeconds": 90,
+            "notes": "Em aberto: séries, repetições e carga você define no treino.",
+            "replacedExerciseId": null,
+            "replacedExerciseName": null
+          },
+          {
+            "exerciseId": "pt_panturrilha_smith",
+            "exerciseName": "Panturrilha no Smith",
+            "targetSets": 2,
+            "targetReps": "20",
+            "targetWeightsKg": "10",
+            "restSeconds": 60,
+            "notes": null,
+            "replacedExerciseId": null,
+            "replacedExerciseName": null
+          },
+          {
+            "exerciseId": "seated_calf_raise",
+            "exerciseName": "Panturrilha sentado",
+            "targetSets": 3,
+            "targetReps": "12-15",
+            "targetWeightsKg": "25",
+            "restSeconds": 60,
+            "notes": "Pirâmide: 25/30/35 kg",
+            "replacedExerciseId": null,
+            "replacedExerciseName": null
+          },
+          {
+            "exerciseId": "pt_corrida_caminhada",
+            "exerciseName": "Corrida/caminhada",
+            "targetSets": 1,
+            "targetReps": "40-50 min",
+            "targetWeightsKg": "",
+            "restSeconds": 0,
+            "notes": "Por tempo",
+            "replacedExerciseId": null,
+            "replacedExerciseName": null
+          }
+        ]
+      }
+    ],
+    "createdAt": 1795437248457
+  },
+  "customExercises": {
+    "pt_agachamento_pendulo": {
+      "name": "Agachamento pêndulo",
+      "muscleGroup": "Quadríceps",
+      "equipment": "Máquina",
+      "description": "",
+      "videoUrl": "",
+      "secondaryMuscles": [
+        "Glúteos"
+      ],
+      "tracksDuration": false,
+      "category": ""
+    },
+    "pt_cadeira_adutora": {
+      "name": "Cadeira adutora",
+      "muscleGroup": "Adutores",
+      "equipment": "Máquina",
+      "description": "",
+      "videoUrl": "",
+      "secondaryMuscles": [],
+      "tracksDuration": false,
+      "category": ""
+    },
+    "pt_corrida_caminhada": {
+      "name": "Corrida/caminhada",
+      "muscleGroup": "Pernas",
+      "equipment": "Esteira",
+      "description": "",
+      "videoUrl": "",
+      "secondaryMuscles": [],
+      "tracksDuration": true,
+      "category": "Cardio"
+    },
+    "pt_crucifixo_inverso_maquina": {
+      "name": "Crucifixo inverso na máquina",
+      "muscleGroup": "Ombro",
+      "equipment": "Máquina",
+      "description": "",
+      "videoUrl": "",
+      "secondaryMuscles": [
+        "Trapézio"
+      ],
+      "tracksDuration": false,
+      "category": ""
+    },
+    "pt_elevacao_lateral_polia": {
+      "name": "Elevação lateral unilateral na polia",
+      "muscleGroup": "Ombro",
+      "equipment": "Polia",
+      "description": "",
+      "videoUrl": "",
+      "secondaryMuscles": [],
+      "tracksDuration": false,
+      "category": ""
+    },
+    "pt_encolhimento": {
+      "name": "Encolhimento com halteres",
+      "muscleGroup": "Trapézio",
+      "equipment": "Halteres",
+      "description": "",
+      "videoUrl": "",
+      "secondaryMuscles": [
+        "Antebraço"
+      ],
+      "tracksDuration": false,
+      "category": ""
+    },
+    "pt_panturrilha_smith": {
+      "name": "Panturrilha no Smith",
+      "muscleGroup": "Panturrilha",
+      "equipment": "Smith",
+      "description": "",
+      "videoUrl": "",
+      "secondaryMuscles": [],
+      "tracksDuration": false,
+      "category": ""
+    },
+    "pt_puxada_triangulo": {
+      "name": "Puxada alta triângulo",
+      "muscleGroup": "Costas",
+      "equipment": "Polia",
+      "description": "",
+      "videoUrl": "",
+      "secondaryMuscles": [
+        "Bíceps"
+      ],
+      "tracksDuration": false,
+      "category": ""
+    },
+    "pt_rosca_45": {
+      "name": "Rosca 45° (banco inclinado)",
+      "muscleGroup": "Bíceps",
+      "equipment": "Halteres",
+      "description": "",
+      "videoUrl": "",
+      "secondaryMuscles": [
+        "Antebraço"
+      ],
+      "tracksDuration": false,
+      "category": ""
+    },
+    "pt_rosca_direta_polia": {
+      "name": "Rosca direta na polia",
+      "muscleGroup": "Bíceps",
+      "equipment": "Polia",
+      "description": "",
+      "videoUrl": "",
+      "secondaryMuscles": [
+        "Antebraço"
+      ],
+      "tracksDuration": false,
+      "category": ""
+    },
+    "pt_triceps_frances_unilateral": {
+      "name": "Tríceps francês unilateral",
+      "muscleGroup": "Tríceps",
+      "equipment": "Halteres",
+      "description": "",
+      "videoUrl": "",
+      "secondaryMuscles": [],
+      "tracksDuration": false,
+      "category": ""
+    }
+  }
+}

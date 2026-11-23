@@ -57,7 +57,8 @@ void main() {
   });
 
   test('sugere o grupo pelo nome (exercise_similarity)', () {
-    expect(suggestMuscleGroup('Leg press antigo', _pool), 'Pernas');
+    // Biblioteca padronizada (Etapa 2): leg press é de quadríceps.
+    expect(suggestMuscleGroup('Leg press antigo', _pool), 'Quadríceps');
     expect(suggestMuscleGroup('Supino reto inclinado', _pool), 'Peito');
     expect(suggestMuscleGroup('Xyzw qwerty', _pool), isNull);
   });

@@ -37,6 +37,13 @@ void main() {
       final ids = sampleExercises.map((e) => e.id).toSet();
       expect(ids.length, sampleExercises.length);
       for (final e in sampleExercises) {
+        // Exercício novo, ainda sem vídeo conferido: fica sem link (não se
+        // inventa vídeo) e marcado para revisão profissional.
+        if (e.videoUrl.isEmpty) {
+          expect(e.professionalReviewPending, isTrue, reason: e.id);
+          expect(e.instructions, isNotEmpty, reason: e.id);
+          continue;
+        }
         expect(
           RegExp(r'^https://www\.youtube\.com/watch\?v=[\w-]{11}$')
               .hasMatch(e.videoUrl),

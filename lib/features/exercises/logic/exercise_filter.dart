@@ -33,13 +33,21 @@ class ExerciseFilter {
       objectives.length +
       categories.length;
 
+  /// Grupos, equipamentos e categorias são comparados já padronizados: um
+  /// exercício antigo com "Pernas" aparece ao filtrar por Quadríceps,
+  /// Posteriores de coxa etc.; "Peso do corpo" aparece em "Peso corporal".
   bool matches(Exercise exercise) {
-    if (muscleGroups.isNotEmpty &&
-        !muscleGroups.contains(exercise.muscleGroup)) {
-      return false;
+    if (muscleGroups.isNotEmpty) {
+      final wanted = {for (final g in muscleGroups) ...canonicalGroupsOf(g)};
+      if (!canonicalGroupsOf(exercise.muscleGroup).any(wanted.contains)) {
+        return false;
+      }
     }
-    if (equipment.isNotEmpty && !equipment.contains(exercise.equipment)) {
-      return false;
+    if (equipment.isNotEmpty) {
+      final wanted = {for (final e in equipment) canonicalEquipmentName(e)};
+      if (!wanted.contains(canonicalEquipmentName(exercise.equipment))) {
+        return false;
+      }
     }
     if (difficultyLevels.isNotEmpty &&
         !difficultyLevels.contains(exercise.difficultyLevel)) {
@@ -49,8 +57,11 @@ class ExerciseFilter {
         !exercise.objectives.any(objectives.contains)) {
       return false;
     }
-    if (categories.isNotEmpty && !categories.contains(exercise.category)) {
-      return false;
+    if (categories.isNotEmpty) {
+      final wanted = {for (final c in categories) canonicalCategory(c)};
+      if (!wanted.contains(canonicalCategory(exercise.category))) {
+        return false;
+      }
     }
     return true;
   }

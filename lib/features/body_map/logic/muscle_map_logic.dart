@@ -110,6 +110,24 @@ const Map<String, List<MuscleRegion>> _groupRegions = {
   'gluteo': [MuscleRegion.gluteal],
   'quadriceps': [MuscleRegion.quadriceps],
   'posterior de coxa': [MuscleRegion.hamstring],
+  'posteriores de coxa': [MuscleRegion.hamstring],
+  'abdutores': [MuscleRegion.gluteal],
+  // Músculos da taxonomia padronizada (secundários e detalhe do principal).
+  'peitoral maior': [MuscleRegion.chest],
+  'latissimo do dorso': [MuscleRegion.upperBack],
+  'romboides': [MuscleRegion.rhomboids],
+  'eretor da espinha': [MuscleRegion.lowerBack],
+  'deltoide anterior': [MuscleRegion.deltoids],
+  'deltoide lateral': [MuscleRegion.deltoids],
+  'deltoide posterior': [MuscleRegion.deltoids],
+  'biceps braquial': [MuscleRegion.biceps],
+  'braquial': [MuscleRegion.biceps],
+  'braquiorradial': [MuscleRegion.forearm],
+  'triceps braquial': [MuscleRegion.triceps],
+  'gastrocnemio': [MuscleRegion.calves],
+  'soleo': [MuscleRegion.calves],
+  'reto abdominal': [MuscleRegion.abs],
+  'transverso': [MuscleRegion.abs],
   'posteriores': [MuscleRegion.hamstring],
   'isquiotibiais': [MuscleRegion.hamstring],
   'adutores': [MuscleRegion.adductors],
@@ -202,6 +220,8 @@ List<MuscleRegion> regionsForName(String name) =>
 /// as regiões principais e 0,5 para cada secundária (a região conta pelo
 /// maior dos dois, sem somar).
 Map<MuscleRegion, double> regionWeights(Exercise exercise) {
+  // Cardio, mobilidade e alongamento não são séries de musculação.
+  if (isNonStrengthCategory(exercise.category)) return const {};
   final primary =
       _exerciseRegions[exercise.id] ?? regionsForName(exercise.muscleGroup);
   final weights = <MuscleRegion, double>{};

@@ -123,8 +123,13 @@ void main() {
       expect(regionsForName('desconhecido'), isEmpty);
     });
 
-    test('todo exercício da biblioteca cai em pelo menos uma região', () {
+    test('todo exercício de força da biblioteca cai em alguma região', () {
       for (final e in [...sampleExercises, ...sampleFunctionalExercises]) {
+        // Cardio, mobilidade e alongamento não contam séries no mapa.
+        if (isNonStrengthCategory(e.category)) {
+          expect(regionWeights(e), isEmpty, reason: e.id);
+          continue;
+        }
         expect(regionWeights(e), isNotEmpty, reason: '${e.id} sem região');
       }
     });

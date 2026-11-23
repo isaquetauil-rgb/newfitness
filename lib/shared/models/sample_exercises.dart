@@ -1,3 +1,4 @@
+import 'sample_exercise_corrections.dart';
 import 'exercise.dart';
 import 'sample_functional_exercises.dart';
 
@@ -17,7 +18,14 @@ import 'sample_functional_exercises.dart';
 /// `incline_dumbbell_press`), agachamento/leg press/afundo e puxada/remada/
 /// barra fixa foram curados manualmente como exemplo; o resto da biblioteca
 /// já participa do cálculo automático mesmo sem curadoria.
+/// Lista padrão já com as correções da Etapa 2 (ver
+/// sample_exercise_corrections.dart) e os exercícios gerais novos.
 final List<Exercise> sampleExercises = [
+  for (final e in _baseSampleExercises) applySampleCorrection(e),
+  ...stage2NewExercises,
+];
+
+final List<Exercise> _baseSampleExercises = [
   Exercise(
     id: 'squat',
     name: 'Agachamento livre',
