@@ -25,8 +25,8 @@ class ExerciseAlternative {
 /// 1. Curadoria manual: os ids em `target.alternativeExerciseIds` sempre
 ///    aparecem primeiro, com pontuação máxima.
 /// 2. Similaridade estruturada: para completar até [limit], o restante do
-///    [pool] é pontuado por grupo muscular, músculos secundários, padrão de
-///    movimento, equipamento, nível de dificuldade e objetivo (ver
+///    [pool] é pontuado por músculo principal, padrão de movimento,
+///    equipamento, dificuldade e músculos secundários em comum (ver
 ///    [_scoreSimilarity]) e ordenado do mais parecido para o menos.
 ///
 /// Arquitetura pensada para depois receber uma 3ª camada opcional (IA): uma
@@ -53,7 +53,10 @@ List<ExerciseAlternative> findExerciseAlternatives(
       ExerciseAlternative(
         exercise: candidate,
         score: 1.0,
-        reason: 'Selecionado como substituto deste exercício',
+        reason: candidate.equipment.trim().isEmpty
+            ? 'escolhido na ficha'
+            : 'escolhido na ficha · '
+                  '${canonicalEquipmentName(candidate.equipment).toLowerCase()}',
         curated: true,
       ),
     );
@@ -88,83 +91,91 @@ List<Exercise> findExerciseVariations(Exercise target, List<Exercise> pool) {
   ];
 }
 
+/// Pontuação de [candidate] como substituto de [target], na ordem de
+/// prioridade pedida: mesmo músculo principal (0,35), mesmo padrão de
+/// movimento (0,25), mesmo equipamento (0,15), dificuldade parecida (até
+/// 0,10) e músculos secundários em comum (até 0,15). Grupos, equipamentos e
+/// músculos são comparados já padronizados (nomes antigos valem).
+///
+/// O motivo é curto, para caber numa linha: o critério mais forte que bateu
+/// e o equipamento do candidato (ex.: "mesmo padrão: empurrar horizontal ·
+/// halteres").
 (double, String) _scoreSimilarity(Exercise target, Exercise candidate) {
   double score = 0;
-  final reasons = <String>[];
 
-  final sameMuscleGroup =
-      target.muscleGroup.isNotEmpty &&
-      _normalized(target.muscleGroup) == _normalized(candidate.muscleGroup);
-  if (sameMuscleGroup) {
-    score += 0.4;
-    reasons.add('mesmo grupo muscular');
-  }
+  final targetGroups = canonicalGroupsOf(target.muscleGroup);
+  final candidateGroups = canonicalGroupsOf(candidate.muscleGroup);
+  final sameMuscle =
+      targetGroups.isNotEmpty && targetGroups.any(candidateGroups.contains);
+  if (sameMuscle) score += 0.35;
 
-  final secondaryOverlap = _overlapRatio(
-    target.secondaryMuscles,
-    candidate.secondaryMuscles,
-  );
-  if (secondaryOverlap > 0) {
-    score += 0.2 * secondaryOverlap;
-    reasons.add('músculos secundários parecidos');
-  } else if (!sameMuscleGroup &&
-      _normalized(target.muscleGroup).isNotEmpty &&
-      candidate.secondaryMuscles.any(
-        (m) => _normalized(m) == _normalized(target.muscleGroup),
-      )) {
-    // Ex: alvo é "Tríceps" isolado, candidato é "Peito" com tríceps como
-    // secundário (supino fechado) — ainda vale como alternativa parcial.
-    score += 0.15;
-    reasons.add('ativa o mesmo músculo como secundário');
-  }
-
-  final sameMovementPattern =
-      target.movementPattern.isNotEmpty &&
+  final samePattern =
+      target.movementPattern.trim().isNotEmpty &&
       _normalized(target.movementPattern) ==
           _normalized(candidate.movementPattern);
-  if (sameMovementPattern) {
-    score += 0.2;
-    reasons.add('mesmo padrão de movimento');
-  }
+  if (samePattern) score += 0.25;
 
+  final targetEquipment = canonicalEquipmentName(target.equipment);
+  final candidateEquipment = canonicalEquipmentName(candidate.equipment);
   final sameEquipment =
-      target.equipment.isNotEmpty &&
-      _normalized(target.equipment) == _normalized(candidate.equipment);
-  if (sameEquipment) {
-    score += 0.1;
-    reasons.add('mesmo equipamento');
-  }
+      targetEquipment.isNotEmpty && targetEquipment == candidateEquipment;
+  if (sameEquipment) score += 0.15;
 
-  final objectiveOverlap = _overlapRatio(
-    target.objectives,
-    candidate.objectives,
+  final levelGap = _difficultyGap(
+    target.difficultyLevel,
+    candidate.difficultyLevel,
   );
-  if (objectiveOverlap > 0) {
-    score += 0.1 * objectiveOverlap;
-    reasons.add('mesmo objetivo');
+  if (levelGap == 0) {
+    score += 0.10;
+  } else if (levelGap == 1) {
+    score += 0.05;
   }
 
-  if (target.difficultyLevel.isNotEmpty &&
-      target.difficultyLevel == candidate.difficultyLevel) {
-    score += 0.1;
-    reasons.add('mesmo nível de dificuldade');
+  final targetMuscles = musclesWorkedBy('', target.secondaryMuscles);
+  final candidateMuscles = musclesWorkedBy('', candidate.secondaryMuscles);
+  final shared = targetMuscles.intersection(candidateMuscles);
+  if (shared.isNotEmpty) {
+    score +=
+        0.15 * shared.length / targetMuscles.union(candidateMuscles).length;
+  } else if (!sameMuscle &&
+      musclesWorkedBy(
+        target.muscleGroup,
+        const [],
+      ).any(musclesWorkedBy('', candidate.secondaryMuscles).contains)) {
+    // Ex.: alvo é "Tríceps" isolado, candidato é "Peito" com tríceps como
+    // secundário (supino fechado) — ainda vale como alternativa parcial.
+    score += 0.10;
+  }
+
+  final parts = <String>[];
+  if (samePattern) {
+    parts.add(
+      'mesmo padrão: ${candidate.movementPattern.trim().toLowerCase()}',
+    );
+  } else if (sameMuscle) {
+    parts.add('mesmo músculo: ${candidateGroups.first.toLowerCase()}');
+  } else if (shared.isNotEmpty) {
+    parts.add('músculos em comum: ${shared.first.toLowerCase()}');
+  } else {
+    parts.add('alternativa parecida');
+  }
+  if (candidateEquipment.isNotEmpty) {
+    parts.add(
+      sameEquipment ? 'mesmo equipamento' : candidateEquipment.toLowerCase(),
+    );
   }
 
   if (score > 1) score = 1;
-  final reason = reasons.isEmpty
-      ? 'Possível alternativa'
-      : reasons.first[0].toUpperCase() + reasons.first.substring(1);
-  return (score, reason);
+  return (score, parts.join(' · '));
 }
 
-double _overlapRatio(List<String> a, List<String> b) {
-  if (a.isEmpty || b.isEmpty) return 0;
-  final setA = a.map(_normalized).toSet();
-  final setB = b.map(_normalized).toSet();
-  final intersection = setA.intersection(setB).length;
-  if (intersection == 0) return 0;
-  final union = setA.union(setB).length;
-  return intersection / union;
+/// 0 = mesmo nível, 1 = vizinho, 2 = iniciante × avançado; `null` quando um
+/// dos dois não tem nível.
+int? _difficultyGap(String a, String b) {
+  final ia = exerciseDifficultyLevels.indexOf(a);
+  final ib = exerciseDifficultyLevels.indexOf(b);
+  if (ia < 0 || ib < 0) return null;
+  return (ia - ib).abs();
 }
 
 String _normalized(String value) => value.trim().toLowerCase();

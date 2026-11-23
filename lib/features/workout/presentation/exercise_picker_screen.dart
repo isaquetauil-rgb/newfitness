@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'package:newfitness/features/auth/logic/auth_provider.dart';
 import 'package:newfitness/features/exercises/logic/exercise_filter.dart';
+import 'package:newfitness/features/exercises/logic/exercise_search.dart';
 import 'package:newfitness/features/exercises/logic/exercise_provider.dart';
 import 'package:newfitness/features/exercises/logic/exercise_taxonomy_provider.dart';
 import 'package:newfitness/features/exercises/presentation/exercise_filter_sheet.dart';
@@ -23,8 +24,19 @@ class ExercisePickerScreen extends StatefulWidget {
 }
 
 class _ExercisePickerScreenState extends State<ExercisePickerScreen> {
-  String _query = '';
+  final _searchCtrl = TextEditingController();
   ExerciseFilter _filter = const ExerciseFilter();
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  void _clearAll() {
+    _searchCtrl.clear();
+    setState(() => _filter = const ExerciseFilter());
+  }
 
   // Guardado entre builds: cada tecla na busca chama setState, e recriar o
   // stream a cada build fazia "Meus exercícios" sumir e voltar (piscar)
@@ -79,10 +91,14 @@ class _ExercisePickerScreenState extends State<ExercisePickerScreen> {
     return StreamBuilder<List<Exercise>>(
       stream: _customFor(customLibraryUid),
       builder: (context, snapshot) {
+        final custom = snapshot.data ?? const <Exercise>[];
         return _buildScaffold(
           context,
-          custom: snapshot.data ?? const [],
-          global: globalExercises,
+          custom: custom,
+          // O personal dono não vê a versão geral do que ele já tem.
+          global: customLibraryUid == profile?.uid
+              ? hideGeneralDuplicates(globalExercises, custom)
+              : globalExercises,
         );
       },
     );
@@ -93,11 +109,8 @@ class _ExercisePickerScreenState extends State<ExercisePickerScreen> {
     required List<Exercise> custom,
     required List<Exercise> global,
   }) {
-    bool matches(Exercise e) =>
-        e.name.toLowerCase().contains(_query.toLowerCase()) &&
-        _filter.matches(e);
-    final filteredCustom = custom.where(matches).toList();
-    final filteredGlobal = global.where(matches).toList();
+    final filteredCustom = custom.where(_filter.matches).toList();
+    final filteredGlobal = global.where(_filter.matches).toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -120,12 +133,19 @@ class _ExercisePickerScreenState extends State<ExercisePickerScreen> {
             padding: const EdgeInsets.all(16),
             child: TextField(
               autofocus: true,
+              controller: _searchCtrl,
               decoration: const InputDecoration(
-                hintText: 'Buscar exercício...',
+                hintText: 'Buscar por nome, apelido ou tag...',
                 prefixIcon: Icon(Icons.search),
               ),
-              onChanged: (v) => setState(() => _query = v),
+              onChanged: (v) =>
+                  setState(() => _filter = _filter.copyWith(query: v)),
             ),
+          ),
+          ExerciseResultsBar(
+            count: filteredCustom.length + filteredGlobal.length,
+            canClear: !_filter.isEmpty,
+            onClear: _clearAll,
           ),
           Expanded(
             child: ListView(

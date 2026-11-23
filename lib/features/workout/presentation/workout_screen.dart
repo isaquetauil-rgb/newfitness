@@ -553,9 +553,13 @@ class _ExerciseCard extends StatelessWidget {
 
   Future<void> _swapExercise(BuildContext context) async {
     final provider = context.read<WorkoutProvider>();
-    final pool = await loadExercisePool(context);
+    // Para achar o exercício atual, a lista completa; para as opções, sem
+    // as versões gerais que o personal dono já tem como próprias.
+    final all = await loadExercisePool(context);
     if (!context.mounted) return;
-    final current = pool.firstWhere(
+    final pool = await loadExercisePool(context, hideOwnerDuplicates: true);
+    if (!context.mounted) return;
+    final current = all.firstWhere(
       (e) => e.id == exercise.exerciseId,
       orElse: () => Exercise(
         id: exercise.exerciseId,

@@ -8,6 +8,7 @@ import 'package:newfitness/features/auth/logic/auth_provider.dart';
 import 'package:newfitness/features/instructor/logic/custom_exercise_provider.dart';
 import 'package:newfitness/shared/models/user_profile.dart';
 import 'package:newfitness/features/exercises/logic/exercise_filter.dart';
+import 'package:newfitness/features/exercises/logic/exercise_search.dart';
 import 'package:newfitness/features/exercises/logic/exercise_provider.dart';
 import 'package:newfitness/features/exercises/logic/exercise_taxonomy_provider.dart';
 import 'package:newfitness/features/exercises/presentation/exercise_filter_sheet.dart';
@@ -22,9 +23,19 @@ class ExerciseLibraryScreen extends StatefulWidget {
 }
 
 class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
-  String _query = '';
-  String? _muscleFilter;
+  final _searchCtrl = TextEditingController();
   ExerciseFilter _filter = const ExerciseFilter();
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  void _clearAll() {
+    _searchCtrl.clear();
+    setState(() => _filter = const ExerciseFilter());
+  }
 
   // Biblioteca privada do instrutor (a própria, se instrutor; a do
   // instrutor vinculado, se aluno) — mesmo critério do seletor de
@@ -63,12 +74,19 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
     if (customLibraryUid == null) return _buildScreen(context, const []);
     return StreamBuilder<List<Exercise>>(
       stream: _customFor(customLibraryUid),
-      builder: (context, snapshot) =>
-          _buildScreen(context, snapshot.data ?? const []),
+      builder: (context, snapshot) => _buildScreen(
+        context,
+        snapshot.data ?? const [],
+        isOwner: customLibraryUid == profile?.uid,
+      ),
     );
   }
 
-  Widget _buildScreen(BuildContext context, List<Exercise> custom) {
+  Widget _buildScreen(
+    BuildContext context,
+    List<Exercise> custom, {
+    bool isOwner = false,
+  }) {
     final provider = context.watch<ExerciseProvider>();
     final equipmentOptions = [
       for (final e in context.watch<ExerciseTaxonomyProvider>().equipment)
@@ -76,25 +94,22 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
     ];
     // Usa a biblioteca do Firestore; se ainda estiver vazia (nenhum dado
     // cadastrado), cai para a lista de exemplo local.
+    final general = provider.exercises.isNotEmpty
+        ? provider.exercises
+        : sampleExercises;
+    // O personal dono não vê a versão geral do que ele já tem como próprio.
     final all = [
       ...custom,
-      ...(provider.exercises.isNotEmpty ? provider.exercises : sampleExercises),
+      ...(isOwner ? hideGeneralDuplicates(general, custom) : general),
     ];
     final customIds = {for (final e in custom) e.id};
 
-    final muscleGroups = [
-      'Todos',
-      ...{for (final e in all) e.muscleGroup},
-    ];
+    const muscleGroups = ['Todos', ...canonicalMuscleGroups];
+    final quickGroup = _filter.muscleGroups.length == 1
+        ? _filter.muscleGroups.first
+        : (_filter.muscleGroups.isEmpty ? 'Todos' : null);
 
-    final filtered = all.where((e) {
-      final matchesQuery = e.name.toLowerCase().contains(_query.toLowerCase());
-      final matchesMuscle =
-          _muscleFilter == null ||
-          _muscleFilter == 'Todos' ||
-          e.muscleGroup == _muscleFilter;
-      return matchesQuery && matchesMuscle && _filter.matches(e);
-    }).toList();
+    final filtered = all.where(_filter.matches).toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -117,11 +132,13 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
             child: TextField(
+              controller: _searchCtrl,
               decoration: const InputDecoration(
-                hintText: 'Buscar exercício...',
+                hintText: 'Buscar por nome, apelido ou tag...',
                 prefixIcon: Icon(Icons.search),
               ),
-              onChanged: (v) => setState(() => _query = v),
+              onChanged: (v) =>
+                  setState(() => _filter = _filter.copyWith(query: v)),
             ),
           ),
           SizedBox(
@@ -133,16 +150,24 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
               separatorBuilder: (_, _) => const SizedBox(width: 8),
               itemBuilder: (context, i) {
                 final group = muscleGroups[i];
-                final selected = (_muscleFilter ?? 'Todos') == group;
                 return ChoiceChip(
                   label: Text(group),
-                  selected: selected,
-                  onSelected: (_) => setState(() => _muscleFilter = group),
+                  selected: quickGroup == group,
+                  onSelected: (_) => setState(
+                    () => _filter = _filter.copyWith(
+                      muscleGroups: group == 'Todos' ? {} : {group},
+                    ),
+                  ),
                 );
               },
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
+          ExerciseResultsBar(
+            count: filtered.length,
+            canClear: !_filter.isEmpty,
+            onClear: _clearAll,
+          ),
           Expanded(
             child: filtered.isEmpty
                 ? const Center(child: Text('Nenhum exercício encontrado'))

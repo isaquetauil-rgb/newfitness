@@ -157,9 +157,13 @@ class _PlanEditorScreenState extends State<PlanEditorScreen> {
 
   Future<void> _swapExercise(int subWorkoutIndex, int exerciseIndex) async {
     final planExercise = _subWorkouts[subWorkoutIndex].exercises[exerciseIndex];
-    final pool = await loadExercisePool(context);
+    // Para achar o exercício atual, a lista completa; para as opções, sem
+    // as versões gerais que o personal dono já tem como próprias.
+    final all = await loadExercisePool(context);
     if (!mounted) return;
-    final current = pool.firstWhere(
+    final pool = await loadExercisePool(context, hideOwnerDuplicates: true);
+    if (!mounted) return;
+    final current = all.firstWhere(
       (e) => e.id == planExercise.exerciseId,
       orElse: () => Exercise(
         id: planExercise.exerciseId,

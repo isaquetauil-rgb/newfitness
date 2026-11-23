@@ -3,11 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:newfitness/features/exercises/logic/exercise_filter.dart';
 import 'package:newfitness/shared/models/exercise.dart';
 
-/// Abre a folha de filtros avançados (equipamento, dificuldade, objetivo,
-/// categoria) usada tanto na biblioteca de exercícios quanto no seletor de
-/// exercício ao montar um treino/ficha. Filtro por grupo muscular fica fora
-/// daqui de propósito — já existe como chips de acesso rápido na tela
-/// (`ExerciseLibraryScreen`).
+/// Abre a folha de filtros (grupo, músculo, equipamento, dificuldade,
+/// categoria, unilateral e objetivo) usada tanto na biblioteca de exercícios
+/// quanto no seletor de exercício ao montar um treino/ficha. A busca por nome
+/// fica no campo da própria tela e é mantida ao aplicar os filtros.
 Future<ExerciseFilter?> showExerciseFilterSheet(
   BuildContext context, {
   required ExerciseFilter current,
@@ -40,6 +39,9 @@ class _ExerciseFilterSheet extends StatefulWidget {
 }
 
 class _ExerciseFilterSheetState extends State<_ExerciseFilterSheet> {
+  late Set<String> _groups = {...widget.initial.muscleGroups};
+  late Set<String> _muscles = {...widget.initial.muscles};
+  late bool? _unilateral = widget.initial.unilateral;
   late Set<String> _equipment = {...widget.initial.equipment};
   late Set<String> _difficulty = {...widget.initial.difficultyLevels};
   late Set<String> _objectives = {...widget.initial.objectives};
@@ -70,6 +72,9 @@ class _ExerciseFilterSheetState extends State<_ExerciseFilterSheet> {
                 ),
                 TextButton(
                   onPressed: () => setState(() {
+                    _groups = {};
+                    _muscles = {};
+                    _unilateral = null;
                     _equipment = {};
                     _difficulty = {};
                     _objectives = {};
@@ -85,6 +90,18 @@ class _ExerciseFilterSheetState extends State<_ExerciseFilterSheet> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    _FilterSection(
+                      label: 'Grupo muscular',
+                      options: canonicalMuscleGroups,
+                      selected: _groups,
+                      onToggle: (v) => _toggle(_groups, v),
+                    ),
+                    _FilterSection(
+                      label: 'Músculo (principal ou secundário)',
+                      options: canonicalMuscles,
+                      selected: _muscles,
+                      onToggle: (v) => _toggle(_muscles, v),
+                    ),
                     _FilterSection(
                       label: 'Categoria',
                       options: exerciseCategories,
@@ -106,6 +123,20 @@ class _ExerciseFilterSheetState extends State<_ExerciseFilterSheet> {
                       onToggle: (v) => _toggle(_difficulty, v),
                     ),
                     _FilterSection(
+                      label: 'Lado',
+                      options: const ['sim', 'nao'],
+                      optionLabel: (v) =>
+                          v == 'sim' ? 'Só unilaterais' : 'Só bilaterais',
+                      selected: {
+                        if (_unilateral == true) 'sim',
+                        if (_unilateral == false) 'nao',
+                      },
+                      onToggle: (v) => setState(() {
+                        final value = v == 'sim';
+                        _unilateral = _unilateral == value ? null : value;
+                      }),
+                    ),
+                    _FilterSection(
                       label: 'Objetivo',
                       options: exerciseObjectiveSuggestions,
                       selected: _objectives,
@@ -120,11 +151,14 @@ class _ExerciseFilterSheetState extends State<_ExerciseFilterSheet> {
               onPressed: () => Navigator.pop(
                 context,
                 ExerciseFilter(
-                  muscleGroups: widget.initial.muscleGroups,
+                  muscleGroups: _groups,
+                  muscles: _muscles,
                   equipment: _equipment,
                   difficultyLevels: _difficulty,
                   objectives: _objectives,
                   categories: _categories,
+                  unilateral: _unilateral,
+                  query: widget.initial.query,
                 ),
               ),
               child: const Text('Aplicar filtros'),
@@ -173,6 +207,44 @@ class _FilterSection extends StatelessWidget {
                 ),
             ],
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Linha com o número de resultados e o botão "Limpar tudo" (busca e
+/// filtros), usada na biblioteca e no seletor de exercícios.
+class ExerciseResultsBar extends StatelessWidget {
+  const ExerciseResultsBar({
+    super.key,
+    required this.count,
+    required this.canClear,
+    required this.onClear,
+  });
+
+  final int count;
+  final bool canClear;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 8, 0),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              count == 1 ? '1 exercício' : '$count exercícios',
+              style: TextStyle(color: Colors.grey.shade700),
+            ),
+          ),
+          if (canClear)
+            TextButton.icon(
+              onPressed: onClear,
+              icon: const Icon(Icons.clear_all, size: 18),
+              label: const Text('Limpar tudo'),
+            ),
         ],
       ),
     );

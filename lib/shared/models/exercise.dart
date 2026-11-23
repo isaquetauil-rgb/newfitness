@@ -202,6 +202,12 @@ class Exercise {
   /// profissional com CREF. Campo opcional, só gravado quando `true`.
   final bool professionalReviewPending;
 
+  /// Só em exercício do personal (users/{uid}/custom_exercises): id do
+  /// exercício geral equivalente. Na biblioteca e no seletor do próprio
+  /// personal, a versão geral fica escondida (ele usa a dele). Campo
+  /// opcional, só gravado quando preenchido.
+  final String baseExerciseId;
+
   const Exercise({
     required this.id,
     required this.name,
@@ -239,6 +245,7 @@ class Exercise {
     this.alternativeExerciseIds = const [],
     this.archived = false,
     this.professionalReviewPending = false,
+    this.baseExerciseId = '',
   });
 
   factory Exercise.fromMap(String id, Map<String, dynamic> map) {
@@ -284,6 +291,7 @@ class Exercise {
       alternativeExerciseIds: stringList('alternativeExerciseIds'),
       archived: map['archived'] == true,
       professionalReviewPending: map['professionalReviewPending'] == true,
+      baseExerciseId: map['baseExerciseId'] as String? ?? '',
     );
   }
 
@@ -324,6 +332,7 @@ class Exercise {
       'alternativeExerciseIds': alternativeExerciseIds,
       if (archived) 'archived': true,
       if (professionalReviewPending) 'professionalReviewPending': true,
+      if (baseExerciseId.isNotEmpty) 'baseExerciseId': baseExerciseId,
     };
   }
 }

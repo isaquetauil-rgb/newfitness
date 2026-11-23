@@ -233,6 +233,10 @@ class ExerciseFormController extends ChangeNotifier {
       objectives: _splitCsv(objectivesCtrl.text),
       variationExerciseIds: variationIds,
       alternativeExerciseIds: alternativeIds,
+      // Campos que o formulário não mostra: editar não pode apagá-los.
+      archived: existing?.archived ?? false,
+      professionalReviewPending: existing?.professionalReviewPending ?? false,
+      baseExerciseId: existing?.baseExerciseId ?? '',
     );
   }
 

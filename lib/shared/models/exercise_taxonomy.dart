@@ -182,3 +182,42 @@ bool isNonStrengthCategory(String category) {
   final c = canonicalCategory(category);
   return c == 'cardio' || c == 'mobilidade' || c == 'alongamento';
 }
+
+/// Músculos principais de cada grupo — usado pelo filtro "Músculo": um
+/// exercício aparece ao filtrar por um músculo quando ele é o principal (pelo
+/// grupo) ou um dos secundários.
+const Map<String, List<String>> primaryMusclesOfGroup = {
+  'Peito': ['Peitoral maior'],
+  'Costas': ['Latíssimo do dorso', 'Romboides', 'Trapézio'],
+  'Ombros': ['Deltoide anterior', 'Deltoide lateral', 'Deltoide posterior'],
+  'Bíceps': ['Bíceps braquial', 'Braquial'],
+  'Tríceps': ['Tríceps braquial'],
+  'Antebraço': ['Braquiorradial'],
+  'Quadríceps': ['Quadríceps'],
+  'Posteriores de coxa': ['Posteriores de coxa'],
+  'Glúteos': ['Glúteos'],
+  'Adutores': ['Adutores'],
+  'Abdutores': ['Abdutores'],
+  'Panturrilha': ['Gastrocnêmio', 'Sóleo'],
+  'Abdômen': ['Reto abdominal', 'Oblíquos', 'Transverso'],
+  'Corpo todo': [],
+};
+
+/// Músculos (principais e secundários) que um exercício trabalha, já
+/// padronizados. Nomes antigos de grupo ("Pernas", "Braço") são entendidos.
+Set<String> musclesWorkedBy(String muscleGroup, List<String> secondary) => {
+  for (final g in canonicalGroupsOf(muscleGroup)) ...?primaryMusclesOfGroup[g],
+  for (final m in secondary) _canonicalMuscle(m),
+};
+
+String _canonicalMuscle(String raw) {
+  final k = _key(raw);
+  for (final m in canonicalMuscles) {
+    if (_key(m) == k) return m;
+  }
+  return raw.trim();
+}
+
+/// Texto sem acento, minúsculo e sem espaços nas pontas ("Tríceps" →
+/// "triceps") — base da busca por nome.
+String foldAccents(String s) => _key(s);
