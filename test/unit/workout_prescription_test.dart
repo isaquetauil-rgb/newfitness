@@ -566,4 +566,48 @@ void main() {
       },
     );
   });
+
+  group('exercício em aberto e linha do plano', () {
+    const aberto = PlanExercise(
+      exerciseId: 'squat',
+      exerciseName: 'Agachamento livre',
+      targetSets: 0,
+      targetReps: '',
+      restSeconds: 90,
+    );
+    const supino = PlanExercise(
+      exerciseId: 'b',
+      exerciseName: 'Supino',
+      targetSets: 3,
+      targetReps: '10',
+      targetWeightsKg: '25',
+      restSeconds: 90,
+    );
+    const corrida = PlanExercise(
+      exerciseId: 'c',
+      exerciseName: 'Corrida/caminhada',
+      targetSets: 1,
+      targetReps: '30-40 min',
+      restSeconds: 0,
+    );
+
+    test('em aberto não mostra "0 séries"', () {
+      expect(prescriptionSetsReps(aberto), 'Séries em aberto');
+      expect(
+        prescriptionSummaryLine(aberto),
+        'Agachamento livre — séries em aberto · 90s descanso',
+      );
+    });
+
+    test('linha normal e sem descanso', () {
+      expect(
+        prescriptionSummaryLine(supino),
+        'Supino — 3x10 · 25 kg · 90s descanso',
+      );
+      expect(
+        prescriptionSummaryLine(corrida),
+        'Corrida/caminhada — 1x30-40 min',
+      );
+    });
+  });
 }

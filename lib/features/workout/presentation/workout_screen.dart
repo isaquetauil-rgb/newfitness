@@ -227,10 +227,7 @@ class _StartWorkoutBody extends StatelessWidget {
                                       vertical: 2,
                                     ),
                                     child: Text(
-                                      '${e.exerciseName} — ${e.targetSets}x'
-                                      '${e.targetReps}'
-                                      '${e.targetWeightsKg.isNotEmpty ? ' · ${e.targetWeightsKg} kg' : ''}'
-                                      ' · ${e.restSeconds}s descanso',
+                                      prescriptionSummaryLine(e),
                                       style: const TextStyle(fontSize: 13),
                                     ),
                                   ),
