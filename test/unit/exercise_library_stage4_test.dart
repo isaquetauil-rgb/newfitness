@@ -50,7 +50,8 @@ void main() {
     for (final e in customRaw.entries)
       Exercise.fromMap(e.key, {
         ...Map<String, dynamic>.from(e.value as Map),
-        if (linked) 'baseExerciseId': pares[e.key],
+        // A cópia do Firestore real já tem o vínculo; sem ele = como era antes.
+        'baseExerciseId': linked ? pares[e.key] : '',
       }),
   ];
 
@@ -224,6 +225,10 @@ void main() {
   group('duplicados personal × geral', () {
     test('os 11 pares apontam para exercícios gerais que existem', () {
       expect(pares.length, 11);
+      // A cópia do Firestore real tem exatamente estes vínculos.
+      for (final e in customRaw.entries) {
+        expect((e.value as Map)['baseExerciseId'], pares[e.key], reason: e.key);
+      }
       expect(pares.keys.toSet(), customRaw.keys.toSet());
       for (final base in pares.values) {
         expect(byId.containsKey(base), isTrue, reason: base);

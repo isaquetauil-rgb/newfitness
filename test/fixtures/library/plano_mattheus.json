@@ -440,7 +440,8 @@
         "Glúteos"
       ],
       "tracksDuration": false,
-      "category": ""
+      "category": "",
+      "baseExerciseId": "pendulum_squat"
     },
     "pt_cadeira_adutora": {
       "name": "Cadeira adutora",
@@ -450,7 +451,8 @@
       "videoUrl": "",
       "secondaryMuscles": [],
       "tracksDuration": false,
-      "category": ""
+      "category": "",
+      "baseExerciseId": "hip_adduction"
     },
     "pt_corrida_caminhada": {
       "name": "Corrida/caminhada",
@@ -460,7 +462,8 @@
       "videoUrl": "",
       "secondaryMuscles": [],
       "tracksDuration": true,
-      "category": "Cardio"
+      "category": "Cardio",
+      "baseExerciseId": "treadmill_run_walk"
     },
     "pt_crucifixo_inverso_maquina": {
       "name": "Crucifixo inverso na máquina",
@@ -472,7 +475,8 @@
         "Trapézio"
       ],
       "tracksDuration": false,
-      "category": ""
+      "category": "",
+      "baseExerciseId": "machine_rear_delt_fly"
     },
     "pt_elevacao_lateral_polia": {
       "name": "Elevação lateral unilateral na polia",
@@ -482,7 +486,8 @@
       "videoUrl": "",
       "secondaryMuscles": [],
       "tracksDuration": false,
-      "category": ""
+      "category": "",
+      "baseExerciseId": "cable_lateral_raise"
     },
     "pt_encolhimento": {
       "name": "Encolhimento com halteres",
@@ -494,7 +499,8 @@
         "Antebraço"
       ],
       "tracksDuration": false,
-      "category": ""
+      "category": "",
+      "baseExerciseId": "dumbbell_shrug"
     },
     "pt_panturrilha_smith": {
       "name": "Panturrilha no Smith",
@@ -504,7 +510,8 @@
       "videoUrl": "",
       "secondaryMuscles": [],
       "tracksDuration": false,
-      "category": ""
+      "category": "",
+      "baseExerciseId": "smith_calf_raise"
     },
     "pt_puxada_triangulo": {
       "name": "Puxada alta triângulo",
@@ -516,7 +523,8 @@
         "Bíceps"
       ],
       "tracksDuration": false,
-      "category": ""
+      "category": "",
+      "baseExerciseId": "close_grip_lat_pulldown"
     },
     "pt_rosca_45": {
       "name": "Rosca 45° (banco inclinado)",
@@ -528,7 +536,8 @@
         "Antebraço"
       ],
       "tracksDuration": false,
-      "category": ""
+      "category": "",
+      "baseExerciseId": "incline_dumbbell_curl"
     },
     "pt_rosca_direta_polia": {
       "name": "Rosca direta na polia",
@@ -540,7 +549,8 @@
         "Antebraço"
       ],
       "tracksDuration": false,
-      "category": ""
+      "category": "",
+      "baseExerciseId": "cable_curl"
     },
     "pt_triceps_frances_unilateral": {
       "name": "Tríceps francês unilateral",
@@ -550,7 +560,8 @@
       "videoUrl": "",
       "secondaryMuscles": [],
       "tracksDuration": false,
-      "category": ""
+      "category": "",
+      "baseExerciseId": "single_arm_overhead_triceps_extension"
     }
   }
 }
