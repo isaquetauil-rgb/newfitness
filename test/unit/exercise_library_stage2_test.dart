@@ -288,6 +288,17 @@ void main() {
       expect(first.targetSets, 3);
       expect(first.targetReps, '10');
       expect(first.targetWeightsKg, '25');
+      // Etapa 3: o tríceps de quarta (feito com barra) aponta para o
+      // exercício geral com barra; a prescrição é a mesma de antes.
+      final triceps = plan.workouts[2].exercises[4];
+      expect(plan.workouts[2].label, 'Quarta – Peitoral e tríceps');
+      expect(triceps.exerciseId, 'triceps_bar_pushdown');
+      expect(triceps.exerciseName, 'Tríceps na polia com barra');
+      expect(triceps.targetSets, 3);
+      expect(triceps.targetReps, '10-12');
+      expect(triceps.targetWeightsKg, '15');
+      expect(triceps.restSeconds, 60);
+      expect(triceps.notes, 'Com barra. Pirâmide: 15/20/25 kg');
       final aberto = plan.workouts.last.exercises.first;
       expect(prescriptionSetsReps(aberto), 'Séries em aberto');
     });

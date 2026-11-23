@@ -228,8 +228,8 @@
             "replacedExerciseName": null
           },
           {
-            "exerciseId": "triceps_pushdown",
-            "exerciseName": "Tríceps na polia",
+            "exerciseId": "triceps_bar_pushdown",
+            "exerciseName": "Tríceps na polia com barra",
             "targetSets": 3,
             "targetReps": "10-12",
             "targetWeightsKg": "15",
