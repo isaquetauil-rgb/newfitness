@@ -64,13 +64,14 @@ class LoggedExercise {
   /// Cópia com [sets] no lugar das séries atuais — o resto (inclusive a
   /// prescrição) é mantido.
   LoggedExercise copyWith({
+    String? exerciseName,
     List<WorkoutSet>? sets,
     String? muscleGroup,
     List<String>? secondaryMuscles,
   }) {
     return LoggedExercise(
       exerciseId: exerciseId,
-      exerciseName: exerciseName,
+      exerciseName: exerciseName ?? this.exerciseName,
       sets: sets ?? this.sets,
       replacedExerciseId: replacedExerciseId,
       replacedExerciseName: replacedExerciseName,

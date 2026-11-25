@@ -9,7 +9,6 @@ import 'core/di/injector.dart';
 import 'core/error/error_handler.dart';
 import 'core/firebase/local_emulators.dart';
 import 'core/logging/app_logger.dart';
-import 'core/system/system_bars.dart';
 import 'features/body_map/data/muscle_map_license.dart';
 import 'firebase_options.dart';
 
@@ -31,8 +30,8 @@ void main() {
       setupInjector();
       await getIt.allReady();
 
-      // Barra de navegação do Android escondida com o app aberto.
-      unawaited(SystemBars.hideNavigationBar());
+      // A barra de navegação do Android fica escondida pelo lado nativo
+      // (MainActivity.kt), que funciona em todos os celulares.
 
       runApp(const NewFitnessApp());
     },

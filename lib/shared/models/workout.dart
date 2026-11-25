@@ -79,6 +79,20 @@ class Workout {
     this.notes,
   }) : exercises = exercises ?? [];
 
+  /// Cópia com outro [name] — o resto do treino é o mesmo.
+  Workout copyWith({String? name}) => Workout(
+    id: id,
+    userId: userId,
+    date: date,
+    name: name ?? this.name,
+    exercises: exercises,
+    durationSeconds: durationSeconds,
+    source: source,
+    importedFrom: importedFrom,
+    importKey: importKey,
+    notes: notes,
+  );
+
   /// Volume total do treino (soma de reps * peso de todas as séries).
   double get totalVolume => exercises.fold(0, (sum, e) => sum + e.totalVolume);
 

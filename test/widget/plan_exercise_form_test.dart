@@ -122,4 +122,28 @@ void main() {
     expect(confirm, findsNothing);
     expect(find.textContaining('20x10'), findsOneWidget);
   });
+
+  testWidgets('nome do exercício no plano pode ser trocado', (tester) async {
+    await openExerciseForm(tester);
+    await tester.enterText(
+      find.byKey(const ValueKey('plan-exercise-name')),
+      'Supino reto (pegada fechada)',
+    );
+    await tester.tap(confirm);
+    await tester.pumpAndSettle();
+
+    expect(confirm, findsNothing);
+    expect(find.text('Supino reto (pegada fechada)'), findsOneWidget);
+  });
+
+  test('tirar aquecimento das instruções do plano', () {
+    const text =
+        'Aquecimento: 5 min de bike. Gato e camelo.\n\n'
+        'Como progredir: suba 2,5 kg.\n\nAtenção: sem dor.';
+    expect(hasWarmupInstructions(text), isTrue);
+    final cleaned = removeWarmupInstructions(text);
+    expect(cleaned, 'Como progredir: suba 2,5 kg.\n\nAtenção: sem dor.');
+    expect(hasWarmupInstructions(cleaned), isFalse);
+    expect(removeWarmupInstructions('Só treinar.'), 'Só treinar.');
+  });
 }

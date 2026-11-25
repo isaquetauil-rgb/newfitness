@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'package:newfitness/app/widgets/rename_dialog.dart';
+
 import 'package:newfitness/features/auth/logic/auth_provider.dart';
 import 'package:newfitness/features/instructor/logic/plan_template_provider.dart';
 import 'package:newfitness/shared/models/plan_template.dart';
@@ -58,15 +60,27 @@ class PlanTemplatesScreen extends StatelessWidget {
                           '${template.workouts.length} treino(s) · '
                           '$exerciseCount exercício(s)',
                         ),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete_outline),
-                          tooltip: 'Apagar modelo',
-                          onPressed: () => _confirmDelete(
-                            context,
-                            provider,
-                            instructorUid,
-                            template,
-                          ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              key: ValueKey('rename-template-${template.id}'),
+                              icon: const Icon(Icons.edit_outlined),
+                              tooltip: 'Renomear modelo',
+                              onPressed: () =>
+                                  _rename(context, provider, template),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline),
+                              tooltip: 'Apagar modelo',
+                              onPressed: () => _confirmDelete(
+                                context,
+                                provider,
+                                instructorUid,
+                                template,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     );
@@ -75,6 +89,36 @@ class PlanTemplatesScreen extends StatelessWidget {
               },
             ),
     );
+  }
+
+  Future<void> _rename(
+    BuildContext context,
+    PlanTemplateProvider provider,
+    PlanTemplate template,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final name = await showRenameDialog(
+      context,
+      title: 'Nome do modelo',
+      initial: template.title,
+    );
+    if (name == null) return;
+    try {
+      await provider.saveTemplate(
+        PlanTemplate(
+          id: template.id,
+          instructorUid: template.instructorUid,
+          title: name,
+          instructions: template.instructions,
+          workouts: template.workouts,
+          createdAt: template.createdAt,
+        ),
+      );
+    } catch (_) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Não foi possível renomear o modelo.')),
+      );
+    }
   }
 
   void _confirmDelete(

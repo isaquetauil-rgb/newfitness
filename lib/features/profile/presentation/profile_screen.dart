@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+
+import 'package:newfitness/app/widgets/rename_dialog.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:newfitness/app/routes/app_routes.dart';
@@ -163,6 +165,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Future<void> _rename(UserProfile current) async {
+    final authProvider = context.read<AuthProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+    final name = await showRenameDialog(
+      context,
+      title: 'Seu nome',
+      initial: current.name,
+    );
+    if (name == null) return;
+    try {
+      await _firestoreService.updateUserProfile(current.copyWith(name: name));
+      await authProvider.refreshProfile();
+      messenger.showSnackBar(const SnackBar(content: Text('Nome atualizado')));
+    } catch (_) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Não foi possível trocar o nome.')),
+      );
+    }
+  }
+
   Future<void> _save(UserProfile current) async {
     final authProvider = context.read<AuthProvider>();
     final messenger = ScaffoldMessenger.of(context);
@@ -242,11 +264,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: 12),
                 Center(
-                  child: Text(
-                    profile.name,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
+                  child: InkWell(
+                    key: const ValueKey('rename-profile'),
+                    onTap: () => _rename(profile),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              profile.name,
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          const Icon(Icons.edit_outlined, size: 18),
+                        ],
+                      ),
                     ),
                   ),
                 ),

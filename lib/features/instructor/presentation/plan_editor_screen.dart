@@ -408,6 +408,22 @@ class _PlanEditorScreenState extends State<PlanEditorScreen> {
               hintText: 'Orientações gerais para o aluno seguir o plano...',
             ),
           ),
+          // Treino pronto traz o aquecimento nas instruções: um toque tira.
+          ValueListenableBuilder<TextEditingValue>(
+            valueListenable: _instructionsCtrl,
+            builder: (context, value, _) => hasWarmupInstructions(value.text)
+                ? Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      key: const ValueKey('remove-plan-warmup'),
+                      onPressed: () => _instructionsCtrl.text =
+                          removeWarmupInstructions(_instructionsCtrl.text),
+                      icon: const Icon(Icons.close, size: 18),
+                      label: const Text('Tirar aquecimento das instruções'),
+                    ),
+                  )
+                : const SizedBox.shrink(),
+          ),
           const SizedBox(height: 24),
           for (int i = 0; i < _subWorkouts.length; i++)
             _SubWorkoutEditor(
@@ -595,6 +611,10 @@ class _PlanExerciseFormSheetState extends State<_PlanExerciseFormSheet> {
   late final _notesCtrl = TextEditingController(
     text: widget.initial?.notes ?? '',
   );
+  // Nome com que o exercício aparece no plano (o da biblioteca não muda).
+  late final _nameCtrl = TextEditingController(
+    text: widget.initial?.exerciseName ?? widget.exercise.name,
+  );
 
   // Regra de progressão: `null` = automática (pela faixa de reps).
   late ProgressionType? _progression = progressionTypeFromString(
@@ -618,6 +638,7 @@ class _PlanExerciseFormSheetState extends State<_PlanExerciseFormSheet> {
   void dispose() {
     _setsCtrl.dispose();
     _repsCtrl.dispose();
+    _nameCtrl.dispose();
     _weightsCtrl.dispose();
     _restCtrl.dispose();
     _notesCtrl.dispose();
@@ -652,7 +673,9 @@ class _PlanExerciseFormSheetState extends State<_PlanExerciseFormSheet> {
       context,
       PlanExercise(
         exerciseId: widget.exercise.id,
-        exerciseName: widget.exercise.name,
+        exerciseName: _nameCtrl.text.trim().isEmpty
+            ? widget.exercise.name
+            : _nameCtrl.text.trim(),
         targetSets: sets!,
         targetReps: _repsCtrl.text.trim().isEmpty
             ? '10'
@@ -692,9 +715,14 @@ class _PlanExerciseFormSheetState extends State<_PlanExerciseFormSheet> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          widget.exercise.name,
+        TextField(
+          key: const ValueKey('plan-exercise-name'),
+          controller: _nameCtrl,
+          textCapitalization: TextCapitalization.sentences,
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+          decoration: const InputDecoration(
+            labelText: 'Nome do exercício no plano',
+          ),
         ),
         const SizedBox(height: 16),
         Row(
@@ -857,6 +885,23 @@ String? validatePlanRest(int? restSeconds) {
   if (restSeconds < 0) return 'Não pode ser negativo.';
   return null;
 }
+
+/// As instruções têm um parágrafo de aquecimento ("Aquecimento: ...")?
+bool hasWarmupInstructions(String text) => _warmupParagraph.hasMatch(text);
+
+final _warmupParagraph = RegExp(
+  r'^\s*aquecimento\s*:',
+  caseSensitive: false,
+  multiLine: true,
+);
+
+/// Tira das instruções os parágrafos que começam com "Aquecimento:" (o
+/// resto do texto fica como está).
+String removeWarmupInstructions(String text) => text
+    .split(RegExp(r'\n\s*\n'))
+    .where((p) => !_warmupParagraph.hasMatch(p))
+    .join('\n\n')
+    .trim();
 
 /// Bottom sheet com a lista de modelos salvos pelo instrutor — usado por
 /// [PlanEditorScreen._useTemplate] pra escolher um pra clonar no plano atual.

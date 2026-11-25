@@ -66,6 +66,8 @@ android {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+    // Esconder a barra de navegação (MainActivity).
+    implementation("androidx.core:core-ktx:1.13.1")
 }
 
 kotlin {

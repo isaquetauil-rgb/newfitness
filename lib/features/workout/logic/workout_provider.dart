@@ -271,8 +271,68 @@ class WorkoutProvider extends ChangeNotifier {
     _changed();
   }
 
-  void removeSet(int exerciseIndex, int setIndex) {
-    _activeWorkout?.exercises[exerciseIndex].sets.removeAt(setIndex);
+  /// Apaga uma série (de trabalho ou de aquecimento) e a devolve, para o
+  /// "Desfazer" ([insertSet]).
+  WorkoutSet? removeSet(int exerciseIndex, int setIndex) {
+    final sets = _activeWorkout?.exercises[exerciseIndex].sets;
+    if (sets == null || setIndex < 0 || setIndex >= sets.length) return null;
+    final removed = sets.removeAt(setIndex);
+    _changed();
+    return removed;
+  }
+
+  /// Põe de volta uma série apagada por [removeSet], na mesma posição.
+  void insertSet(int exerciseIndex, int setIndex, WorkoutSet set) {
+    final sets = _activeWorkout?.exercises[exerciseIndex].sets;
+    if (sets == null) return;
+    sets.insert(setIndex.clamp(0, sets.length), set);
+    _changed();
+  }
+
+  /// Tira todas as séries de aquecimento do exercício (as de trabalho
+  /// ficam). Devolve as removidas com a posição, para o "Desfazer"
+  /// ([restoreSets]).
+  List<(int, WorkoutSet)> removeWarmup(int exerciseIndex) {
+    final sets = _activeWorkout?.exercises[exerciseIndex].sets;
+    if (sets == null) return const [];
+    final removed = [
+      for (var i = 0; i < sets.length; i++)
+        if (sets[i].isWarmup) (i, sets[i]),
+    ];
+    if (removed.isEmpty) return const [];
+    sets.removeWhere((s) => s.isWarmup);
+    _changed();
+    return removed;
+  }
+
+  /// Desfaz [removeWarmup]: devolve cada série à posição em que estava.
+  void restoreSets(int exerciseIndex, List<(int, WorkoutSet)> removed) {
+    final sets = _activeWorkout?.exercises[exerciseIndex].sets;
+    if (sets == null || removed.isEmpty) return;
+    for (final (i, set) in removed) {
+      sets.insert(i.clamp(0, sets.length), set);
+    }
+    _changed();
+  }
+
+  /// Troca o nome do treino em andamento (vazio = mantém o atual).
+  void renameWorkout(String name) {
+    final w = _activeWorkout;
+    final clean = name.trim();
+    if (w == null || clean.isEmpty || clean == w.name) return;
+    _activeWorkout = w.copyWith(name: clean);
+    _changed();
+  }
+
+  /// Troca o nome com que o exercício aparece NESTE treino (e no histórico
+  /// dele). O exercício da biblioteca não muda.
+  void renameExercise(int exerciseIndex, String name) {
+    final exercises = _activeWorkout?.exercises;
+    final clean = name.trim();
+    if (exercises == null || clean.isEmpty) return;
+    final current = exercises[exerciseIndex];
+    if (clean == current.exerciseName) return;
+    exercises[exerciseIndex] = current.copyWith(exerciseName: clean);
     _changed();
   }
 

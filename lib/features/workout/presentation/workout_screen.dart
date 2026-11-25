@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import 'package:newfitness/app/widgets/rename_dialog.dart';
+
 import 'package:newfitness/app/routes/app_routes.dart';
 import 'package:newfitness/app/widgets/drawer_menu_button.dart';
 import 'package:newfitness/core/di/injector.dart';
@@ -50,9 +52,34 @@ class WorkoutScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         leading: const DrawerMenuButton(),
-        title: Text(
-          workout.hasActiveWorkout ? workout.activeWorkout!.name : 'Treino',
-        ),
+        title: workout.hasActiveWorkout
+            ? InkWell(
+                key: const ValueKey('rename-workout'),
+                onTap: () async {
+                  final name = await showRenameDialog(
+                    context,
+                    title: 'Nome do treino',
+                    initial: workout.activeWorkout!.name,
+                  );
+                  if (name != null) {
+                    workout.renameWorkout(name);
+                  }
+                },
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        workout.activeWorkout!.name,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    const Icon(Icons.edit_outlined, size: 18),
+                  ],
+                ),
+              )
+            : const Text('Treino'),
         actions: workout.hasActiveWorkout
             ? [
                 IconButton(
@@ -532,6 +559,62 @@ class _ExerciseCard extends StatelessWidget {
     );
   }
 
+  void _removeWarmup(BuildContext context) {
+    FocusScope.of(context).unfocus();
+    final provider = context.read<WorkoutProvider>();
+    final removed = provider.removeWarmup(exerciseIndex);
+    if (removed.isEmpty) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            removed.length == 1
+                ? 'Aquecimento retirado.'
+                : '${removed.length} séries de aquecimento retiradas.',
+          ),
+          action: SnackBarAction(
+            label: 'Desfazer',
+            onPressed: () => provider.restoreSets(exerciseIndex, removed),
+          ),
+        ),
+      );
+  }
+
+  /// Apaga a série [setIndex] e oferece "Desfazer".
+  static void deleteSet(BuildContext context, int exerciseIndex, int setIndex) {
+    FocusScope.of(context).unfocus();
+    final provider = context.read<WorkoutProvider>();
+    final removed = provider.removeSet(exerciseIndex, setIndex);
+    if (removed == null) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            removed.isWarmup
+                ? 'Série de aquecimento excluída.'
+                : 'Série excluída.',
+          ),
+          action: SnackBarAction(
+            label: 'Desfazer',
+            onPressed: () =>
+                provider.insertSet(exerciseIndex, setIndex, removed),
+          ),
+        ),
+      );
+  }
+
+  Future<void> _renameExercise(BuildContext context) async {
+    final provider = context.read<WorkoutProvider>();
+    final name = await showRenameDialog(
+      context,
+      title: 'Nome do exercício neste treino',
+      initial: exercise.exerciseName,
+    );
+    if (name != null) provider.renameExercise(exerciseIndex, name);
+  }
+
   void _explainSuggestion(BuildContext context) {
     showDialog<void>(
       context: context,
@@ -601,6 +684,12 @@ class _ExerciseCard extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
+                ),
+                IconButton(
+                  key: ValueKey('rename-exercise-$exerciseIndex'),
+                  icon: const Icon(Icons.edit_outlined, size: 20),
+                  tooltip: 'Renomear exercício',
+                  onPressed: () => _renameExercise(context),
                 ),
                 IconButton(
                   icon: const Icon(Icons.swap_horiz, size: 20),
@@ -714,17 +803,32 @@ class _ExerciseCard extends StatelessWidget {
               ],
             ),
             for (int s = 0; s < exercise.sets.length; s++)
-              _SetRow(
+              Dismissible(
                 key: ObjectKey(exercise.sets[s]),
-                exerciseIndex: exerciseIndex,
-                setIndex: s,
-                isBarbell: isBarbell,
-                isTimed: isTimed,
-                // Numera só as séries de trabalho (aquecimento mostra "A").
-                setNumber: exercise.sets
-                    .take(s + 1)
-                    .where((x) => !x.isWarmup)
-                    .length,
+                direction: DismissDirection.endToStart,
+                background: Container(
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.only(right: 16),
+                  color: Theme.of(context).colorScheme.errorContainer,
+                  child: Icon(
+                    Icons.delete_outline,
+                    color: Theme.of(context).colorScheme.onErrorContainer,
+                  ),
+                ),
+                onDismissed: (_) =>
+                    _ExerciseCard.deleteSet(context, exerciseIndex, s),
+                child: _SetRow(
+                  exerciseIndex: exerciseIndex,
+                  setIndex: s,
+                  isBarbell: isBarbell,
+                  isTimed: isTimed,
+                  repsHint: exercise.prescription?.targetReps.trim() ?? '',
+                  // Numera só as séries de trabalho (aquecimento mostra "A").
+                  setNumber: exercise.sets
+                      .take(s + 1)
+                      .where((x) => !x.isWarmup)
+                      .length,
+                ),
               ),
             Wrap(
               spacing: 4,
@@ -734,8 +838,26 @@ class _ExerciseCard extends StatelessWidget {
                   icon: const Icon(Icons.add, size: 18),
                   label: const Text('Adicionar série'),
                 ),
+                if (exercise.sets.isNotEmpty)
+                  TextButton.icon(
+                    key: const ValueKey('remove-last-set'),
+                    onPressed: () => _ExerciseCard.deleteSet(
+                      context,
+                      exerciseIndex,
+                      exercise.sets.length - 1,
+                    ),
+                    icon: const Icon(Icons.remove, size: 18),
+                    label: const Text('Excluir série'),
+                  ),
                 // Aquecimento por carga não se aplica a exercício por tempo.
-                if (!isTimed)
+                if (!isTimed && exercise.sets.any((x) => x.isWarmup))
+                  TextButton.icon(
+                    key: const ValueKey('remove-warmup'),
+                    onPressed: () => _removeWarmup(context),
+                    icon: const Icon(Icons.close, size: 18),
+                    label: const Text('Tirar aquecimento'),
+                  )
+                else if (!isTimed)
                   TextButton.icon(
                     key: const ValueKey('generate-warmup'),
                     onPressed: () => _generateWarmup(context),
@@ -872,13 +994,17 @@ class _SetRow extends StatelessWidget {
   final bool isBarbell;
   final bool isTimed;
 
+  /// Meta de reps do plano (ex.: "10-12"), mostrada no campo vazio. A pessoa
+  /// digita quantas fez.
+  final String repsHint;
+
   const _SetRow({
-    super.key,
     required this.exerciseIndex,
     required this.setIndex,
     required this.setNumber,
     this.isBarbell = false,
     this.isTimed = false,
+    this.repsHint = '',
   });
 
   @override
@@ -1001,6 +1127,7 @@ class _SetRow extends StatelessWidget {
                       )
                     : _NumberField(
                         suggested: set.suggested,
+                        hint: set.isWarmup ? '' : repsHint,
                         initialValue: set.reps == 0 ? '' : set.reps.toString(),
                         onChanged: (v) => provider.updateSet(
                           exerciseIndex,
@@ -1075,11 +1202,15 @@ class _NumberField extends StatefulWidget {
   /// Aceita casas decimais (peso). Reps e segundos são inteiros.
   final bool decimal;
 
+  /// Texto apagado no campo vazio (ex.: meta "10-12").
+  final String hint;
+
   const _NumberField({
     required this.initialValue,
     required this.onChanged,
     this.suggested = false,
     this.decimal = false,
+    this.hint = '',
   });
 
   @override
@@ -1118,9 +1249,10 @@ class _NumberFieldState extends State<_NumberField> {
       style: widget.suggested
           ? TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)
           : null,
-      decoration: const InputDecoration(
+      decoration: InputDecoration(
         isDense: true,
-        contentPadding: EdgeInsets.symmetric(vertical: 8),
+        contentPadding: const EdgeInsets.symmetric(vertical: 8),
+        hintText: widget.hint.isEmpty ? null : widget.hint,
       ),
       onChanged: widget.onChanged,
     );
