@@ -10,11 +10,9 @@ import 'package:newfitness/features/auth/logic/auth_provider.dart';
 import 'package:newfitness/features/instructor/presentation/ai_suggestion_sheet.dart';
 import 'package:newfitness/features/professional/logic/student_activity.dart';
 import 'package:newfitness/features/professional/presentation/professional_dashboard_widgets.dart';
+import 'package:newfitness/features/professional/presentation/professional_student_list.dart';
 import 'package:newfitness/shared/models/appointment.dart';
 import 'package:newfitness/shared/services/firestore_service.dart';
-
-/// Filtro da lista de alunos no painel.
-enum StudentListFilter { all, attention, noPlan }
 
 /// Painel do personal: resumo dos alunos (quem treinou, quem precisa de
 /// atenção), agenda de hoje, atalhos, código de convite e a lista de alunos
@@ -62,29 +60,12 @@ class _InstructorDashboardScreenState extends State<InstructorDashboardScreen> {
     _agendaStream = _db.watchAppointmentsForInstructor(uid);
   }
 
-  Future<Map<String, StudentActivity?>> _loadActivity(List<String> uids) async {
-    final now = _now;
-    final entries = await Future.wait(
-      uids.map((uid) async {
-        try {
-          final workouts = await _db.watchWorkouts(uid).first;
-          final plans = await _db.watchTrainingPlans(uid).first;
-          return MapEntry<String, StudentActivity?>(
-            uid,
-            summarizeActivity(
-              dates: [for (final w in workouts) w.date],
-              hasPlan: plans.isNotEmpty,
-              now: now,
-            ),
-          );
-        } catch (_) {
-          // Sem permissão ou sem conexão: o aluno aparece sem situação.
-          return MapEntry<String, StudentActivity?>(uid, null);
-        }
-      }),
-    );
-    return Map.fromEntries(entries);
-  }
+  Future<Map<String, StudentActivity?>> _loadActivity(List<String> uids) =>
+      loadStudentsActivity(uids, (uid) async {
+        final workouts = await _db.watchWorkouts(uid).first;
+        final plans = await _db.watchTrainingPlans(uid).first;
+        return ([for (final w in workouts) w.date], plans.isNotEmpty);
+      }, _now);
 
   Future<Map<String, StudentActivity?>> _activityFor(List<String> uids) {
     final key = (uids.toList()..sort()).join(',');
@@ -164,28 +145,6 @@ class _InstructorDashboardScreenState extends State<InstructorDashboardScreen> {
         : students
               .where((s) => activityOf(s)?.needsAttentionAt(now) ?? false)
               .length;
-
-    final q = _query.trim().toLowerCase();
-    final visible =
-        [
-          for (final s in students)
-            if ((q.isEmpty ||
-                    (s['name'] as String? ?? '').toLowerCase().contains(q) ||
-                    (s['email'] as String? ?? '').toLowerCase().contains(q)) &&
-                switch (_filter) {
-                  StudentListFilter.all => true,
-                  StudentListFilter.attention =>
-                    activityOf(s)?.needsAttentionAt(now) ?? false,
-                  StudentListFilter.noPlan =>
-                    activityOf(s)?.statusAt(now) == StudentStatus.noPlan,
-                })
-              s,
-        ]..sort(
-          (a, b) => _sortKey(
-            activityOf(a),
-            now,
-          ).compareTo(_sortKey(activityOf(b), now)),
-        );
 
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
@@ -271,128 +230,25 @@ class _InstructorDashboardScreenState extends State<InstructorDashboardScreen> {
               'Sou seu personal no NewFitness. Instale o app, entre na sua '
               'conta e, no Perfil, use o meu código de convite: $code',
         ),
-        DashboardSectionTitle(
-          'Alunos',
-          trailing: Text(
-            '${visible.length} de ${students.length}',
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ProfessionalStudentList(
+          students: students,
+          activity: activity,
+          now: now,
+          query: _query,
+          filter: _filter,
+          onQueryChanged: (v) => setState(() => _query = v),
+          onFilterChanged: (f) => setState(() => _filter = f),
+          statusLine: studentStatusLine,
+          onOpen: (s) => context.push(
+            AppRoutes.instructorStudent,
+            extra: StudentDetailArgs(
+              uid: s['uid'] as String,
+              name: s['name'] as String? ?? '',
+              notes: s['notes'] as String?,
             ),
           ),
         ),
-        if (students.isNotEmpty) ...[
-          TextField(
-            key: const ValueKey('student-search'),
-            decoration: const InputDecoration(
-              hintText: 'Buscar aluno por nome ou e-mail',
-              prefixIcon: Icon(Icons.search),
-              isDense: true,
-            ),
-            onChanged: (v) => setState(() => _query = v),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            children: [
-              for (final (f, label) in const [
-                (StudentListFilter.all, 'Todos'),
-                (StudentListFilter.attention, 'Precisam de atenção'),
-                (StudentListFilter.noPlan, 'Sem plano'),
-              ])
-                ChoiceChip(
-                  label: Text(label),
-                  selected: _filter == f,
-                  onSelected: (_) => setState(() => _filter = f),
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-        ],
-        if (students.isEmpty)
-          const _EmptyStudents()
-        else if (visible.isEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 24),
-            child: Text(
-              'Nenhum aluno com esse filtro.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-          )
-        else
-          for (final s in visible)
-            _StudentTile(
-              student: s,
-              activity: activityOf(s),
-              loading: activity == null,
-              now: now,
-            ),
       ],
-    );
-  }
-
-  /// Quem precisa de atenção primeiro; depois quem treinou há mais tempo.
-  static int _sortKey(StudentActivity? a, DateTime now) {
-    if (a == null) return 1 << 20;
-    return switch (a.statusAt(now)) {
-      StudentStatus.noPlan => 0,
-      StudentStatus.inactive => 1,
-      StudentStatus.neverTrained => 2,
-      StudentStatus.active =>
-        1000 - daysSince(a.lastActivity!, now).clamp(0, 999),
-    };
-  }
-}
-
-class _StudentTile extends StatelessWidget {
-  const _StudentTile({
-    required this.student,
-    required this.activity,
-    required this.loading,
-    required this.now,
-  });
-
-  final Map<String, dynamic> student;
-  final StudentActivity? activity;
-  final bool loading;
-  final DateTime now;
-
-  @override
-  Widget build(BuildContext context) {
-    final name = student['name'] as String? ?? '';
-    final a = activity;
-    final subtitle = loading
-        ? 'Carregando...'
-        : a == null
-        ? (student['email'] as String? ?? '')
-        : studentStatusLine(a, now);
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        leading: CircleAvatar(
-          child: Text(name.isNotEmpty ? name[0].toUpperCase() : '?'),
-        ),
-        title: Text(name),
-        subtitle: Text(subtitle),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            StudentStatusDot(status: a?.statusAt(now)),
-            const SizedBox(width: 8),
-            const Icon(Icons.chevron_right),
-          ],
-        ),
-        onTap: () => context.push(
-          AppRoutes.instructorStudent,
-          extra: StudentDetailArgs(
-            uid: student['uid'] as String,
-            name: name,
-            notes: student['notes'] as String?,
-          ),
-        ),
-      ),
     );
   }
 }
@@ -439,35 +295,6 @@ class _TodayAgendaCard extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-}
-
-class _EmptyStudents extends StatelessWidget {
-  const _EmptyStudents();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 24),
-      child: Column(
-        children: [
-          Icon(
-            Icons.person_add_alt_1_outlined,
-            size: 40,
-            color: Theme.of(context).colorScheme.primary,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Nenhum aluno vinculado ainda.\nCompartilhe seu código de convite '
-            'acima: o aluno digita no Perfil dele e aparece aqui.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
