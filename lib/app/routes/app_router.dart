@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:newfitness/app/widgets/app_shell.dart';
-import 'package:newfitness/app/widgets/coming_soon_screen.dart';
 import 'package:newfitness/core/di/injector.dart';
 import 'package:newfitness/core/storage/local_prefs.dart';
 import 'package:newfitness/features/admin/presentation/admin_dashboard_screen.dart';
@@ -12,6 +11,9 @@ import 'package:newfitness/features/admin/presentation/admin_exercises_screen.da
 import 'package:newfitness/features/admin/presentation/admin_professional_requests_screen.dart';
 import 'package:newfitness/features/admin/presentation/admin_taxonomy_screen.dart';
 import 'package:newfitness/features/admin/presentation/admin_users_screen.dart';
+import 'package:newfitness/features/account/presentation/active_contracts_screen.dart';
+import 'package:newfitness/features/account/presentation/documents_screen.dart';
+import 'package:newfitness/features/account/presentation/my_cards_screen.dart';
 import 'package:newfitness/features/agenda/presentation/agenda_screen.dart';
 import 'package:newfitness/features/ai/presentation/ai_hub_screen.dart';
 import 'package:newfitness/features/health/presentation/parq_screen.dart';
@@ -220,33 +222,18 @@ GoRouter buildAppRouter(AuthProvider authProvider) {
       ),
       GoRoute(
         path: AppRoutes.myCards,
-        pageBuilder: (context, state) => _fadeThrough(
-          state,
-          const ComingSoonScreen(
-            title: 'Meus cartões',
-            icon: Icons.credit_card_outlined,
-          ),
-        ),
+        pageBuilder: (context, state) =>
+            _fadeThrough(state, const MyCardsScreen()),
       ),
       GoRoute(
         path: AppRoutes.activeContracts,
-        pageBuilder: (context, state) => _fadeThrough(
-          state,
-          const ComingSoonScreen(
-            title: 'Contratos ativos',
-            icon: Icons.description_outlined,
-          ),
-        ),
+        pageBuilder: (context, state) =>
+            _fadeThrough(state, const ActiveContractsScreen()),
       ),
       GoRoute(
         path: AppRoutes.documents,
-        pageBuilder: (context, state) => _fadeThrough(
-          state,
-          const ComingSoonScreen(
-            title: 'Documentos',
-            icon: Icons.folder_outlined,
-          ),
-        ),
+        pageBuilder: (context, state) =>
+            _fadeThrough(state, const DocumentsScreen()),
       ),
 
       StatefulShellRoute.indexedStack(

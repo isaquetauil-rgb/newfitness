@@ -218,7 +218,7 @@ class _InstructorDashboardScreenState extends State<InstructorDashboardScreen> {
               child: DashboardQuickAction(
                 icon: Icons.event_outlined,
                 label: 'Agenda',
-                onTap: () => context.go(AppRoutes.agenda),
+                onTap: () => context.push(AppRoutes.agenda),
               ),
             ),
           ],
@@ -291,7 +291,7 @@ class _TodayAgendaCard extends StatelessWidget {
             title: const Text('Agenda de hoje'),
             subtitle: Text(text),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.go(AppRoutes.agenda),
+            onTap: () => context.push(AppRoutes.agenda),
           ),
         );
       },

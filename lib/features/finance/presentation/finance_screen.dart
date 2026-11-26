@@ -6,43 +6,10 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:newfitness/core/di/injector.dart';
 import 'package:newfitness/features/auth/logic/auth_provider.dart';
 import 'package:newfitness/features/finance/logic/finance_provider.dart';
+import 'package:newfitness/features/finance/logic/subscription_labels.dart';
 import 'package:newfitness/shared/models/subscription.dart';
 import 'package:newfitness/shared/models/user_profile.dart';
 import 'package:newfitness/shared/services/firestore_service.dart';
-
-String _formatCents(int? cents) {
-  if (cents == null) return '—';
-  return 'R\$ ${(cents / 100).toStringAsFixed(2).replaceAll('.', ',')}';
-}
-
-String _statusLabel(SubscriptionStatus status) {
-  switch (status) {
-    case SubscriptionStatus.authorized:
-      return 'Em dia';
-    case SubscriptionStatus.pending:
-      return 'Pendente';
-    case SubscriptionStatus.paused:
-      return 'Pausada';
-    case SubscriptionStatus.cancelled:
-      return 'Cancelada';
-    case SubscriptionStatus.none:
-      return 'Sem assinatura';
-  }
-}
-
-Color _statusColor(SubscriptionStatus status) {
-  switch (status) {
-    case SubscriptionStatus.authorized:
-      return Colors.green;
-    case SubscriptionStatus.pending:
-      return Colors.orange;
-    case SubscriptionStatus.paused:
-    case SubscriptionStatus.cancelled:
-      return Colors.red;
-    case SubscriptionStatus.none:
-      return Colors.grey;
-  }
-}
 
 /// Financeiro: mensalidade recorrente via Mercado Pago (ver
 /// `functions/src/mercadopago.ts`). Aluno assina/acompanha o próprio
@@ -116,12 +83,12 @@ class _StudentFinanceView extends StatelessWidget {
                           height: 10,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: _statusColor(subscription.status),
+                            color: subscriptionStatusColor(subscription.status),
                           ),
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          _statusLabel(subscription.status),
+                          subscriptionStatusLabel(subscription.status),
                           style: const TextStyle(
                             fontWeight: FontWeight.w700,
                             fontSize: 16,
@@ -131,7 +98,7 @@ class _StudentFinanceView extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Mensalidade: ${_formatCents(subscription.amountCents)}',
+                      'Mensalidade: ${formatCents(subscription.amountCents)}',
                     ),
                     if (subscription.nextPaymentDate != null)
                       Text(
@@ -212,7 +179,7 @@ class _StudentFinanceView extends StatelessWidget {
                   Card(
                     margin: const EdgeInsets.only(bottom: 8),
                     child: ListTile(
-                      title: Text(_formatCents(payment.amountCents)),
+                      title: Text(formatCents(payment.amountCents)),
                       subtitle: Text(
                         DateFormat('dd/MM/yyyy').format(payment.date),
                       ),
@@ -417,11 +384,11 @@ class _StudentFinanceTileState extends State<_StudentFinanceTile> {
                           height: 8,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: _statusColor(subscription.status),
+                            color: subscriptionStatusColor(subscription.status),
                           ),
                         ),
                         const SizedBox(width: 6),
-                        Text(_statusLabel(subscription.status)),
+                        Text(subscriptionStatusLabel(subscription.status)),
                       ],
                     );
                   },

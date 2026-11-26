@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 import 'package:newfitness/app/routes/app_routes.dart';
 import 'package:newfitness/features/auth/logic/auth_provider.dart';
@@ -184,10 +185,17 @@ class _ProgressCalendarScreenState extends State<ProgressCalendarScreen> {
                       ),
                       const Spacer(),
                       OutlinedButton.icon(
-                        onPressed: () => ScaffoldMessenger.of(context)
-                            .showSnackBar(
-                              const SnackBar(content: Text('Em breve')),
-                            ),
+                        key: const ValueKey('share-month-attendance'),
+                        onPressed: () => SharePlus.instance.share(
+                          ShareParams(
+                            text: presentCount == 1
+                                ? 'Treinei 1 dia em ${DateFormat('MMMM', 'pt_BR').format(_month)} '
+                                      'no NewFitness. 💪'
+                                : 'Treinei $presentCount dias em '
+                                      '${DateFormat('MMMM', 'pt_BR').format(_month)} '
+                                      'no NewFitness. 💪',
+                          ),
+                        ),
                         icon: const Icon(Icons.share_outlined),
                         label: const Text('Compartilhar'),
                       ),
