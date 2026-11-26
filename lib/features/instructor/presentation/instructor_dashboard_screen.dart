@@ -13,6 +13,7 @@ import 'package:newfitness/features/professional/presentation/professional_dashb
 import 'package:newfitness/features/professional/presentation/professional_student_list.dart';
 import 'package:newfitness/shared/models/appointment.dart';
 import 'package:newfitness/shared/services/firestore_service.dart';
+import 'package:newfitness/app/widgets/effects.dart';
 
 /// Painel do personal: resumo dos alunos (quem treinou, quem precisa de
 /// atenção), agenda de hoje, atalhos, código de convite e a lista de alunos
@@ -149,7 +150,7 @@ class _InstructorDashboardScreenState extends State<InstructorDashboardScreen> {
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-      children: [
+      children: staggered([
         DashboardGreeting(name: name, now: now),
         const SizedBox(height: 16),
         Row(
@@ -248,7 +249,7 @@ class _InstructorDashboardScreenState extends State<InstructorDashboardScreen> {
             ),
           ),
         ),
-      ],
+      ]),
     );
   }
 }

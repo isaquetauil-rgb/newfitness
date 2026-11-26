@@ -38,6 +38,7 @@ import 'package:newfitness/shared/models/user_profile.dart';
 import 'package:newfitness/shared/models/workout.dart';
 import 'package:newfitness/shared/models/workout_set.dart';
 import 'package:newfitness/shared/models/workout_templates.dart';
+import 'package:newfitness/app/widgets/effects.dart';
 
 import 'plate_calculator_sheet.dart';
 import 'rest_timer_sheet.dart';
@@ -1344,6 +1345,12 @@ void _showSavedSummary(
   final volume = saved.totalVolume;
   // Exercícios sem série realizada continuam no treino, mas não contam.
   final done = saved.exercises.where((e) => e.sets.isNotEmpty).length;
+  // O diálogo entra primeiro; o confete cai por cima dele.
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (context.mounted) {
+      showConfetti(context, pieces: records.isEmpty ? 60 : 110);
+    }
+  });
   showDialog<void>(
     context: context,
     builder: (ctx) => AlertDialog(

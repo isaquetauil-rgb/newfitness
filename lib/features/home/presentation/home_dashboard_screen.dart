@@ -23,6 +23,7 @@ import 'package:newfitness/shared/models/workout.dart';
 import 'package:newfitness/shared/models/workout_templates.dart';
 import 'package:newfitness/shared/services/firestore_service.dart';
 import 'package:newfitness/shared/utils/format.dart';
+import 'package:newfitness/app/widgets/effects.dart';
 
 /// Aba inicial — layout diferente por papel:
 ///  - Aluno: próxima ação, resumo da semana, último treino, treinos prontos
@@ -151,7 +152,7 @@ class _StudentHomeBodyState extends State<_StudentHomeBody> {
 
         return ListView(
           padding: const EdgeInsets.all(16),
-          children: [
+          children: staggered([
             Text(
               'Olá, $name 👋',
               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
@@ -218,7 +219,7 @@ class _StudentHomeBodyState extends State<_StudentHomeBody> {
             const _ExploreGrid(),
             const SizedBox(height: 12),
             _RemindersCard(count: enabledReminders),
-          ],
+          ]),
         );
       },
     );

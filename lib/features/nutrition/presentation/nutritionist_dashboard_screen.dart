@@ -11,6 +11,7 @@ import 'package:newfitness/features/professional/logic/student_activity.dart';
 import 'package:newfitness/features/professional/presentation/professional_dashboard_widgets.dart';
 import 'package:newfitness/features/professional/presentation/professional_student_list.dart';
 import 'package:newfitness/shared/services/firestore_service.dart';
+import 'package:newfitness/app/widgets/effects.dart';
 
 /// Painel da nutricionista: resumo dos alunos (quem registrou refeição na
 /// semana, quem precisa de atenção), código de convite e a lista de alunos
@@ -151,7 +152,7 @@ class _NutritionistDashboardScreenState
                 child: ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-                  children: [
+                  children: staggered([
                     DashboardGreeting(name: profile.name, now: now),
                     const SizedBox(height: 16),
                     Row(
@@ -240,7 +241,7 @@ class _NutritionistDashboardScreenState
                         ),
                       ),
                     ),
-                  ],
+                  ]),
                 ),
               );
             },

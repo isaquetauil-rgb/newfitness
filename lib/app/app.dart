@@ -26,6 +26,7 @@ import 'package:newfitness/features/progress/logic/progress_record_provider.dart
 import 'package:newfitness/features/timeline/logic/timeline_provider.dart';
 import 'package:newfitness/features/workout/logic/training_plan_provider.dart';
 import 'package:newfitness/features/workout/logic/workout_provider.dart';
+import 'package:newfitness/app/widgets/effects.dart';
 
 /// Widget raiz do app. O [AuthProvider] e o [GoRouter] são criados uma única
 /// vez aqui (não a cada rebuild) porque o router usa
@@ -133,6 +134,9 @@ class _NewFitnessAppState extends State<NewFitnessApp> {
           darkTheme: AppTheme.dark,
           themeMode: themeProvider.themeMode,
           routerConfig: _router,
+          // Abertura animada (uma vez por abertura do app).
+          builder: (context, child) =>
+              AppIntroOverlay(child: child ?? const SizedBox.shrink()),
         ),
       ),
     );

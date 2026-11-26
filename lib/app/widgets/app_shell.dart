@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 
 import 'app_drawer.dart';
 
+import 'package:newfitness/app/widgets/effects.dart';
+
 /// Chave do `Scaffold` que hospeda o [Drawer] do app — usada por
 /// [DrawerMenuButton] (em `drawer_menu_button.dart`) pra abrir o menu a
 /// partir de qualquer tela de aba, já que cada uma tem seu próprio
@@ -24,7 +26,10 @@ class AppShell extends StatelessWidget {
     return Scaffold(
       key: appShellScaffoldKey,
       drawer: AppDrawer(navigationShell: navigationShell),
-      body: navigationShell,
+      body: TabFade(
+        index: navigationShell.currentIndex,
+        child: navigationShell,
+      ),
     );
   }
 }
