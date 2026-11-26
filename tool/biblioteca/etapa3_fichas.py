@@ -20,6 +20,10 @@ here = os.path.dirname(os.path.abspath(__file__))
 # ---------------------------------------------------------------------------
 NOVOS = {}
 
+# Vídeos achados depois na busca do YouTube e conferidos (oEmbed), aprovados
+# pelo usuário em 2026-11-25.
+_VIDEOS = json.load(open(os.path.join(here, 'videos_novos.json'), encoding='utf-8'))
+
 
 def novo(id, name, alt, group, sec, equip, cat, pattern, diff, uni, desc,
          instr, mistakes, care, tags, alts, sets, reps, rest,
@@ -47,7 +51,7 @@ def novo(id, name, alt, group, sec, equip, cat, pattern, diff, uni, desc,
         'defaultRestSeconds': rest,
         **({'defaultDurationSeconds': duration} if duration else {}),
         'loadUnit': load,
-        'videoUrl': '',
+        'videoUrl': _VIDEOS.get(id, {}).get('videoUrl', ''),
         'imageUrls': [],
         'professionalReviewPending': True,
         '_bloco': bloco,

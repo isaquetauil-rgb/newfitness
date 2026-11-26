@@ -6,6 +6,13 @@ import 'package:newfitness/shared/models/exercise.dart';
 import 'package:newfitness/shared/models/sample_exercise_stage3.dart';
 import 'package:newfitness/shared/models/sample_exercises.dart';
 
+final Map<String, String> approvedVideos = {
+  for (final e in (jsonDecode(
+    File('tool/biblioteca/videos_novos.json').readAsStringSync(),
+  ) as Map<String, dynamic>).entries)
+    e.key: (e.value as Map)['videoUrl'] as String,
+};
+
 void main() {
   final byId = {for (final e in sampleExercises) e.id: e};
   final fichas = jsonDecode(
@@ -60,10 +67,25 @@ void main() {
     ]);
   });
 
-  test('novos: ficha completa, sem vídeo nem imagem inventados', () {
+  test('os 56 vídeos aprovados: todos de exercícios gerais novos e do '
+      'YouTube', () {
+    expect(approvedVideos.length, 56);
+    for (final entry in approvedVideos.entries) {
+      expect(byId[entry.key]!.videoUrl, entry.value, reason: entry.key);
+      expect(
+        entry.value,
+        matches(RegExp(r'^https://www\.youtube\.com/watch\?v=[\w-]{11}$')),
+      );
+    }
+    final ids = approvedVideos.values.toList();
+    expect(ids.toSet().length, ids.length, reason: 'vídeo repetido');
+  });
+
+  test('novos: ficha completa, sem imagem inventada', () {
     for (final id in novos) {
       final e = byId[id]!;
-      expect(e.videoUrl, isEmpty, reason: id);
+      // Vídeo só o aprovado (achado na busca e conferido); imagem vazia.
+      expect(e.videoUrl, approvedVideos[id], reason: id);
       expect(e.imageUrls, isEmpty, reason: id);
       expect(e.description.trim(), isNotEmpty, reason: id);
       expect(e.instructions.length, greaterThanOrEqualTo(3), reason: id);
@@ -116,7 +138,8 @@ void main() {
     expect(corda.name, 'Tríceps na polia com corda');
     expect(corda.videoUrl, isNotEmpty); // o vídeo atual já é com corda
     expect(barra.name, 'Tríceps na polia com barra');
-    expect(barra.videoUrl, isEmpty);
+    expect(barra.videoUrl, approvedVideos['triceps_bar_pushdown']);
+    expect(barra.videoUrl, isNot(corda.videoUrl));
     expect(corda.alternativeExerciseIds, contains('triceps_bar_pushdown'));
     // Nenhuma ficha mistura corda e barra.
     for (final e in sampleExercises) {

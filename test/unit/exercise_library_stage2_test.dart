@@ -32,6 +32,13 @@ Exercise _ex(
   category: category,
 );
 
+final Map<String, String> approvedVideos = {
+  for (final e in (jsonDecode(
+    File('tool/biblioteca/videos_novos.json').readAsStringSync(),
+  ) as Map<String, dynamic>).entries)
+    e.key: (e.value as Map)['videoUrl'] as String,
+};
+
 void main() {
   group('nomes antigos continuam sendo entendidos (leitura)', () {
     test('grupos', () {
@@ -228,7 +235,8 @@ void main() {
       ]) {
         final e = byId(id);
         expect(e.professionalReviewPending, isTrue, reason: id);
-        expect(e.videoUrl, isEmpty, reason: 'não inventar vídeo: $id');
+        // Vídeo só o aprovado (achado na busca e conferido).
+        expect(e.videoUrl, approvedVideos[id], reason: id);
         expect(e.id.startsWith('pt_'), isFalse);
       }
     });

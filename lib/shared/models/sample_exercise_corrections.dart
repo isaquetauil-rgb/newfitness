@@ -715,7 +715,7 @@ final List<Exercise> stage2NewExercises = [
     tracksDuration: false,
     description:
         'Puxada na polia alta com o triângulo (pegada neutra e fechada).',
-    videoUrl: '',
+    videoUrl: 'https://www.youtube.com/watch?v=uAnrJBnxrZ0',
     instructions: const [
       'Sente-se com as coxas presas no apoio e segure o triângulo.',
       'Puxe o triângulo até a parte de cima do peito, levando os cotovelos para baixo.',
@@ -736,7 +736,7 @@ final List<Exercise> stage2NewExercises = [
     isUnilateral: false,
     tracksDuration: false,
     description: 'Flexão de cotovelo na polia baixa, com barra reta ou W.',
-    videoUrl: '',
+    videoUrl: 'https://www.youtube.com/watch?v=zqklqTcOsbo',
     instructions: const [
       'Fique de frente para a polia baixa, com a barra nas mãos e os cotovelos junto ao corpo.',
       'Flexione os cotovelos até a barra chegar perto dos ombros.',
@@ -758,7 +758,7 @@ final List<Exercise> stage2NewExercises = [
     tracksDuration: false,
     description:
         'Abertura dos braços para trás no voador, de frente para o encosto.',
-    videoUrl: '',
+    videoUrl: 'https://www.youtube.com/watch?v=wjlX-5DTjBQ',
     instructions: const [
       'Sente-se de frente para o encosto do voador e segure as alças na altura dos ombros.',
       'Abra os braços para trás, com os cotovelos levemente flexionados.',
@@ -779,7 +779,7 @@ final List<Exercise> stage2NewExercises = [
     isUnilateral: true,
     tracksDuration: false,
     description: 'Elevação lateral com um braço, na polia baixa.',
-    videoUrl: '',
+    videoUrl: 'https://www.youtube.com/watch?v=ze9B6VX4nUs',
     instructions: const [
       'Fique de lado para a polia baixa e segure a alça com a mão do lado de fora.',
       'Eleve o braço pela lateral até a altura do ombro, com o cotovelo levemente flexionado.',

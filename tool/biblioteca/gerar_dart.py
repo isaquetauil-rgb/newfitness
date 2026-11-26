@@ -9,6 +9,9 @@ import os
 here = os.path.dirname(os.path.abspath(__file__))
 root = os.path.abspath(os.path.join(here, '..', '..'))
 data = json.load(open(os.path.join(here, 'etapa2_correcoes.json'), encoding='utf-8'))
+# Vídeos achados depois na busca do YouTube e conferidos (oEmbed), aprovados
+# pelo usuário em 2026-11-25.
+videos = json.load(open(os.path.join(here, 'videos_novos.json'), encoding='utf-8'))
 
 
 def lit(v):
@@ -64,7 +67,7 @@ for k, v in data['novos'].items():
     out.append(f"    isUnilateral: {lit(fields['isUnilateral'])},")
     out.append(f"    tracksDuration: {lit(fields['tracksDuration'])},")
     out.append(f"    description: {lit(fields['description'])},")
-    out.append("    videoUrl: '',")
+    out.append(f"    videoUrl: {lit(videos.get(k, {}).get('videoUrl', ''))},")
     out.append(f"    instructions: const {lit(fields['instructions'])},")
     out.append(f"    professionalReviewPending: {lit(rev)},")
     out.append('  ),')
