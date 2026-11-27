@@ -47,6 +47,14 @@ void main() {
     );
     expect(find.text('NewFitness'), findsOneWidget);
     expect(find.text('conteúdo'), findsOneWidget); // monta por baixo
+    // O nome usa a fonte do tema (precisa de um Material por baixo).
+    expect(
+      find.ancestor(
+        of: find.text('NewFitness'),
+        matching: find.byType(Material),
+      ),
+      findsWidgets,
+    );
     await tester.pumpAndSettle();
     expect(find.text('NewFitness'), findsNothing);
     expect(find.text('conteúdo'), findsOneWidget);

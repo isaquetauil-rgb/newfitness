@@ -200,7 +200,9 @@ class _AppIntroOverlayState extends State<AppIntroOverlay>
               animation: _c,
               builder: (context, _) => Opacity(
                 opacity: 1 - out.value,
-                child: ColoredBox(
+                // Material (e não só uma cor): a abertura fica acima das
+                // telas, e sem ele o texto não pega a fonte do tema.
+                child: Material(
                   color: scheme.surface,
                   child: Center(
                     child: Transform.scale(
